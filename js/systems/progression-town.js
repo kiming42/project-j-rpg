@@ -1,5 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 精簡公會介面、單次俸祿限制與鍛造等級門檻總管 (progression-town.js - v3.4)
+ * Project J：艾瑟瑞亞的破曉 — NPC單次指令鎖定、金幣商店與公會鍛造總管 (progression-town.js - v3.5)
+ * 升級：1.NPC 旅人指令支援 onceKey 單次領取鎖定，防止無限刷素材與聲望
+ *       2.整合「金幣物資補給商店 (GOLD_SHOP)」至工坊與行商奇奇介面，賦予金幣完整購買力
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -18,6 +20,7 @@ window.Aetheria = window.Aetheria || {};
     if (matKey === "potionHeal" || matKey === "potionHint") return "icon_potion";
     if (matKey === "bombItem") return "icon_bomb";
     if (matKey === "tameFruit") return "heart";
+    if (matKey === "wood") return "deco_stump";
     return "crate";
   }
 
@@ -133,7 +136,7 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.Audio.playBgm("forest");
       this.updateAllHud();
       if (window.Aetheria.Renderer) window.Aetheria.Renderer.renderWorld();
-      this.showToast("新冒險展開！請先找【鐵匠巴爾】對話領取首批礦石！");
+      this.showToast("新冒險展開！請先找【鐵匠巴爾】對話領取首批礦石與原木！");
     },
 
     setActivePanel: function(panelId) {
@@ -236,7 +239,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // ================= 1. NPC 對話與旅人指令 =================
+    // ================= 1. NPC 對話與旅人指令 (支援 onceKey 單次領取鎖定) =================
     openNpcDialogue: function(npcId) {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -273,26 +276,43 @@ window.Aetheria = window.Aetheria || {};
       srvBtn.innerHTML = S.iconHtml("icon_forge") + cleanText(npc.serviceLabel);
       srvBtn.onclick = function() {
         if (npc.serviceAction === "openAstrolabeModal") self.openSettingsModal("astrolabe");
+        else if (npc.serviceAction === "openMerchantShop") self.openForgeModal("alchemy");
         else if (self[npc.serviceAction]) self[npc.serviceAction]();
       };
       btnGrid.appendChild(srvBtn);
 
       (npc.pathActions || []).forEach(function(pa) {
+        const alreadyDone = Boolean(pa.onceKey && s.questProgress && s.questProgress[pa.onceKey]);
         const btn = document.createElement("button");
         btn.className = "na-btn";
         btn.style.textAlign = "left";
         btn.style.padding = "8px";
-        btn.innerHTML = '<div style="color:var(--na-gold); font-size:14px;">' + S.iconHtml("icon_sword") + cleanText(pa.label) + '</div><div style="font-size:12px; font-weight:normal; color:#cbd5e1; margin-top:2px;">' + cleanText(pa.desc) + '</div>';
-        btn.onclick = function() {
-          if (pa.type === "spar") {
-            window.Aetheria.Battle.pathActionRef = { action: pa, npc: npc };
-            window.Aetheria.Battle.startBattle(pa.enemyConfig, "combat");
-          } else {
-            window.Aetheria.Battle.startPathActionChallenge(pa, npc);
+
+        if (alreadyDone) {
+          btn.style.opacity = "0.45";
+          btn.style.pointerEvents = "none";
+          btn.innerHTML = '<div style="color:#8d99ae; font-size:14px;">[已完成] ' + cleanText(pa.label) + '</div><div style="font-size:12px; color:#8d99ae; margin-top:2px;">已領取過此項單次獎勵</div>';
+        } else {
+          let descTxt = cleanText(pa.desc);
+          if (pa.id === "pa_smith_spar" && s.questProgress && s.questProgress.done_pa_smith_spar) {
+            descTxt = "已領首勝秘銀；再次切磋獲勝可得【藍晶鐵礦 x1、40 G】";
           }
-        };
+          btn.innerHTML = '<div style="color:var(--na-gold); font-size:14px;">' + S.iconHtml("icon_sword") + cleanText(pa.label) + '</div><div style="font-size:12px; font-weight:normal; color:#cbd5e1; margin-top:2px;">' + descTxt + '</div>';
+          btn.onclick = function() {
+            if (pa.type === "spar") {
+              window.Aetheria.Battle.pathActionRef = { action: pa, npc: npc };
+              window.Aetheria.Battle.startBattle(pa.enemyConfig, "combat");
+            } else {
+              window.Aetheria.Battle.startPathActionChallenge(pa, npc);
+            }
+          };
+        }
         btnGrid.appendChild(btn);
       });
+    },
+
+    openMerchantShop: function() {
+      this.openForgeModal("alchemy");
     },
 
     // ================= 2. 傳送陣 (必須步行進入該區才解鎖) =================
@@ -367,7 +387,6 @@ window.Aetheria = window.Aetheria || {};
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
 
-      // 檢查當前階級俸祿是否已領取過 (每級限領一次)
       const rankAlreadyClaimed = s.claimedRankSupplies.indexOf(s.guildRank) !== -1;
       const ghLv = s.campBuildings.greenhouse || 0;
 
@@ -382,7 +401,6 @@ window.Aetheria = window.Aetheria || {};
           : '<span class="na-badge" style="display:flex;align-items:center;">溫室運作中</span>');
       body.appendChild(topBar);
 
-      // A. 主線任務 (精簡雙行顯示)
       const mq = window.Aetheria.Data.getCurrentMainQuest(s);
       if (mq) {
         const isDone = mq.checkComplete(s);
@@ -397,7 +415,6 @@ window.Aetheria = window.Aetheria || {};
         body.appendChild(mqCard);
       }
 
-      // B. 進行中委託 (上限 3 張)
       const activeHeader = document.createElement("div");
       activeHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:6px 0 4px; font-size:14px;";
       activeHeader.innerHTML = S.iconHtml("icon_sword") + "進行中委託 (" + s.activeBounties.length + "/" + MAX_ACTIVE_BOUNTIES + ")";
@@ -451,7 +468,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // C. 可接委託公告板 (極簡排位)
       const boardHeader = document.createElement("div");
       boardHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px; font-size:14px;";
       boardHeader.innerHTML = S.iconHtml("icon_scroll") + "可接懸賞板";
@@ -544,7 +560,6 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // 每階級俸祿限領一次！
     claimGuildSupply: function() {
       const s = window.Aetheria.State.data;
       if (!Array.isArray(s.claimedRankSupplies)) s.claimedRankSupplies = [];
@@ -604,7 +619,7 @@ window.Aetheria = window.Aetheria || {};
       this.openGuildModal();
     },
 
-    // ================= 4. 鐵匠鋪：4 大分類 Tab + 等級門檻 (reqLv) 與破防核心要求 =================
+    // ================= 4. 鐵匠鋪：4 大分類 Tab (含金幣補給商店與萬能煉金爐) =================
     openForgeModal: function(activeTab) {
       activeTab = activeTab || "weapon";
       const s = window.Aetheria.State.data;
@@ -614,7 +629,7 @@ window.Aetheria = window.Aetheria || {};
       const self = this;
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerHTML = S.iconHtml("icon_forge") + "曙光鐵匠工坊 (主角當前 Lv." + s.lv + ")";
+      document.getElementById("modal-title").innerHTML = S.iconHtml("icon_forge") + "鐵匠工坊 & 補給店 (Lv." + s.lv + "｜" + s.gold + " G)";
 
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
@@ -625,7 +640,7 @@ window.Aetheria = window.Aetheria || {};
         { id: "weapon",  label: "武器鍛造", icon: "icon_sword" },
         { id: "tool",    label: "工具升級", icon: "icon_forge" },
         { id: "relic",   label: "聖物飾品", icon: "icon_shield" },
-        { id: "alchemy", label: "煉金提煉", icon: "icon_potion" }
+        { id: "alchemy", label: "煉金/商店", icon: "icon_coin" }
       ].forEach(function(t) {
         const b = document.createElement("button");
         b.className = "na-btn" + (activeTab === t.id ? " highlight" : "");
@@ -749,7 +764,35 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
+      // 分頁 4：金幣補給商店 + 萬能煉金提煉爐
       else if (activeTab === "alchemy") {
+        const shopHeader = document.createElement("div");
+        shopHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:2px 0 5px; font-size:14px;";
+        shopHeader.innerHTML = S.iconHtml("icon_coin") + "金幣物資補給店（持有金幣：" + s.gold + " G）";
+        body.appendChild(shopHeader);
+
+        (window.Aetheria.Data.GOLD_SHOP || []).forEach(function(item) {
+          const canBuy = s.gold >= item.goldCost;
+          const haveNow = inv[item.toKey] || 0;
+          const row = document.createElement("div");
+          row.className = "sys-card";
+          row.style.display = "flex";
+          row.style.justifyContent = "space-between";
+          row.style.alignItems = "center";
+          row.innerHTML =
+            '<div>' +
+              '<b style="font-size:14px;">' + S.iconHtml(getItemSpriteKey(item.toKey)) + cleanText(item.name) + '</b>' +
+              '<div style="font-size:12px; color:#cbd5e1; margin-top:2px;">售價：' + item.goldCost + ' G（目前持有：' + haveNow + '）</div>' +
+            '</div>' +
+            '<button class="na-btn ' + (canBuy ? 'highlight' : '') + '" style="padding:5px 12px;" onclick="Aetheria.UI.buyWithGold(\'' + item.id + '\')">購買</button>';
+          body.appendChild(row);
+        });
+
+        const alchHeader = document.createElement("div");
+        alchHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:10px 0 5px; font-size:14px;";
+        alchHeader.innerHTML = S.iconHtml("icon_potion") + "萬能煉金提煉爐（低階素材合成高階礦石與藥水）";
+        body.appendChild(alchHeader);
+
         window.Aetheria.Data.ALCHEMY_CONVERSIONS.forEach(function(c) {
           const fromMat = window.Aetheria.Data.MATERIALS[c.fromKey];
           const have = inv[c.fromKey] || 0;
@@ -767,6 +810,23 @@ window.Aetheria = window.Aetheria || {};
           body.appendChild(row);
         });
       }
+    },
+
+    buyWithGold: function(shopId) {
+      const s = window.Aetheria.State.data;
+      const item = (window.Aetheria.Data.GOLD_SHOP || []).find(function(i) { return i.id === shopId; });
+      if (!item) return;
+      if (s.gold < item.goldCost) {
+        this.showToast("金幣不足！可透過擊敗魔物、完成主線或公會委託賺取金幣。");
+        return;
+      }
+      s.gold -= item.goldCost;
+      s.inventory[item.toKey] = (s.inventory[item.toKey] || 0) + item.toCount;
+      window.Aetheria.Audio.sfxGather();
+      window.Aetheria.State.save();
+      this.showToast("購買成功：" + cleanText(item.name) + "！");
+      this.openForgeModal("alchemy");
+      this.updateAllHud();
     },
 
     pinWeapon: function(wId) {
@@ -1131,7 +1191,7 @@ window.Aetheria = window.Aetheria || {};
             '<button class="na-btn" style="padding:9px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原)</button>' +
             '<button class="na-btn" style="padding:9px;" onclick="document.getElementById(\'title-screen\').style.display=\'flex\'; Aetheria.UI.initTitleScreen();">返回遊戲首頁</button>' +
             '<button class="na-btn" style="padding:9px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm(\'確定要清除所有進度並以零素材重新開始嗎？\')) Aetheria.State.resetSave()">重置遊戲 (清除所有進度重新開始)</button>' +
-          '</div>';
+          </div>';
         body.appendChild(sysCard);
       }
     },
