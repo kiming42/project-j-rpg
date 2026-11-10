@@ -1,5 +1,8 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 探索移動、怪物巡邏追擊AI、步行解鎖傳送與採集系統 (exploration-gather.js - v3.3)
+ * Project J：艾瑟瑞亞的破曉 — 跨區重生、老樹樁伐木與分區寶箱系統 (exploration-gather.js - v3.5)
+ * 修正：1.跨區移動 (triggerPortal / warpToCamp) 自動刷新野外魔物與基礎礦草，確保破防核心可持續刷取
+ *       2.實裝老樹樁 (type: 'wood') 採集，且採集植物必同步獲得翠風原木
+ *       3.傳說寶箱按當前區域階級發放對應素材，不再於第 1 區過早掉落終局星隕鐵
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -89,7 +92,6 @@ window.Aetheria = window.Aetheria || {};
       let nx = Math.max(24, Math.min(mapObj.width - 36, s.heroX + this.moveDX * speed));
       let ny = Math.max(24, Math.min(mapObj.height - 36, s.heroY + this.moveDY * speed));
 
-      // 1. 河流與木橋通行判定
       if (mapObj.hasRiver) {
         const rx = mapObj.riverX || 555;
         const by = mapObj.bridgeY || 250;
@@ -100,7 +102,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 2. 裂縫牆、巨石與枯木阻擋判定
       if (mapObj.decos) {
         for (let i = 0; i < mapObj.decos.length; i++) {
           const d = mapObj.decos[i];
@@ -121,13 +122,11 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 3. 戰寵平滑跟隨
       s.petX += (s.heroX - this.moveDX * 18 - s.petX) * 0.18;
       s.petY += (s.heroY - this.moveDY * 16 - s.petY) * 0.18;
       s.heroX = nx;
       s.heroY = ny;
 
-      // 4. 傳送門與帳篷入口觸發
       if (mapObj.portals) {
         for (let j = 0; j < mapObj.portals.length; j++) {
           const p = mapObj.portals[j];
@@ -143,7 +142,6 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.UI.updateHudZoneDynamic(mapObj, s);
     },
 
-    // 野外怪物巡邏走動 + 接近時 [!] 加速衝刺追擊 AI
     updateMonstersAI: function(mapObj, s) {
       if (!mapObj || !mapObj.monsters || mapObj.monsters.length === 0) return;
       if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
@@ -244,9 +242,12 @@ window.Aetheria = window.Aetheria || {};
       hintEl.innerText = "對話 / 採集";
     },
 
+    // 步行跨區：自動刷新野外魔物與基礎採集點 (傳說寶箱與已破障機關由 s.openedNodes 永久保留)
     triggerPortal: function(portal) {
       const s = window.Aetheria.State.data;
       let newlyUnlocked = false;
+
+      window.Aetheria.Data.Maps.refreshAllResources();
 
       if (portal.targetZone === "endless_tower_next") {
         const curMap = window.Aetheria.Data.Maps.getMap("endless_tower");
@@ -333,10 +334,10 @@ window.Aetheria = window.Aetheria || {};
                 return;
               }
               s.openedNodes[d.id] = true;
-              s.inventory.iron += 2;
+              s.inventory.iron += 3;
               window.Aetheria.Audio.sfxBreakShield();
               window.Aetheria.State.save();
-              window.Aetheria.UI.showToast("使用秘銀重鎬擊碎擋路巨石，獲得【藍晶鐵礦 +2】！");
+              window.Aetheria.UI.showToast("使用秘銀重鎬擊碎擋路巨石，獲得【藍晶鐵礦 +3】！");
               return;
             }
             if (d.obstacleType === "deadtree") {
@@ -345,10 +346,10 @@ window.Aetheria = window.Aetheria || {};
                 return;
               }
               s.openedNodes[d.id] = true;
-              s.inventory.wood += 3;
+              s.inventory.wood += 4;
               window.Aetheria.Audio.sfxBreakShield();
               window.Aetheria.State.save();
-              window.Aetheria.UI.showToast("揮動烈焰戰斧劈開巨型枯木，獲得【翠風原木 +3】！");
+              window.Aetheria.UI.showToast("揮動烈焰戰斧劈開巨型枯木，獲得【翠風原木 +4】！");
               return;
             }
           }
@@ -373,7 +374,7 @@ window.Aetheria = window.Aetheria || {};
         return;
       }
 
-      window.Aetheria.UI.showToast("請走近 NPC、礦脈、釣魚點或寶箱再按 A 鍵！");
+      window.Aetheria.UI.showToast("請走近 NPC、礦脈、老樹樁、釣魚點或寶箱再按 A 鍵！");
     },
 
     triggerFishing: function(spot) {
@@ -423,45 +424,80 @@ window.Aetheria = window.Aetheria || {};
       } else if (node.snowLotus) {
         const amt = (1 + axeBonus) * luckyMult;
         s.inventory.iceLotus += amt;
-        window.Aetheria.UI.showToast("採集成功：獲得【雪山冰蓮 +" + amt + "】！");
+        s.inventory.wood += 1;
+        window.Aetheria.UI.showToast("採集成功：獲得【雪山冰蓮 +" + amt + "】、【翠風原木 +1】！");
       } else if (node.goldLeafNode) {
         const amt = (1 + axeBonus) * luckyMult;
         s.inventory.goldLeaf += amt;
         window.Aetheria.UI.showToast("採集成功：獲得【世界樹金葉 +" + amt + "】！");
+      } else if (node.type === "wood") {
+        // 新增：砍伐老樹樁獲得大量翠風原木
+        const amt = (2 + axeBonus) * luckyMult;
+        s.inventory.wood += amt;
+        if (s.tools.axe >= 3 && Math.random() < 0.45) {
+          s.inventory.tameFruit += 1;
+          window.Aetheria.UI.showToast("雷鳴神斧觸發！獲得【翠風原木 +" + amt + "】與【靈獸誘餌果 +1】！");
+        } else {
+          window.Aetheria.UI.showToast("伐木成功：獲得【翠風原木 +" + amt + "】！");
+        }
       } else if (node.type === "crystal") {
         const amt = (2 + pickBonus) * luckyMult;
         s.inventory.iron += amt;
         window.Aetheria.UI.showToast("挖掘成功：獲得【藍晶鐵礦 +" + amt + "】！");
       } else if (node.type === "mushroom") {
+        // 兌現伐木斧說明：採集植物同時拾獲翠風原木
         const amt = (1 + axeBonus) * luckyMult;
+        const woodAmt = 1 + axeBonus;
         s.inventory.herb += amt;
-        window.Aetheria.UI.showToast("採集成功：獲得【紅傘微光菇 +" + amt + "】！");
+        s.inventory.wood += woodAmt;
+        window.Aetheria.UI.showToast("採集成功：獲得【紅傘微光菇 +" + amt + "】、【翠風原木 +" + woodAmt + "】！");
       } else if (node.type === "flower") {
         const amt = (1 + axeBonus) * luckyMult;
+        const woodAmt = 1 + axeBonus;
         s.inventory.flower += amt;
+        s.inventory.wood += woodAmt;
         if (s.tools.axe >= 3 && Math.random() < 0.45) {
           s.inventory.tameFruit += 1;
-          window.Aetheria.UI.showToast("雷鳴神斧觸發！獲得【太陽花 +" + amt + "】與【靈獸誘餌果 +1】！");
+          window.Aetheria.UI.showToast("雷鳴神斧觸發！獲得【太陽花 +" + amt + "】、【原木 +" + woodAmt + "】、【誘餌果 +1】！");
         } else {
-          window.Aetheria.UI.showToast("採集成功：獲得【翠風太陽花 +" + amt + "】！");
+          window.Aetheria.UI.showToast("採集成功：獲得【翠風太陽花 +" + amt + "】、【翠風原木 +" + woodAmt + "】！");
         }
       } else if (node.type === "chest") {
+        // 寶箱依當前區域階級發放對應素材，不越級破壞平衡
         if (node.legendary) {
-          s.inventory.mithril += 4;
-          s.inventory.obsidian += 2;
-          s.inventory.starIron += 2;
-          s.inventory.tameFruit += 2;
           window.Aetheria.Audio.sfxLevelUp();
-          window.Aetheria.UI.showToast("開啟傳說秘寶箱：秘銀 +4、黑曜石 +2、星隕鐵 +2、誘餌果 +2！");
+          if (s.currentZone === "camp_hub" || s.currentZone === "tent_guild" || s.currentZone === "zone1_forest" || s.currentZone === "cave1_mushroom") {
+            s.inventory.iron += 5;
+            s.inventory.wood += 4;
+            s.inventory.mithril += 3;
+            s.inventory.tameFruit += 1;
+            window.Aetheria.UI.showToast("開啟秘寶箱：藍晶礦 +5、原木 +4、流沙秘銀 +3、誘餌果 +1！");
+          } else if (s.currentZone === "zone2_canyon" || s.currentZone === "zone3_coast") {
+            s.inventory.mithril += 6;
+            s.inventory.bombItem += 2;
+            s.inventory.tameFruit += 2;
+            window.Aetheria.UI.showToast("開啟秘寶箱：流沙秘銀 +6、爆破炸彈 +2、誘餌果 +2！");
+          } else if (s.currentZone === "zone4_snow" || s.currentZone === "zone5_volcano") {
+            s.inventory.obsidian += 5;
+            s.inventory.iceLotus += 4;
+            s.inventory.tameFruit += 2;
+            window.Aetheria.UI.showToast("開啟秘寶箱：熔岩黑曜石 +5、雪山冰蓮 +4、誘餌果 +2！");
+          } else {
+            s.inventory.starIron += 4;
+            s.inventory.goldLeaf += 3;
+            s.inventory.obsidian += 4;
+            window.Aetheria.UI.showToast("開啟至高秘寶箱：深淵星隕鐵 +4、世界樹金葉 +3、黑曜石 +4！");
+          }
         } else {
           s.inventory.iron += 3;
-          s.inventory.potionHint += 1;
-          window.Aetheria.UI.showToast("開啟紅金寶箱：藍晶鐵礦 +3、洞察藥水 +1！");
+          s.inventory.wood += 2;
+          s.inventory.potionHeal += 1;
+          window.Aetheria.UI.showToast("開啟寶箱：藍晶鐵礦 +3、翠風原木 +2、生命藥水 +1！");
         }
       } else {
-        s.inventory.wood += 2;
-        s.inventory.iron += 1;
-        window.Aetheria.UI.showToast("搜括補給木箱：獲得【翠風原木 +2】、【藍晶鐵礦 +1】！");
+        s.inventory.wood += 3;
+        s.inventory.iron += 2;
+        window.Aetheria.UI.showToast("搜括補給木箱：獲得【翠風原木 +3】、【藍晶鐵礦 +2】！");
       }
 
       window.Aetheria.State.save();
@@ -472,7 +508,7 @@ window.Aetheria = window.Aetheria || {};
       if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
       const s = window.Aetheria.State.data;
       if ((s.inventory.bombItem || 0) <= 0) {
-        window.Aetheria.UI.showToast("爆破炸彈不足！可在鐵匠鋪煉金提煉取得。");
+        window.Aetheria.UI.showToast("爆破炸彈不足！可在鐵匠鋪煉金或金幣商店購買。");
         return;
       }
 
@@ -496,6 +532,7 @@ window.Aetheria = window.Aetheria || {};
     warpToCamp: function() {
       if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
       const s = window.Aetheria.State.data;
+      window.Aetheria.Data.Maps.refreshAllResources();
       s.currentZone = "camp_hub";
       s.heroX = 250;
       s.heroY = 220;
@@ -506,7 +543,7 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.Audio.playBgm("forest");
       window.Aetheria.UI.closePanelToExplore();
       window.Aetheria.UI.updateAllHud();
-      window.Aetheria.UI.showToast("已返回【0. 曙光露營基地】！");
+      window.Aetheria.UI.showToast("已返回【0. 曙光露營基地】（野外資源已刷新）！");
     }
   };
 
