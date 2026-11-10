@@ -1,6 +1,6 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 進階鍛造配方、等級門檻與破防核心要求庫 (items-crafting.js - v3.4)
- * 升級：大幅提高各階神兵、工具與聖物的素材數量，並綁定角色等級 (reqLv) 與魔物破防核心！
+ * Project J：艾瑟瑞亞的破曉 — 鍛造配方、工具升級、煉金與金幣商店庫 (items-crafting.js - v3.5)
+ * 新增：GOLD_SHOP 金幣補給商店，讓戰鬥與任務獲得的金幣可購買基礎原木、礦石與藥水炸彈！
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -11,11 +11,11 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     mithril:    { id: "mithril",    name: "流沙秘銀礦", tier: 2, desc: "蘊含魔力的銀白礦石，產自洞窟與峽谷。" },
     obsidian:   { id: "obsidian",   name: "熔岩黑曜石", tier: 3, desc: "火山高溫凝結的黑晶，用於鍛造高階神兵。" },
     starIron:   { id: "starIron",   name: "深淵星隕鐵", tier: 4, desc: "自天界墜落的神話金屬，散發星辰微光。" },
-    herb:       { id: "herb",       name: "紅傘微光菇", tier: 1, desc: "散發微光的森林蘑菇，可用於鍛造與煉藥。" },
-    flower:     { id: "flower",     name: "翠風太陽花", tier: 1, desc: "向陽盛開的靈花，蘊含純淨生命力。" },
+    herb:       { id: "herb",       name: "紅傘微光菇", tier: 1, desc: "散發微光的森林蘑菇，採集時可同時拾獲原木。" },
+    flower:     { id: "flower",     name: "翠風太陽花", tier: 1, desc: "向陽盛開的靈花，採集時可同時拾獲原木。" },
     iceLotus:   { id: "iceLotus",   name: "雪山冰蓮",   tier: 3, desc: "極寒雪原永不凋謝的冰蓮，高階附魔素材。" },
     goldLeaf:   { id: "goldLeaf",   name: "世界樹金葉", tier: 4, desc: "天界浮空神殿飄落的金葉，蘊含破曉之力。" },
-    wood:       { id: "wood",       name: "翠風原木",   tier: 1, desc: "堅韌的森林木材，用於擴建營地與升級工具。" },
+    wood:       { id: "wood",       name: "翠風原木",   tier: 1, desc: "堅韌的森林木材，可從老樹樁、植物叢採集或用金幣購買。" },
     coreBamboo: { id: "coreBamboo", name: "竹精木心",   tier: 1, desc: "【破防擊殺專屬】將竹子妖打入 BREAK 狀態擊敗後掉落。" },
     coreSkull:  { id: "coreSkull",  name: "骷髏魂火",   tier: 2, desc: "【破防擊殺專屬】將骷髏兵打入 BREAK 狀態擊敗後掉落。" },
     coreDragon: { id: "coreDragon", name: "龍王逆鱗",   tier: 4, desc: "【破防擊殺專屬】將區域 Boss 打入 BREAK 狀態擊敗後掉落。" },
@@ -25,7 +25,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     tameFruit:  { id: "tameFruit",  name: "靈獸誘餌果", tier: 2, desc: "在魔物破防殘血時投擲，答對題目即可收服。" }
   };
 
-  // 六階代表性神兵配方表 (加入 reqLv 等級門檻 + 破防魔物核心要求)
   const WEAPONS = {
     w_starter: {
       id: "w_starter",
@@ -46,7 +45,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       atk: 38,
       shieldBreak: 1,
       element: "水屬",
-      desc: "每次答對額外削盾 +1（需破防擊敗竹子妖取得木心）",
+      desc: "每次答對額外削盾 +1（需破防擊敗竹子妖取得竹精木心）",
       cost: { iron: 12, herb: 8, wood: 6, coreBamboo: 2 }
     },
     w_flame: {
@@ -93,12 +92,11 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       shieldBreak: 2,
       bpGainBonus: 1,
       element: "全屬性",
-      desc: "全屬性破盾 +2、每擊回復生命、額外充能 BP",
+      desc: "全屬性破盾 +2、每擊回復 10% 最大生命、額外充能 BP",
       cost: { starIron: 25, goldLeaf: 15, coreDragon: 5 }
     }
   };
 
-  // 三大聖物飾品配方 (提高素材與等級要求)
   const RELICS = {
     r_cloak: {
       id: "r_cloak",
@@ -127,22 +125,21 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   };
 
-  // 四大探索工具升級鏈 (提高升級門檻，需收集足夠礦石、木材與魔物核心)
   const TOOLS_UPGRADE = {
     pickaxe: {
       name: "十字鎬",
       levels: {
         1: { title: "新手鐵鎬", desc: "可開採基礎藍晶礦脈。" },
-        2: { title: "秘銀重鎬", reqLv: 4, desc: "可敲碎地圖上的「擋路玄武巨石」，挖礦產量 +1", cost: { iron: 12, wood: 8, coreBamboo: 2 } },
-        3: { title: "星隕鑽頭", reqLv: 16, desc: "全礦脈採集產量直接翻倍 (x2)", cost: { mithril: 18, obsidian: 8, coreSkull: 4 } }
+        2: { title: "秘銀重鎬", reqLv: 4, desc: "可敲碎地圖上的「擋路玄武巨石」，挖礦與完美採集產量 +1", cost: { iron: 12, wood: 8, coreBamboo: 2 } },
+        3: { title: "星隕鑽頭", reqLv: 16, desc: "全礦脈與完美採集產量直接翻倍 (x2)", cost: { mithril: 18, obsidian: 8, coreSkull: 4 } }
       }
     },
     axe: {
       name: "伐木斧",
       levels: {
-        1: { title: "石製手斧", desc: "可採集基礎原木與靈花。" },
-        2: { title: "烈焰戰斧", reqLv: 4, desc: "可砍斷地圖上的「擋路巨型枯木」，採集植物 +1", cost: { iron: 10, herb: 8, wood: 8, coreBamboo: 2 } },
-        3: { title: "雷鳴神斧", reqLv: 16, desc: "採集植物時 45% 機率額外掉落【靈獸誘餌果】", cost: { mithril: 16, flower: 14, coreSkull: 4 } }
+        1: { title: "石製手斧", desc: "可採集老樹樁原木與靈花（採植物必得原木 +1）。" },
+        2: { title: "烈焰戰斧", reqLv: 4, desc: "可砍斷地圖上的「擋路巨型枯木」，植物與原木產量 +1", cost: { iron: 10, herb: 8, wood: 8, coreBamboo: 2 } },
+        3: { title: "雷鳴神斧", reqLv: 16, desc: "伐木與採集植物時 45% 機率額外掉落【靈獸誘餌果】", cost: { mithril: 16, flower: 14, coreSkull: 4 } }
       }
     },
     bomb: {
@@ -163,7 +160,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   };
 
-  // 萬能煉金轉化爐 (4 低階換 1 高階)
   const ALCHEMY_CONVERSIONS = [
     { id: "conv_mithril",  name: "提煉【流沙秘銀礦 x1】", fromKey: "iron",     fromCount: 4, toKey: "mithril",    toCount: 1 },
     { id: "conv_obsidian", name: "熔煉【熔岩黑曜石 x1】", fromKey: "mithril",  fromCount: 4, toKey: "obsidian",   toCount: 1 },
@@ -174,6 +170,16 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     { id: "conv_hint",     name: "提煉【洞察藥水 x1】",   fromKey: "flower",   fromCount: 3, toKey: "potionHint", toCount: 1 },
     { id: "conv_bomb",     name: "製作【爆破炸彈 x1】",   fromKey: "iron",     fromCount: 3, toKey: "bombItem",   toCount: 1 },
     { id: "conv_fruit",    name: "調配【靈獸誘餌果 x1】", fromKey: "flower",   fromCount: 3, toKey: "tameFruit",  toCount: 1 }
+  ];
+
+  // 新增！行商與工坊金幣補給商店 (解決金幣無處使用的問題)
+  const GOLD_SHOP = [
+    { id: "shop_wood",  name: "購買【翠風原木 x2】",   goldCost: 30,  toKey: "wood",       toCount: 2 },
+    { id: "shop_iron",  name: "購買【藍晶鐵礦 x2】",   goldCost: 40,  toKey: "iron",       toCount: 2 },
+    { id: "shop_heal",  name: "購買【生命藥水 x1】",   goldCost: 35,  toKey: "potionHeal", toCount: 1 },
+    { id: "shop_hint",  name: "購買【洞察藥水 x1】",   goldCost: 50,  toKey: "potionHint", toCount: 1 },
+    { id: "shop_bomb",  name: "購買【爆破炸彈 x1】",   goldCost: 60,  toKey: "bombItem",   toCount: 1 },
+    { id: "shop_fruit", name: "購買【靈獸誘餌果 x1】", goldCost: 80,  toKey: "tameFruit",  toCount: 1 }
   ];
 
   function canAfford(inventory, costObj) {
@@ -207,5 +213,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
   window.Aetheria.Data.RELICS = RELICS;
   window.Aetheria.Data.TOOLS_UPGRADE = TOOLS_UPGRADE;
   window.Aetheria.Data.ALCHEMY_CONVERSIONS = ALCHEMY_CONVERSIONS;
+  window.Aetheria.Data.GOLD_SHOP = GOLD_SHOP;
   window.Aetheria.Data.CraftingHelper = { canAfford: canAfford, payCost: payCost, formatCostText: formatCostText };
 })();
