@@ -1,16 +1,14 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 3倍高清文字與銳利像素渲染引擎 (camera-renderer.js - v3.4)
- * 修復：將畫布內部解析度提升至 768x432 (3x Super-Sampling)，像素貼圖保持銳利點陣，
- *       同時讓地圖上的 NPC 名稱與傳送門文字以原生 24px 高清黑邊字體繪製，徹底解決文字模糊！
+ * Project J：艾瑟瑞亞的破曉 — 3倍高清文字與原木樹樁渲染引擎 (camera-renderer.js - v3.5)
+ * 新增：支援繪製 n.type === "wood" 老樹樁原木採集點 (deco_stump)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
 (function() {
   const VIEW_W = 256;
   const VIEW_H = 144;
-  const HI_SCALE = 3; // 3倍高清內解析度 (768x432)
+  const HI_SCALE = 3;
 
-  // 高清黑邊清晰標籤繪製器
   function drawCrispLabel(ctx, text, centerX, bottomY, textColor, bgAlpha) {
     ctx.save();
     ctx.font = "900 7.5px 'Microsoft JhengHei', 'PingFang HK', sans-serif";
@@ -147,7 +145,6 @@ window.Aetheria = window.Aetheria || {};
         const canvas = document.getElementById("world-canvas");
         if (!canvas) return;
 
-        // 自動升級為 768x432 高清緩衝區，令地圖文字清晰銳利
         if (canvas.width !== VIEW_W * HI_SCALE || canvas.height !== VIEW_H * HI_SCALE) {
           canvas.width = VIEW_W * HI_SCALE;
           canvas.height = VIEW_H * HI_SCALE;
@@ -188,13 +185,12 @@ window.Aetheria = window.Aetheria || {};
 
         this.drawTerrain(ctx, mapObj, camX, camY, VIEW_W, VIEW_H);
 
+        const self = this;
         if (mapObj.portals) {
-          const self = this;
           mapObj.portals.forEach(function(p) { self.drawPortal(ctx, p); });
         }
 
         const renderQueue = [];
-        const self = this;
 
         // A. 裝飾物與工具機關
         if (mapObj.decos) {
@@ -240,7 +236,7 @@ window.Aetheria = window.Aetheria || {};
           });
         }
 
-        // C. 採集資源點
+        // C. 採集資源點 (含新增 wood 老樹樁)
         if (mapObj.nodes) {
           mapObj.nodes.forEach(function(n) {
             if (n.opened || (s.openedNodes && s.openedNodes[n.id])) return;
@@ -253,6 +249,7 @@ window.Aetheria = window.Aetheria || {};
                 if (n.type === "mushroom") spKey = "mat_mushroom";
                 if (n.type === "flower")   spKey = "mat_flower";
                 if (n.type === "chest")    spKey = "chest";
+                if (n.type === "wood")     spKey = "deco_stump";
 
                 const sp = Sprites.get(spKey);
                 if (sp) ctx.drawImage(sp, n.x, n.y + floatY, 18, 18);
@@ -267,7 +264,7 @@ window.Aetheria = window.Aetheria || {};
           });
         }
 
-        // D. 營地與室內 4 大核心 NPC (使用 3x 高清黑邊標籤)
+        // D. 營地與室內 NPC
         if (mapObj.npcs) {
           mapObj.npcs.forEach(function(npc) {
             renderQueue.push({
@@ -359,9 +356,8 @@ window.Aetheria = window.Aetheria || {};
         renderQueue.sort(function(a, b) { return a.y - b.y; });
         renderQueue.forEach(function(item) { item.draw(); });
 
-        ctx.restore(); // 結束相機位移
+        ctx.restore();
 
-        // 螢幕特效：微雨 / 飄雪
         if (mapObj.rain) {
           ctx.strokeStyle = (mapObj.theme === "snow") ? "#ffffff" : "rgba(255, 255, 255, 0.72)";
           ctx.lineWidth = (mapObj.theme === "snow") ? 2 : 1;
@@ -375,7 +371,6 @@ window.Aetheria = window.Aetheria || {};
           }
         }
 
-        // 左上角 3 顆像素紅心
         const fullHearts = Math.ceil((s.hp / s.maxHp) * 3);
         const heartSp = Sprites.get("heart");
         for (let i = 0; i < 3; i++) {
@@ -386,7 +381,7 @@ window.Aetheria = window.Aetheria || {};
 
         this.drawMinimap(ctx, mapObj, s);
 
-        ctx.restore(); // 結束 3x 高清縮放
+        ctx.restore();
       } catch (err) {
         console.error("renderWorld error:", err);
       }
