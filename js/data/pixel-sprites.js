@@ -1,6 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 逐像素手繪點陣圖資烘焙庫 (pixel-sprites.js - v3.0)
- * 新增：getDataURL(key) 快取轉換器，供純 DOM/CSS 戰鬥舞台與首頁直接渲染 <img> 像素貼圖！
+ * Project J：艾瑟瑞亞的破曉 — 逐像素手繪點陣圖資與 UI 像素小圖標庫 (pixel-sprites.js - v3.2)
+ * 新增：12 款 12x12 像素 UI 小圖標 (寶劍/護盾/鐵鎚/藥水/背包/地圖/齒輪/卷軸/炸彈/金幣)
+ *       及 iconHtml(key, large) 產生器，徹底取代所有 Emoji！
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -76,7 +77,158 @@ window.Aetheria.Data = window.Aetheria.Data || {};
   function initAllSprites() {
     if (SPRITES._initialized) return SPRITES;
 
-    // 1. 主角 4 方向 × 2 踏步動作幀
+    // ================= 0. 新增！12x12 開源風格像素 UI 小圖標 (取代 Emoji) =================
+    SPRITES.icon_sword = bake([
+      "........kkk.",
+      ".......kccwk",
+      "......kccbbk",
+      ".....kccbbk.",
+      "....kccbbk..",
+      ".kk.kccbk...",
+      ".kyykcbk....",
+      "..kyyyk.....",
+      ".kTTkyyk....",
+      "kTTk.kk.....",
+      "kkk.........",
+      "............"
+    ]);
+
+    SPRITES.icon_shield = bake([
+      ".kkkkkkkkkk.",
+      "kbbbbbbbbbbk",
+      "kbccccccccbk",
+      "kbcBBBBBBcbk",
+      "kbcByyyyycbk",
+      "kbcBBBBBBcbk",
+      ".kbccccccbk.",
+      ".kbbbbbbbbk.",
+      "..kBBBBBBk..",
+      "...kBBBBk...",
+      "....kkkk....",
+      "............"
+    ]);
+
+    SPRITES.icon_forge = bake([
+      "...kkkkkk...",
+      "..keeeeeek..",
+      ".keeEEEEeek.",
+      ".kkkkkkkkkk.",
+      "....kTTk....",
+      "....kTTk....",
+      "...kkTTkk...",
+      "..keeeeeeK..",
+      ".kEEEEEEEEk.",
+      "kEEEEEEEEEEk",
+      "kkkkkkkkkkkk",
+      "............"
+    ]);
+
+    SPRITES.icon_bag = bake([
+      "....kkkk....",
+      "...koooOk...",
+      "..kkkkkkkk..",
+      ".koooooooook",
+      "kooOyyyyOook",
+      "kooOyyyyOook",
+      "koOOOOOOOOok",
+      "koOOOOOOOOok",
+      "kttttttttttk",
+      ".kkkkkkkkkk.",
+      "............",
+      "............"
+    ]);
+
+    SPRITES.icon_map = bake([
+      ".kkkkkkkkkk.",
+      "kmmmmmmmmmmk",
+      "kmggmmmmbbmk",
+      "kmgGmmmmbBmk",
+      "kmmmmrrmmmmk",
+      "kmmmmrrmmmmk",
+      "kmbbmmmmggmk",
+      "kmbBmmmmgGmk",
+      "kmmmmmmmmmmk",
+      ".kkkkkkkkkk.",
+      "............",
+      "............"
+    ]);
+
+    SPRITES.icon_gear = bake([
+      "....kkkk....",
+      "..kkeeeeKk..",
+      ".keekkkkeek.",
+      ".kek....kek.",
+      "keek....keek",
+      "keek....keek",
+      ".kek....kek.",
+      ".keekkkkeek.",
+      "..kkEEEEkk..",
+      "....kkkk....",
+      "............",
+      "............"
+    ]);
+
+    SPRITES.icon_potion = bake([
+      "....kkkk....",
+      "....kffk....",
+      "...kkkkkk...",
+      "....kwwk....",
+      "..kkwwwwkk..",
+      ".kwrrrrrrwk.",
+      "kwrrwwrrrrwk",
+      "kwrrrrrrrrwk",
+      "kRRRRRRRRRRk",
+      ".kkkkkkkkkk.",
+      "............",
+      "............"
+    ]);
+
+    SPRITES.icon_bomb = bake([
+      ".......kk...",
+      "......kyrk..",
+      ".....kk.kk..",
+      "...kkEEEkk..",
+      "..kEEEEEEEk.",
+      ".kEEwwEEEEEk",
+      ".kEEwEEEEEEk",
+      ".kEEEEEEEEEk",
+      "..kEEEEEEEk.",
+      "...kkkkkkk..",
+      "............",
+      "............"
+    ]);
+
+    SPRITES.icon_scroll = bake([
+      "..kkkkkkkk..",
+      ".koooooooook",
+      "kmmmmmmmmmmk",
+      "kmkkkkkkkmmk",
+      "kmmmmmmmmmmk",
+      "kmkkkkkmmmmk",
+      "kmmmmmmmmmmk",
+      "kooooooooook",
+      ".kkkkkkkkkk.",
+      "............",
+      "............",
+      "............"
+    ]);
+
+    SPRITES.icon_coin = bake([
+      "...kkkkkk...",
+      "..kyyyyyyk..",
+      ".kyywwwwyyk.",
+      "kyywYYYYwyyk",
+      "kyywYYYYwyyk",
+      "kyywYYYYwyyk",
+      ".kyyYYYYyyk.",
+      "..kyyyyyyk..",
+      "...kkkkkk...",
+      "............",
+      "............",
+      "............"
+    ]);
+
+    // ================= 1. 主角 4 方向 × 2 踏步動作幀 =================
     const heroDownBase = [
       ".....kkkkkk.....",
       "...kkbbbbbbkk...",
@@ -138,7 +290,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.hero_left_1  = bake([...heroSideBase, "...kBBk...kBBk..", "...kTTk...kTTk..", "...kkk....kkkk.."], true);
     SPRITES.hero_left    = SPRITES.hero_left_0;
 
-    // 2. 四款像素戰寵 + 異色閃光版
+    // ================= 2. 四款像素戰寵 + 異色閃光版 =================
     const slimeRows = [
       ".....k..k..k....",
       "....kyykyykyk...",
@@ -223,7 +375,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.pet_icedragon = bake(iceDragonRows);
     SPRITES.pet_icedragon_shiny = bakeShiny(iceDragonRows);
 
-    // 3. 四大核心 NPC
+    // ================= 3. 四大核心 NPC =================
     SPRITES.npc_blacksmith = bake([
       "....kkkkkkkk....",
       "..kkrrrrrrrrkk..",
@@ -298,7 +450,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ]);
 
-    // 4. 魔物與 Boss
+    // ================= 4. 魔物與 Boss =================
     const bambooRows = [
       "....kkkkkkkk....",
       "..kkllllllllkk..",
@@ -363,7 +515,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "...kkkk..........kkkk..."
     ]);
 
-    // 5. 採集素材與寶箱
+    // ================= 5. 採集素材與寶箱 =================
     SPRITES.mat_crystal = bake([
       ".......kk.......",
       "......kcck......",
@@ -437,7 +589,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkkkkkkkkkkk."
     ]);
 
-    // 6. 營地裝飾與工具互動機關
+    // ================= 6. 營地裝飾與工具互動機關 =================
     SPRITES.deco_bench = bake([
       ".kkkkkkkkkkkkkkkkkk.",
       "koooooooooooooooooOk",
@@ -459,7 +611,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "..kEEEEEEEEEEk..",
       "...kkkkkkkkkk...",
       "..kTTk.kk.kTTk..",
-      ".kTTk.kyyk.kTTk.",
+      ".kTTk.kyyk.kTTk..",
       ".kkk..rrrr..kkk."
     ]);
 
@@ -761,6 +913,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
         DATA_URLS[key] = SPRITES[key].toDataURL("image/png");
       }
       return DATA_URLS[key] || "";
+    },
+    // 生成像素小圖標 HTML <img> 標籤 (代替 Emoji)
+    iconHtml: function(key, large = false) {
+      const url = this.getDataURL(key);
+      if (!url) return "";
+      return `<img src="${url}" class="${large ? "px-icon-lg" : "px-icon"}" alt="">`;
     }
   };
 })();
