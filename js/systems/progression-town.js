@@ -1,13 +1,14 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 公會養成、鐵匠鍛造、NPC旅人對話、轉職與主迴圈總管 (progression-town.js)
- * 包含：1.HUD與主線任務追蹤 2.NPC對話與旅人指令 3.冒險者公會與錯題懸賞
- *       4.鐵匠鋪與工具升級/煉金轉化 5.六大職業與戰寵切換 6.世界地圖傳送與60FPS啟動器
+ * Project J：艾瑟瑞亞的破曉 — 公會養成、鐵匠聖物鍛造、四科圖鑑館與主迴圈總管 (progression-town.js - Full v2.5)
+ * 補完：1.鐵匠鋪「🦉三大輔助聖物飾品(Relics)」鍛造區
+ *       2.冒險者公會「🎁每日階級補給」、「🎯完美溫習里程碑成就」
+ *       3.「📖古文明四科掌握度報告 & 圖鑑館(家長檢視面板)」+「💾JSON存檔備份/還原」
+ *       4.三層世界全 9 大區域傳送陣
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
 (function() {
   const UIManager = {
-    // 切換下半屏活躍面板
     setActivePanel(panelId) {
       document.querySelectorAll(".sub-panel").forEach(p => p.classList.remove("active"));
       const target = document.getElementById(panelId);
@@ -19,7 +20,6 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // 浮動提示橫幅
     showToast(msg) {
       const t = document.getElementById("toast-banner");
       if (!t) return;
@@ -29,7 +29,6 @@ window.Aetheria = window.Aetheria || {};
       t._timer = setTimeout(() => { t.style.display = "none"; }, 2800);
     },
 
-    // 浮動戰鬥傷害/暴擊跳字
     spawnFloatingText(text, color = "#ffffff", onEnemy = true) {
       const stage = document.getElementById("upper-screen");
       if (!stage) return;
@@ -43,7 +42,6 @@ window.Aetheria = window.Aetheria || {};
       setTimeout(() => el.remove(), 880);
     },
 
-    // 全面更新頂部雙側 HUD、釘選配方與主線任務追蹤
     updateAllHud() {
       const s = window.Aetheria.State.data;
       const jobs = window.Aetheria.Data.JOBS;
@@ -59,13 +57,13 @@ window.Aetheria = window.Aetheria || {};
 
       const petObj = pets[s.activePet] || pets.pet_slime;
       const isShiny = s.shinyPets && s.shinyPets.includes(s.activePet);
+      const hunterDual = (s.currentJob === "hunter" && s.unlockedPets.length >= 2) ? " + 副寵" : "";
       const petEl = document.getElementById("hud-pet");
-      if (petEl) petEl.innerText = `${isShiny ? "✨" : ""}${petObj.name}`;
+      if (petEl) petEl.innerText = `${isShiny ? "✨" : ""}${petObj.name}${hunterDual}`;
 
       const guildEl = document.getElementById("hud-guild");
       if (guildEl) guildEl.innerText = `🛡️ ${s.guildRank}級 (${s.guildPoints}pt)`;
 
-      // 更新釘選配方進度
       const pinBox = document.getElementById("pinned-recipe");
       if (pinBox) {
         const pinWep = weapons[s.pinnedRecipe] || weapons.w_tide;
@@ -77,7 +75,6 @@ window.Aetheria = window.Aetheria || {};
         pinBox.innerHTML = `📌 ${pinWep.name.replace(/^[^\s]+\s/, "")}：${costParts.join("｜") || "已擁有"}`;
       }
 
-      // 更新當前主線任務追蹤
       const questEl = document.getElementById("hud-quest");
       if (questEl) {
         const mq = window.Aetheria.Data.getCurrentMainQuest(s);
@@ -88,7 +85,7 @@ window.Aetheria = window.Aetheria || {};
             : `📜 ${mq.chapter}：${mq.title}`;
           questEl.style.borderColor = done ? "#5ac54f" : "#f5b700";
         } else {
-          questEl.innerHTML = `👑 主線全破！挑戰《無盡試煉之塔》(最高 ${s.maxTowerFloor} 層)`;
+          questEl.innerHTML = `👑 主線全破！無盡試煉之塔最高：第 ${s.maxTowerFloor} 層`;
         }
       }
 
@@ -96,7 +93,6 @@ window.Aetheria = window.Aetheria || {};
       this.updateHudZoneDynamic(mapObj, s);
     },
 
-    // 根據主角在大地圖中的位置動態顯示子區域與三色危險度雷達
     updateHudZoneDynamic(mapObj, s) {
       const zoneBadge = document.getElementById("hud-zone");
       if (!zoneBadge || !mapObj) return;
@@ -125,12 +121,11 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // ================= 1. NPC 互動對話與《歧路旅人》式旅人技能視窗 =================
+    // ================= 1. NPC 對話與旅人指令 =================
     openNpcDialogue(npcId) {
       const s = window.Aetheria.State.data;
       const npc = window.Aetheria.Data.NPCS_DB[npcId] || window.Aetheria.Data.NPCS_DB.npc_smith;
 
-      // 標記序章主線「找鐵匠巴爾對話」完成
       if (npcId === "npc_smith") {
         s.questProgress.mq_01_talked = true;
         window.Aetheria.State.save();
@@ -142,7 +137,6 @@ window.Aetheria = window.Aetheria || {};
       document.getElementById("npc-role-label").innerText = npc.role;
       document.getElementById("npc-speech-text").innerText = npc.greeting;
 
-      // 繪製 NPC 像素頭像
       const portCanvas = document.getElementById("npc-portrait-canvas");
       if (portCanvas) {
         const pCtx = portCanvas.getContext("2d");
@@ -155,7 +149,6 @@ window.Aetheria = window.Aetheria || {};
       const btnGrid = document.getElementById("npc-action-buttons");
       btnGrid.innerHTML = "";
 
-      // 專屬服務主按鈕
       const srvBtn = document.createElement("button");
       srvBtn.className = "na-btn highlight";
       srvBtn.style.gridColumn = "span 2";
@@ -166,7 +159,6 @@ window.Aetheria = window.Aetheria || {};
       };
       btnGrid.appendChild(srvBtn);
 
-      // 旅人技能 (Path Actions: 探查 / 討教 / 議價 / 切磋)
       (npc.pathActions || []).forEach(pa => {
         const btn = document.createElement("button");
         btn.className = "na-btn";
@@ -185,30 +177,34 @@ window.Aetheria = window.Aetheria || {};
       });
     },
 
-    // ================= 2. 🗺️ 世界傳送陣與 100 層《無盡試煉之塔》選單 =================
+    // ================= 2. 🗺️ 立體三層世界全 9 大區域傳送選單 =================
     openWorldMapModal() {
       const s = window.Aetheria.State.data;
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = "🗺️ 艾瑟瑞亞大陸傳送陣 & 秘境入口";
+      document.getElementById("modal-title").innerText = "🗺️ 三層世界傳送陣 (全 9 大區域 & 無盡之塔)";
 
       const zones = [
-        { id: "forest_world", name: "🟢 翠風大森林 & 中央露營基地 (Lv.1~5)", x: 420, y: 345, desc: "包含中央營地、北方微光蘑菇林、南方藍晶礦區與翡翠河木橋。" },
-        { id: "mushroom_cave", name: "🟡 微光蘑菇地下洞窟 (Lv.5~9)", x: 280, y: 390, desc: "火把迷霧視野迷宮，盛產✨閃光秘銀礦，內有可炸開的裂縫密室！" },
-        { id: "canyon_world", name: "🟡 流沙繩索大峽谷 (Lv.12~18)", x: 400, y: 340, desc: "綁麻繩年輪高台與綠洲商隊，盛產流沙秘銀與太陽靈花。" },
-        { id: "abyss_sanctum", name: "🔴 深淵星隕聖殿 (Lv.25 💀極度危險)", x: 280, y: 380, desc: "深淵赤炎龍皇盤踞之地，可越級潛入偷開左上角【傳說神器寶箱】！" },
-        { id: "endless_tower", name: `🏛️ 無盡試煉之塔 (當前最高：第 ${s.maxTowerFloor} 層)`, x: 250, y: 350, desc: "100 層 Roguelike 隨機生成迷宮，刷異色閃光寵與深淵星隕鐵！" }
+        { id: "forest_world",    name: "🟢 [第一層] 翠風大森林 & 露營基地 (Lv.1~5)", x: 420, y: 345, desc: "含中央營地、釣魚點、抓鉤河岸、擋路巨石與枯木秘境。" },
+        { id: "mushroom_cave",   name: "🟢 [子迷宮] 微光蘑菇地下洞窟 (Lv.5~9)", x: 280, y: 390, desc: "含🔥點燃火盆驅散黑霧機關、🧱炸彈裂縫密室與閃光秘銀。" },
+        { id: "canyon_world",    name: "🟡 [第一層] 流沙繩索大峽谷 (Lv.12~18)", x: 400, y: 340, desc: "綁麻繩年輪高台、綠洲商隊與太陽神殿寶箱。" },
+        { id: "emerald_coast",   name: "🟡 [第一層] 翡翠海岸與沉船灣 (Lv.21~27)", x: 350, y: 120, desc: "黃金沙灘、🎣海濱垂釣、🪝抓鉤孤島寶箱與⛵古代遠洋帆船。" },
+        { id: "abyss_sanctum",   name: "🔴 [裏世界] 深淵星隕聖殿 (Lv.25 💀越級尋寶)", x: 280, y: 380, desc: "深淵赤炎龍皇盤踞之地，可走位繞過強敵偷開傳說神器寶箱！" },
+        { id: "frost_snowfield", name: "🔴 [第二層] 霜語極寒雪原 (Lv.45~52)", x: 350, y: 450, desc: "飄雪極地，盛產【🪷雪山冰蓮】與永凍冰晶，棲息遠古冰霜龍王。" },
+        { id: "magma_volcano",   name: "🔴 [第二層] 赤紅熔岩火山帶 (Lv.56~65)", x: 100, y: 280, desc: "煉獄熔岩之地，盛產【🔥熔岩黑曜石】，需秘銀重鎬敲碎火山巨石。" },
+        { id: "sky_archipelago", name: "👑 [第三層] 天界浮空群島 (Lv.85~95)", x: 350, y: 440, desc: "乘🛸星辰飛空艇抵達的雲端聖殿，盛產【🌳世界樹金葉】與星隕神鐵！" },
+        { id: "endless_tower",   name: `🏛️ [終局挑戰] 無盡試煉之塔 (當前最高：第 ${s.maxTowerFloor} 層)`, x: 250, y: 350, desc: "100 層 Roguelike 隨機迷宮，高機率遭遇✨異色閃光魔物！" }
       ];
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = `<div style="margin-bottom:6px; color:#cbd5e1;">點擊任一已發現的古代傳送石碑即可瞬間移動（並自動刷新野外礦脈）：</div>`;
+      body.innerHTML = `<div style="margin-bottom:6px; color:#cbd5e1;">點擊任一區域即可瞬間傳送（並自動刷新全地圖閃光礦脈與野生魔物）：</div>`;
 
       zones.forEach(z => {
         const card = document.createElement("div");
         card.className = "sys-card";
         card.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b style="color:var(--na-gold); font-size:13px;">${z.name}</b>
-            <button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.teleportToZone('${z.id}', ${z.x}, ${z.y})">⚡ 傳送</button>
+            <b style="color:var(--na-gold); font-size:12px;">${z.name}</b>
+            <button class="na-btn highlight" style="padding:4px 9px;" onclick="Aetheria.UI.teleportToZone('${z.id}', ${z.x}, ${z.y})">⚡ 傳送</button>
           </div>
           <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">${z.desc}</div>
         `;
@@ -232,10 +228,10 @@ window.Aetheria = window.Aetheria || {};
       const mapObj = window.Aetheria.Data.Maps.getMap(zoneId);
       window.Aetheria.Audio.playBgm(mapObj.bgm || "forest");
       this.closePanelToExplore();
-      this.showToast(`⚡ 已瞬移至【${mapObj.name}】（野外礦脈已刷新）！`);
+      this.showToast(`⚡ 已傳送至【${mapObj.name}】（資源已刷新）！`);
     },
 
-    // ================= 3. 🛡️ 冒險者公會大廳（主線領獎、委託懸賞、🟣錯題討伐、營地建設） =================
+    // ================= 3. 🛡️ 冒險者公會大廳（含階級每日俸祿、溫習里程碑、📖四科圖鑑館） =================
     openGuildModal() {
       const s = window.Aetheria.State.data;
       this.setActivePanel("panel-modal");
@@ -244,7 +240,16 @@ window.Aetheria = window.Aetheria || {};
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
 
-      // A. 主線劇情任務進度與領獎卡
+      // 頂部快捷切換：進入【📖 古文明四科掌握度報告 & 圖鑑館 & 存檔備份】
+      const topBar = document.createElement("div");
+      topBar.style.cssText = "display:flex; gap:5px; margin-bottom:6px;";
+      topBar.innerHTML = `
+        <button class="na-btn highlight" style="flex:1; padding:6px;" onclick="Aetheria.UI.openCodexReportModal()">📖 四科掌握度報告 & 圖鑑館 & 存檔備份</button>
+        <button class="na-btn" style="padding:6px 10px;" onclick="Aetheria.UI.claimGuildSupply()">🎁 領取${s.guildRank}級俸祿</button>
+      `;
+      body.appendChild(topBar);
+
+      // A. 主線任務
       const mq = window.Aetheria.Data.getCurrentMainQuest(s);
       if (mq) {
         const isDone = mq.checkComplete(s);
@@ -259,7 +264,7 @@ window.Aetheria = window.Aetheria || {};
         body.appendChild(mqCard);
       }
 
-      // B. 🟣 特級錯題魔導書懸賞討伐 (將曾答錯的題目化為雙倍賞金怪！)
+      // B. 🟣 特級錯題魔導書懸賞討伐
       const wrongCount = (s.wrongBook || []).length;
       const shadowCard = document.createElement("div");
       shadowCard.className = "sys-card";
@@ -269,11 +274,27 @@ window.Aetheria = window.Aetheria || {};
           <b style="color:#e0aaff;">🟣 【S級錯題懸賞】討伐暗影記憶幻象 (${wrongCount} 隻待討伐)</b>
           ${wrongCount > 0 ? `<button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.huntWrongQuestion()">⚔️ 立即討伐</button>` : `<span style="color:#5ac54f; font-size:11px;">✅ 全數淨化</span>`}
         </div>
-        <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">專門挑戰你曾經答錯過的題目，擊敗後可獲<b>雙倍公會聲望、秘銀礦與魔物核心</b>！</div>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">專門挑戰曾經答錯的題目，擊敗後獲<b>雙倍公會聲望、秘銀礦與魔物核心</b>！</div>
       `;
       body.appendChild(shadowCard);
 
-      // C. 公會日常採集與料理委託板
+      // C. 🎯 完美溫習連勝里程碑
+      const maxStrk = s.maxStreak || 0;
+      const mileDone = maxStrk >= 5 && !(s.questProgress && s.questProgress.mile_streak5);
+      const mileCard = document.createElement("div");
+      mileCard.className = "sys-card";
+      mileCard.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <b style="color:#fbd000;">🎯 【溫習試煉】達成 5 題連續答對連勝 (最高紀錄: ${maxStrk}/5)</b>
+          ${mileDone
+            ? `<button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.claimStreakMilestone()">🎁 領取星隕鐵x2</button>`
+            : (s.questProgress && s.questProgress.mile_streak5) ? `<span style="color:#5ac54f;">✅ 已達成</span>` : `<span style="color:#cbd5e1;">進行中</span>`
+          }
+        </div>
+      `;
+      body.appendChild(mileCard);
+
+      // D. 公會日常委託板
       const Helper = window.Aetheria.Data.CraftingHelper;
       window.Aetheria.Data.GUILD_BOUNTIES.forEach(b => {
         const canDo = Helper.canAfford(s.inventory, b.cost);
@@ -284,13 +305,13 @@ window.Aetheria = window.Aetheria || {};
             <b style="color:var(--na-gold);">${b.title}</b>
             <button class="na-btn ${canDo ? "highlight" : ""}" style="padding:4px 10px;" onclick="Aetheria.UI.completeGuildBounty('${b.id}')">交付委託</button>
           </div>
-          <div style="font-size:11px; color:#cbd5e1; margin:2px 0;">${b.desc}（需求：${Helper.formatCostText(s.inventory, b.cost)}）</div>
+          <div style="font-size:11px; color:#cbd5e1; margin:2px 0;">${b.desc}（${Helper.formatCostText(s.inventory, b.cost)}）</div>
           <div style="font-size:11px; color:#8ce0ff;">🎁 報酬：${b.rewardText}</div>
         `;
         body.appendChild(bCard);
       });
 
-      // D. 營地基地建設：煉金藥水溫室
+      // E. 煉金藥水溫室建設
       const ghLv = s.campBuildings.greenhouse || 0;
       const ghCard = document.createElement("div");
       ghCard.className = "sys-card";
@@ -299,9 +320,113 @@ window.Aetheria = window.Aetheria || {};
           <b style="color:#5ac54f;">🏡 【營地建設】煉金藥水溫室 (Lv.${ghLv})</b>
           ${ghLv === 0 ? `<button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.buildGreenhouse()">🔨 建造 (原木x2, 鐵礦x2)</button>` : `<span style="color:#5ac54f;">✅ 運作中</span>`}
         </div>
-        <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">建成後，每在戰鬥中答對 5 題，牧場戰寵挖礦時會額外自動產出 1 瓶【🧪 洞察藥水】！</div>
+        <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">建成後，每在戰鬥中答對 5 題，牧場戰寵挖礦時自動產出 1 瓶【🧪 洞察藥水】！</div>
       `;
       body.appendChild(ghCard);
+    },
+
+    claimGuildSupply() {
+      const s = window.Aetheria.State.data;
+      const rankInfo = window.Aetheria.Data.GUILD_RANKS.find(r => r.rank === s.guildRank) || window.Aetheria.Data.GUILD_RANKS[0];
+      s.inventory.iron += rankInfo.dailyIron;
+      s.inventory.potionHint += rankInfo.dailyPotion;
+      window.Aetheria.Audio.sfxGather();
+      window.Aetheria.State.save();
+      this.showToast(`🎁 領取【${rankInfo.name}】補給：藍晶鐵礦 +${rankInfo.dailyIron}、洞察藥水 +${rankInfo.dailyPotion}！`);
+      this.updateAllHud();
+    },
+
+    claimStreakMilestone() {
+      const s = window.Aetheria.State.data;
+      s.questProgress.mile_streak5 = true;
+      s.inventory.starIron += 2;
+      s.inventory.tameFruit += 2;
+      window.Aetheria.Audio.sfxLevelUp();
+      window.Aetheria.State.save();
+      this.showToast("🎊 達成 5 連勝溫習試煉！獲得【🌌深淵星隕鐵 x2】、【🍎靈獸誘餌果 x2】！");
+      this.openGuildModal();
+    },
+
+    // 📖 新增！古文明四科掌握度報告 & 榮譽圖鑑館 & JSON 存檔備份 (家長檢視面板)
+    openCodexReportModal() {
+      const s = window.Aetheria.State.data;
+      this.setActivePanel("panel-modal");
+      document.getElementById("modal-title").innerText = "📖 古文明四科掌握度報告 & 榮譽圖鑑館";
+
+      const allQ = window.Aetheria.QuizBridge.getAllQuestions();
+      const subjStats = {
+        chinese:    { name: "📘 中文科", total: 0, mastered: 0, stars: 0 },
+        english:    { name: "📕 英文科", total: 0, mastered: 0, stars: 0 },
+        science:    { name: "📗 科學科", total: 0, mastered: 0, stars: 0 },
+        humanities: { name: "📙 人文科", total: 0, mastered: 0, stars: 0 }
+      };
+
+      allQ.forEach(q => {
+        const st = subjStats[q.subject];
+        if (st) {
+          st.total++;
+          const m = s.questionMastery && s.questionMastery[q.id];
+          if (m && m.stars > 0) {
+            st.mastered++;
+            st.stars += m.stars;
+          }
+        }
+      });
+
+      const body = document.getElementById("modal-body");
+      body.innerHTML = `
+        <div class="sys-card-scroll">
+          <div style="font-weight:900; margin-bottom:4px;">📊 Justin 四科古文明符文掌握度統計（最高紀錄連勝：${s.maxStreak || 0} 題）</div>
+          ${Object.values(subjStats).map(st => {
+            const pct = st.total > 0 ? Math.round((st.mastered / st.total) * 100) : 0;
+            return `<div style="display:flex; justify-content:space-between; font-size:11px; margin:2px 0;">
+              <span>${st.name}：已掌握 <b>${st.mastered}/${st.total}</b> 題 (${pct}%)</span>
+              <span style="color:#c98a00;">累計星級 ★${st.stars}</span>
+            </div>`;
+          }).join("")}
+        </div>
+        <div class="sys-card">
+          <div style="color:var(--na-gold); font-weight:900;">🏆 收集榮譽圖鑑進度</div>
+          <div style="font-size:11px; margin-top:3px;">
+            • 已解鎖破盾神兵：<b>${s.unlockedWeapons.length} / ${Object.keys(window.Aetheria.Data.WEAPONS).length}</b> 把<br>
+            • 已收服同行戰寵：<b>${s.unlockedPets.length} / ${Object.keys(window.Aetheria.Data.PETS).length}</b> 隻（✨閃光寵：<b>${(s.shinyPets || []).length}</b> 隻）<br>
+            • 已鍛造聖物飾品：<b>${(s.unlockedRelics || []).length} / ${Object.keys(window.Aetheria.Data.RELICS).length}</b> 件
+          </div>
+        </div>
+        <div class="sys-card">
+          <div style="color:#8ce0ff; font-weight:900; margin-bottom:4px;">💾 遊戲進度與溫習記錄 JSON 備份 / 還原</div>
+          <div style="display:flex; gap:5px;">
+            <button class="na-btn highlight" style="flex:1; padding:5px;" onclick="Aetheria.UI.exportSavePrompt()">📤 複製存檔代碼</button>
+            <button class="na-btn" style="flex:1; padding:5px;" onclick="Aetheria.UI.importSavePrompt()">📥 貼上還原存檔</button>
+            <button class="na-btn" style="padding:5px 8px; background:#6e2228;" onclick="if(confirm('確定要重置所有進度嗎？')) Aetheria.State.resetSave()">重置</button>
+          </div>
+        </div>
+        <button class="na-btn" style="width:100%; padding:6px;" onclick="Aetheria.UI.openGuildModal()">⬅️ 返回冒險者公會</button>
+      `;
+    },
+
+    exportSavePrompt() {
+      const json = window.Aetheria.State.exportJSON();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(json).then(() => {
+          this.showToast("📋 存檔 JSON 已複製到剪貼簿！");
+        }).catch(() => {
+          prompt("請複製以下存檔 JSON 代碼：", json);
+        });
+      } else {
+        prompt("請複製以下存檔 JSON 代碼：", json);
+      }
+    },
+
+    importSavePrompt() {
+      const raw = prompt("請貼上先前備份的存檔 JSON 代碼：");
+      if (raw && window.Aetheria.State.importJSON(raw)) {
+        this.showToast("🎉 存檔還原成功！");
+        this.updateAllHud();
+        this.openCodexReportModal();
+      } else if (raw) {
+        this.showToast("⚠️ 存檔格式不正確！");
+      }
     },
 
     claimMainQuest(mqId) {
@@ -333,8 +458,7 @@ window.Aetheria = window.Aetheria || {};
       const s = window.Aetheria.State.data;
       const b = window.Aetheria.Data.GUILD_BOUNTIES.find(item => item.id === bountyId);
       const Helper = window.Aetheria.Data.CraftingHelper;
-      if (!b) return;
-      if (!Helper.payCost(s.inventory, b.cost)) {
+      if (!b || !Helper.payCost(s.inventory, b.cost)) {
         this.showToast("⚠️ 素材不足以交付此委託！請先去野外採集。");
         return;
       }
@@ -360,31 +484,31 @@ window.Aetheria = window.Aetheria || {};
       this.openGuildModal();
     },
 
-    // ================= 4. ⚒️ 鐵匠鍛造、工具升級與萬能煉金轉化台 =================
+    // ================= 4. ⚒️ 鐵匠鋪（含神兵鍛造、🦉三大聖物飾品、⛏️四大工具升級、⚗️煉金轉化） =================
     openForgeModal() {
       const s = window.Aetheria.State.data;
       const inv = s.inventory;
       const Helper = window.Aetheria.Data.CraftingHelper;
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = "⚒️ 曙光鐵匠鋪：神兵鍛造 & 工具升級 & 煉金";
+      document.getElementById("modal-title").innerText = "⚒️ 曙光鐵匠鋪：神兵 & 聖物飾品 & 四大工具";
 
       const body = document.getElementById("modal-body");
       body.innerHTML = `
         <div class="sys-card" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; font-size:11px;">
           <div>💎 藍晶礦: <b>${inv.iron}</b></div>
           <div>🪙 秘銀礦: <b>${inv.mithril}</b></div>
+          <div>🔥 黑曜石: <b>${inv.obsidian}</b></div>
           <div>🌌 星隕鐵: <b>${inv.starIron}</b></div>
           <div>🍄 紅傘菇: <b>${inv.herb}</b></div>
           <div>🌸 太陽花: <b>${inv.flower}</b></div>
+          <div>🪷 雪冰蓮: <b>${inv.iceLotus}</b></div>
+          <div>🌳 金葉: <b>${inv.goldLeaf}</b></div>
           <div>🪵 原木: <b>${inv.wood}</b></div>
-          <div>🦴 竹木心: <b>${inv.coreBamboo}</b></div>
-          <div>🦴 骷髏火: <b>${inv.coreSkull}</b></div>
-          <div>💣 炸彈: <b>${inv.bombItem}</b></div>
         </div>
       `;
 
-      // A. 六階破盾神兵鍛造與裝備切換
+      // A. 六階破盾神兵
       const wepHeader = document.createElement("div");
       wepHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:6px 0 4px;";
       wepHeader.innerText = "🗡️ 【破盾神兵鍛造與裝備】（可釘選至右上角追蹤）";
@@ -414,10 +538,36 @@ window.Aetheria = window.Aetheria || {};
         body.appendChild(card);
       });
 
-      // B. 探索工具升級 (十字鎬 / 伐木斧 / 爆破袋)
+      // B. 🦉 新增補完！三大輔助聖物飾品鍛造區 (Relics)
+      const relicHeader = document.createElement("div");
+      relicHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px;";
+      relicHeader.innerText = "🦉 【古文明聖物飾品】（鍛造後永久獲得被動加成）";
+      body.appendChild(relicHeader);
+
+      Object.values(window.Aetheria.Data.RELICS).forEach(rel => {
+        const owned = s.unlockedRelics && s.unlockedRelics.includes(rel.id);
+        const canCraft = Helper.canAfford(inv, rel.cost);
+
+        const rCard = document.createElement("div");
+        rCard.className = owned ? "sys-card-scroll" : "sys-card";
+        rCard.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b>${rel.name}</b>
+            ${owned
+              ? `<span style="color:#1d5eb8; font-weight:900;">✅ 永久生效中</span>`
+              : `<button class="na-btn ${canCraft ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.craftRelic('${rel.id}')">🔨 鍛造聖物</button>`
+            }
+          </div>
+          <div style="font-size:11px; margin-top:2px;">${rel.desc}</div>
+          ${!owned ? `<div style="font-size:11px; margin-top:2px;">需求：${Helper.formatCostText(inv, rel.cost)}</div>` : ""}
+        `;
+        body.appendChild(rCard);
+      });
+
+      // C. 四大探索工具升級 (十字鎬 / 伐木斧 / 爆破袋 / 釣竿與抓鉤)
       const toolHeader = document.createElement("div");
       toolHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px;";
-      toolHeader.innerText = "⛏️ 【探索工具升級】（提高採集產量與開局自動炸盾）";
+      toolHeader.innerText = "⛏️ 【四大探索工具升級】（解鎖碎巨石、砍枯木、飛爪鉤與開局炸盾）";
       body.appendChild(toolHeader);
 
       Object.entries(window.Aetheria.Data.TOOLS_UPGRADE).forEach(([tKey, tDef]) => {
@@ -440,10 +590,10 @@ window.Aetheria = window.Aetheria || {};
         body.appendChild(tCard);
       });
 
-      // C. 萬能煉金轉化爐 (3 低階換 1 高階 / 製作藥水炸彈)
+      // D. 萬能煉金轉化爐
       const alchHeader = document.createElement("div");
       alchHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px;";
-      alchHeader.innerText = "⚗️ 【萬能煉金轉化爐】（低階素材提煉高階礦石與補給品）";
+      alchHeader.innerText = "⚗️ 【萬能煉金轉化爐】（3 低階素材提煉 1 高階素材與補給品）";
       body.appendChild(alchHeader);
 
       window.Aetheria.Data.ALCHEMY_CONVERSIONS.forEach(c => {
@@ -485,6 +635,24 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.Audio.sfxLevelUp();
       window.Aetheria.State.save();
       this.showToast(`🎉 鍛造大成功！已裝備神兵【${w.name}】！`);
+      this.openForgeModal();
+      this.updateAllHud();
+    },
+
+    craftRelic(rId) {
+      const s = window.Aetheria.State.data;
+      const rel = window.Aetheria.Data.RELICS[rId];
+      const Helper = window.Aetheria.Data.CraftingHelper;
+      if (!rel || !Helper.payCost(s.inventory, rel.cost)) {
+        this.showToast("⚠️ 鍛造聖物所需素材不足！");
+        return;
+      }
+      if (!s.unlockedRelics) s.unlockedRelics = [];
+      s.unlockedRelics.push(rId);
+      if (rel.onCraft) rel.onCraft(s);
+      window.Aetheria.Audio.sfxLevelUp();
+      window.Aetheria.State.save();
+      this.showToast(`🦉 聖物鍛造成功！【${rel.name}】永久被動已生效！`);
       this.openForgeModal();
       this.updateAllHud();
     },
@@ -532,16 +700,15 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // ================= 5. 🐾 六大職業祠堂轉職 & 戰寵牧場切換 =================
+    // ================= 5. 🐾 六大職業祠堂 & 戰寵牧場 =================
     openJobPetModal() {
       const s = window.Aetheria.State.data;
       this.setActivePanel("panel-modal");
       document.getElementById("modal-title").innerText = "🐾 古文明職業祠堂 & 同行戰寵牧場";
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = `<div style="color:var(--na-gold); font-weight:900; margin-bottom:4px;">🐾 【同行戰寵切換】（未上場戰寵會自動於牧場遠征挖礦）</div>`;
+      body.innerHTML = `<div style="color:var(--na-gold); font-weight:900; margin-bottom:4px;">🐾 【同行戰寵切換】（轉職「荒野獵人」可同時帶 2 隻戰寵上場！）</div>`;
 
-      // A. 戰寵列表
       Object.values(window.Aetheria.Data.PETS).forEach(p => {
         const unlocked = s.unlockedPets.includes(p.id);
         const isActive = (s.activePet === p.id);
@@ -553,7 +720,7 @@ window.Aetheria = window.Aetheria || {};
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <b>${isShiny ? "✨【異色閃光】" : ""}${p.name} — ${p.skillName}</b>
             ${unlocked
-              ? `<button class="na-btn ${isActive ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.selectPet('${p.id}')">${isActive ? "✅同行中" : "攜帶同行"}</button>`
+              ? `<button class="na-btn ${isActive ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.selectPet('${p.id}')">${isActive ? "✅主戰寵" : "設為主寵"}</button>`
               : `<button class="na-btn" style="padding:3px 8px;" onclick="Aetheria.UI.quickUnlockPet('${p.id}')">🍎 誘餌果x2 契約</button>`
             }
           </div>
@@ -562,10 +729,9 @@ window.Aetheria = window.Aetheria || {};
         body.appendChild(pCard);
       });
 
-      // B. 六大職業轉職列表
       const jobHeader = document.createElement("div");
       jobHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px;";
-      jobHeader.innerText = "⚔️ 【六大古文明職業轉職】（隨等級自動解鎖，隨時自由切換）";
+      jobHeader.innerText = "⚔️ 【六大古文明職業轉職】（隨等級解鎖，或隨時自由體驗）";
       body.appendChild(jobHeader);
 
       Object.values(window.Aetheria.Data.JOBS).forEach(j => {
@@ -577,10 +743,7 @@ window.Aetheria = window.Aetheria || {};
         jCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <b>${j.name}（${j.title}｜ATK x${j.atkMult}）</b>
-            ${unlocked
-              ? `<button class="na-btn ${active ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.selectJob('${j.id}')">${active ? "✅當前職業" : "轉職"}</button>`
-              : `<span style="font-size:11px; color:#ff595e;">🔒 Lv.${j.unlockLv} 解鎖</span>`
-            }
+            <button class="na-btn ${active ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.selectJob('${j.id}')">${active ? "✅當前職業" : (unlocked ? "轉職" : `⚡提前體驗(Lv.${j.unlockLv})`)}</button>
           </div>
           <div style="font-size:11px; margin-top:2px;">${j.passiveDesc}</div>
         `;
@@ -617,6 +780,7 @@ window.Aetheria = window.Aetheria || {};
 
     selectJob(jobId) {
       const s = window.Aetheria.State.data;
+      if (!s.unlockedJobs.includes(jobId)) s.unlockedJobs.push(jobId);
       s.currentJob = jobId;
       window.Aetheria.Audio.sfxLevelUp();
       window.Aetheria.State.save();
@@ -625,7 +789,7 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // ================= 6. 🔮 星象儀溫習科目調頻 & 📜 7大題型快速測試 =================
+    // ================= 6. 🔮 星象儀 & 📜 7大題型預覽 =================
     openAstrolabeModal() {
       const s = window.Aetheria.State.data;
       this.setActivePanel("panel-modal");
@@ -639,7 +803,7 @@ window.Aetheria = window.Aetheria || {};
       ];
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = `<div style="margin-bottom:6px; color:#cbd5e1;">世界觀不分科目，在此勾選的科目將自動注入所有戰鬥與完美採集詠唱中：</div>`;
+      body.innerHTML = `<div style="margin-bottom:6px; color:#cbd5e1;">在此勾選的科目將自動注入所有戰鬥與完美採集詠唱中：</div>`;
 
       subjects.forEach(sub => {
         const on = Boolean(s.activeSubjects[sub.key]);
@@ -685,7 +849,6 @@ window.Aetheria = window.Aetheria || {};
 
   window.Aetheria.UI = UIManager;
 
-  // ================= 60FPS 遊戲主引擎啟動器 =================
   function startMainGameLoop() {
     window.Aetheria.State.init();
     window.Aetheria.Data.Sprites.init();
