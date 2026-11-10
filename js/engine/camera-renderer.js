@@ -1,14 +1,46 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 60FPS 大世界相機渲染與座標自動修復引擎 (camera-renderer.js - v3.2)
- * 修復：自動檢測舊存檔無效地圖 ID 或越界座標，強制拉回安全座標，徹底解決上半屏只見純綠底問題！
+ * Project J：艾瑟瑞亞的破曉 — 3倍高清文字與銳利像素渲染引擎 (camera-renderer.js - v3.4)
+ * 修復：將畫布內部解析度提升至 768x432 (3x Super-Sampling)，像素貼圖保持銳利點陣，
+ *       同時讓地圖上的 NPC 名稱與傳送門文字以原生 24px 高清黑邊字體繪製，徹底解決文字模糊！
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
 (function() {
+  const VIEW_W = 256;
+  const VIEW_H = 144;
+  const HI_SCALE = 3; // 3倍高清內解析度 (768x432)
+
+  // 高清黑邊清晰標籤繪製器
+  function drawCrispLabel(ctx, text, centerX, bottomY, textColor, bgAlpha) {
+    ctx.save();
+    ctx.font = "900 7.5px 'Microsoft JhengHei', 'PingFang HK', sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const tw = Math.ceil(ctx.measureText(text).width) + 8;
+    const th = 11;
+    const rx = Math.round(centerX - tw / 2);
+    const ry = Math.round(bottomY - th);
+
+    ctx.fillStyle = bgAlpha || "rgba(18, 14, 18, 0.88)";
+    ctx.fillRect(rx, ry, tw, th);
+    ctx.strokeStyle = "#d9a066";
+    ctx.lineWidth = 0.75;
+    ctx.strokeRect(rx, ry, tw, th);
+
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 1.6;
+    ctx.strokeText(text, centerX, ry + th / 2 + 0.5);
+
+    ctx.fillStyle = textColor || "#ffd166";
+    ctx.fillText(text, centerX, ry + th / 2 + 0.5);
+    ctx.restore();
+  }
+
   const Renderer = {
     tick: 0,
 
-    drawTerrain(ctx, mapObj, camX, camY, viewW, viewH) {
+    drawTerrain: function(ctx, mapObj, camX, camY, viewW, viewH) {
       const themeColors = {
         forest:  { bg: "#a8ba59", edge: "#7a9c46", dirt: "#c88662" },
         canyon:  { bg: "#e09953", edge: "#c77432", dirt: "#f4be78" },
@@ -24,21 +56,21 @@ window.Aetheria = window.Aetheria || {};
       ctx.fillRect(camX, camY, viewW, viewH);
 
       ctx.fillStyle = pal.edge;
-      (mapObj.dirtBlobs || []).forEach(b => {
+      (mapObj.dirtBlobs || []).forEach(function(b) {
         ctx.beginPath();
         ctx.ellipse(b.cx, b.cy, b.rx + 5, b.ry + 5, 0, 0, Math.PI * 2);
         ctx.fill();
       });
 
       ctx.fillStyle = pal.dirt;
-      (mapObj.dirtBlobs || []).forEach(b => {
+      (mapObj.dirtBlobs || []).forEach(function(b) {
         ctx.beginPath();
         ctx.ellipse(b.cx, b.cy, b.rx, b.ry, 0, 0, Math.PI * 2);
         ctx.fill();
       });
 
       if (mapObj.groundDetails) {
-        mapObj.groundDetails.forEach(g => {
+        mapObj.groundDetails.forEach(function(g) {
           if (g.x < camX - 16 || g.x > camX + viewW + 16 || g.y < camY - 16 || g.y > camY + viewH + 16) return;
           if (g.kind === "pebble") {
             ctx.fillStyle = (mapObj.theme === "volcano") ? "#ff9f1c" : (mapObj.theme === "snow") ? "#8ce0ff" : "#d89672";
@@ -80,7 +112,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    drawPortal(ctx, p) {
+    drawPortal: function(ctx, p) {
       if (p.icon === "door") {
         ctx.fillStyle = "#1c1619";
         ctx.fillRect(p.x - 10, p.y - 5, 20, 10);
@@ -106,27 +138,27 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      ctx.font = "bold 8px 'Microsoft JhengHei', monospace";
-      ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(20, 16, 19, 0.88)";
-      const tw = ctx.measureText(p.name).width + 8;
-      const labelY = (p.icon === "door") ? (p.y + 14) : (p.y - 15);
-      ctx.fillRect(p.x - tw / 2, labelY - 8, tw, 10);
-      ctx.fillStyle = "#fbd000";
-      ctx.fillText(p.name, p.x, labelY);
+      const labelY = (p.icon === "door") ? (p.y + 17) : (p.y - 12);
+      drawCrispLabel(ctx, p.name, p.x, labelY, "#fbd000");
     },
 
-    renderWorld() {
+    renderWorld: function() {
       try {
         const canvas = document.getElementById("world-canvas");
         if (!canvas) return;
+
+        // 自動升級為 768x432 高清緩衝區，令地圖文字清晰銳利
+        if (canvas.width !== VIEW_W * HI_SCALE || canvas.height !== VIEW_H * HI_SCALE) {
+          canvas.width = VIEW_W * HI_SCALE;
+          canvas.height = VIEW_H * HI_SCALE;
+        }
+
         const ctx = canvas.getContext("2d");
         ctx.imageSmoothingEnabled = false;
 
         const s = window.Aetheria.State.data;
         let mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
 
-        // 安全校正：若舊存檔殘留舊版區域 ID 或主角座標超出當前地圖邊界，自動校正回營地中央！
         if (!mapObj || isNaN(s.heroX) || isNaN(s.heroY) || s.heroX < 10 || s.heroX > mapObj.width - 10 || s.heroY < 10 || s.heroY > mapObj.height - 10) {
           s.currentZone = "camp_hub";
           mapObj = window.Aetheria.Data.Maps.getMap("camp_hub");
@@ -139,37 +171,43 @@ window.Aetheria = window.Aetheria || {};
         const Sprites = window.Aetheria.Data.Sprites;
         const ExpSys = window.Aetheria.Explore;
 
-        const brazierLit = s.openedNodes && s.openedNodes[`lit_${mapObj.id}`];
+        const brazierLit = s.openedNodes && s.openedNodes["lit_" + mapObj.id];
         const fogEl = document.getElementById("fog-overlay");
         if (fogEl) fogEl.style.display = (mapObj.fog && !brazierLit) ? "block" : "none";
 
-        const camX = Math.max(0, Math.min(mapObj.width - canvas.width, Math.round(s.heroX - canvas.width / 2)));
-        const camY = Math.max(0, Math.min(mapObj.height - canvas.height, Math.round(s.heroY - canvas.height / 2)));
+        const camX = Math.max(0, Math.min(mapObj.width - VIEW_W, Math.round(s.heroX - VIEW_W / 2)));
+        const camY = Math.max(0, Math.min(mapObj.height - VIEW_H, Math.round(s.heroY - VIEW_H / 2)));
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.scale(HI_SCALE, HI_SCALE);
+
         ctx.save();
         ctx.translate(-camX, -camY);
 
-        this.drawTerrain(ctx, mapObj, camX, camY, canvas.width, canvas.height);
+        this.drawTerrain(ctx, mapObj, camX, camY, VIEW_W, VIEW_H);
 
         if (mapObj.portals) {
-          mapObj.portals.forEach(p => this.drawPortal(ctx, p));
+          const self = this;
+          mapObj.portals.forEach(function(p) { self.drawPortal(ctx, p); });
         }
 
         const renderQueue = [];
+        const self = this;
 
         // A. 裝飾物與工具機關
         if (mapObj.decos) {
-          mapObj.decos.forEach(d => {
+          mapObj.decos.forEach(function(d) {
             if ((d.isCrackedWall || d.obstacleType) && s.openedNodes && s.openedNodes[d.id]) return;
 
             renderQueue.push({
               y: d.y + (d.h || 18),
-              draw: () => {
+              draw: function() {
                 if (d.sprite === "campfire") {
                   ctx.fillStyle = "#1c1619"; ctx.fillRect(d.x, d.y + 10, 16, 6);
                   ctx.fillStyle = "#9c4124"; ctx.fillRect(d.x + 2, d.y + 11, 12, 4);
-                  const fh = (Math.floor(this.tick / 8) % 2 === 0) ? 8 : 11;
+                  const fh = (Math.floor(self.tick / 8) % 2 === 0) ? 8 : 11;
                   ctx.fillStyle = "#ff6b35"; ctx.fillRect(d.x + 3, d.y + 12 - fh, 10, fh);
                   ctx.fillStyle = "#fbd000"; ctx.fillRect(d.x + 5, d.y + 13 - fh, 6, fh - 2);
                 } else {
@@ -179,11 +217,8 @@ window.Aetheria = window.Aetheria || {};
                   if (sp) ctx.drawImage(sp, d.x, d.y, d.w || sp.width, d.h || sp.height);
 
                   if (d.isFishingSpot || d.isGrapple || d.obstacleType || d.isBrazier) {
-                    ctx.font = "bold 7px 'Microsoft JhengHei', monospace";
-                    ctx.textAlign = "center";
-                    ctx.fillStyle = "#ffffff";
-                    const tag = d.isFishingSpot ? "[釣魚]" : d.isGrapple ? "[抓鉤]" : d.isBrazier ? (brazierLit ? "[已點亮]" : "[點火盆]") : (d.obstacleType === "boulder" ? "[需Lv2鎬]" : "[需Lv2斧]");
-                    ctx.fillText(tag, d.x + (d.w || 18) / 2, d.y - 2);
+                    const tag = d.isFishingSpot ? "釣魚點" : d.isGrapple ? "抓鉤樁" : d.isBrazier ? (brazierLit ? "已點亮" : "點火盆") : (d.obstacleType === "boulder" ? "需Lv2鎬" : "需Lv2斧");
+                    drawCrispLabel(ctx, tag, d.x + (d.w || 18) / 2, d.y - 1, "#ffffff");
                   }
                 }
               }
@@ -193,11 +228,11 @@ window.Aetheria = window.Aetheria || {};
 
         // B. 樹木與高台柱
         if (mapObj.trees) {
-          mapObj.trees.forEach(t => {
-            if (t.x + 42 < camX || t.x - 12 > camX + canvas.width || t.y + 46 < camY || t.y - 12 > camY + canvas.height) return;
+          mapObj.trees.forEach(function(t) {
+            if (t.x + 42 < camX || t.x - 12 > camX + VIEW_W || t.y + 46 < camY || t.y - 12 > camY + VIEW_H) return;
             renderQueue.push({
               y: t.y + 32,
-              draw: () => {
+              draw: function() {
                 if (mapObj.theme === "forest") ctx.drawImage(Sprites.get("tree"), t.x, t.y, 34, 36);
                 else ctx.drawImage(Sprites.get("pillar"), t.x, t.y, 32, 42);
               }
@@ -207,12 +242,12 @@ window.Aetheria = window.Aetheria || {};
 
         // C. 採集資源點
         if (mapObj.nodes) {
-          mapObj.nodes.forEach(n => {
+          mapObj.nodes.forEach(function(n) {
             if (n.opened || (s.openedNodes && s.openedNodes[n.id])) return;
             renderQueue.push({
               y: n.y + 16,
-              draw: () => {
-                const floatY = (Math.floor((this.tick + n.x) / 14) % 2 === 0) ? 0 : -1;
+              draw: function() {
+                const floatY = (Math.floor((self.tick + n.x) / 14) % 2 === 0) ? 0 : -1;
                 let spKey = "crate";
                 if (n.type === "crystal")  spKey = "mat_crystal";
                 if (n.type === "mushroom") spKey = "mat_mushroom";
@@ -222,7 +257,7 @@ window.Aetheria = window.Aetheria || {};
                 const sp = Sprites.get(spKey);
                 if (sp) ctx.drawImage(sp, n.x, n.y + floatY, 18, 18);
 
-                if ((this.tick + n.x) % 22 < 11) {
+                if ((self.tick + n.x) % 22 < 11) {
                   ctx.fillStyle = n.perfect ? "#fbd000" : "#ffffff";
                   ctx.fillRect(n.x + 14, n.y - 2, 3, 1);
                   ctx.fillRect(n.x + 15, n.y - 3, 1, 3);
@@ -232,38 +267,32 @@ window.Aetheria = window.Aetheria || {};
           });
         }
 
-        // D. 營地與室內 4 大核心 NPC
+        // D. 營地與室內 4 大核心 NPC (使用 3x 高清黑邊標籤)
         if (mapObj.npcs) {
-          mapObj.npcs.forEach(npc => {
+          mapObj.npcs.forEach(function(npc) {
             renderQueue.push({
               y: npc.y + 18,
-              draw: () => {
-                const bounce = (Math.floor(this.tick / 16) % 2 === 0) ? 0 : -1;
+              draw: function() {
+                const bounce = (Math.floor(self.tick / 16) % 2 === 0) ? 0 : -1;
                 const sp = Sprites.get(npc.sprite);
                 if (sp) ctx.drawImage(sp, npc.x, npc.y + bounce, 19, 19);
 
-                ctx.font = "bold 8px 'Microsoft JhengHei', monospace";
-                ctx.textAlign = "center";
-                const labelTxt = `${npc.badge || ""}${npc.name.split("・")[1] || npc.name}`;
-                const tw = ctx.measureText(labelTxt).width + 6;
-                ctx.fillStyle = "rgba(20, 16, 19, 0.9)";
-                ctx.fillRect(npc.x + 9 - tw / 2, npc.y - 11, tw, 10);
-                ctx.fillStyle = "#ffd166";
-                ctx.fillText(labelTxt, npc.x + 9, npc.y - 3);
+                const shortName = (npc.badge || "") + (npc.name.split("・")[1] || npc.name);
+                drawCrispLabel(ctx, shortName, npc.x + 9.5, npc.y - 1, "#ffd166");
               }
             });
           });
         }
 
-        // E. 巡邏與追擊魔物 (含追擊時頭頂紅底 [!] 驚嘆號標記)
+        // E. 巡邏與追擊魔物
         if (mapObj.monsters) {
-          mapObj.monsters.forEach(m => {
+          mapObj.monsters.forEach(function(m) {
             if (m.alive === false) return;
             renderQueue.push({
               y: m.y + 18,
-              draw: () => {
+              draw: function() {
                 const stepSpd = m.aggro ? 4 : 9;
-                const bounce = (Math.floor(this.tick / stepSpd) % 2 === 0) ? 0 : -2;
+                const bounce = (Math.floor(self.tick / stepSpd) % 2 === 0) ? 0 : -2;
                 const sz = m.isBoss ? 26 : 19;
                 let spKey = (m.type === "boss") ? "mon_boss" : (m.type === "skull") ? "mon_skull" : "mon_bamboo";
                 if (m.isShiny && !m.isBoss) spKey += "_shiny";
@@ -275,20 +304,9 @@ window.Aetheria = window.Aetheria || {};
                 ctx.fillRect(Math.round(m.x), Math.round(m.y) - 5, sz, 2);
 
                 if (m.aggro) {
-                  ctx.fillStyle = "#e03c4b";
-                  ctx.fillRect(Math.round(m.x) + Math.floor(sz / 2) - 5, Math.round(m.y) - 16, 10, 9);
-                  ctx.strokeStyle = "#1c1619";
-                  ctx.lineWidth = 1;
-                  ctx.strokeRect(Math.round(m.x) + Math.floor(sz / 2) - 5, Math.round(m.y) - 16, 10, 9);
-                  ctx.fillStyle = "#ffffff";
-                  ctx.font = "bold 8px monospace";
-                  ctx.textAlign = "center";
-                  ctx.fillText("!", Math.round(m.x) + Math.floor(sz / 2), Math.round(m.y) - 9);
+                  drawCrispLabel(ctx, "!", Math.round(m.x) + sz / 2, Math.round(m.y) - 7, "#ffffff", "rgba(224, 60, 75, 0.95)");
                 } else if (m.isShiny) {
-                  ctx.font = "bold 7px 'Microsoft JhengHei', monospace";
-                  ctx.textAlign = "center";
-                  ctx.fillStyle = "#fbd000";
-                  ctx.fillText("[閃光]", Math.round(m.x) + Math.floor(sz / 2), Math.round(m.y) - 8);
+                  drawCrispLabel(ctx, "閃光", Math.round(m.x) + sz / 2, Math.round(m.y) - 7, "#fbd000");
                 }
 
                 if (sp) ctx.drawImage(sp, Math.round(m.x), Math.round(m.y + bounce), sz, sz);
@@ -301,48 +319,49 @@ window.Aetheria = window.Aetheria || {};
         const isMov = ExpSys && ExpSys.isMoving;
         const petBounce = isMov ? (Math.floor(this.tick / 4) % 2 * -2) : (Math.floor(this.tick / 14) % 2 * -1);
         const petData = window.Aetheria.Data.PETS[s.activePet] || window.Aetheria.Data.PETS.pet_slime;
-        const isShinyPet = s.shinyPets && s.shinyPets.includes(s.activePet);
+        const isShinyPet = s.shinyPets && s.shinyPets.indexOf(s.activePet) !== -1;
         const petSp = Sprites.get(isShinyPet ? petData.shinySpriteKey : petData.spriteKey);
 
         renderQueue.push({
           y: s.petY + 16,
-          draw: () => {
+          draw: function() {
             if (petSp) ctx.drawImage(petSp, Math.round(s.petX), Math.round(s.petY + petBounce), 18, 18);
           }
         });
 
         if (s.currentJob === "hunter" && s.unlockedPets.length >= 2) {
-          const subPetId = s.unlockedPets.find(id => id !== s.activePet) || s.unlockedPets[0];
+          const subPetId = s.unlockedPets.find(function(id) { return id !== s.activePet; }) || s.unlockedPets[0];
           const subPetData = window.Aetheria.Data.PETS[subPetId];
           if (subPetData) {
-            const subShiny = s.shinyPets && s.shinyPets.includes(subPetId);
+            const subShiny = s.shinyPets && s.shinyPets.indexOf(subPetId) !== -1;
             const subSp = Sprites.get(subShiny ? subPetData.shinySpriteKey : subPetData.spriteKey);
             renderQueue.push({
               y: s.petY + 15,
-              draw: () => {
+              draw: function() {
                 if (subSp) ctx.drawImage(subSp, Math.round(s.heroX + 16), Math.round(s.petY - petBounce), 16, 16);
               }
             });
           }
         }
 
-        // G. 主角 4 方向雙幀行走
+        // G. 主角
         renderQueue.push({
           y: s.heroY + 18,
-          draw: () => {
-            const stepFrame = isMov ? (Math.floor(this.tick / 6) % 2) : 0;
+          draw: function() {
+            const stepFrame = isMov ? (Math.floor(self.tick / 6) % 2) : 0;
             const bounce = isMov ? (stepFrame * -1) : 0;
             const dir = s.facing || "down";
-            const heroSp = Sprites.get(`hero_${dir}_${stepFrame}`) || Sprites.get("hero_down_0");
+            const heroSp = Sprites.get("hero_" + dir + "_" + stepFrame) || Sprites.get("hero_down_0");
             if (heroSp) ctx.drawImage(heroSp, Math.round(s.heroX), Math.round(s.heroY + bounce), 19, 19);
           }
         });
 
-        renderQueue.sort((a, b) => a.y - b.y);
-        renderQueue.forEach(item => item.draw());
+        renderQueue.sort(function(a, b) { return a.y - b.y; });
+        renderQueue.forEach(function(item) { item.draw(); });
 
-        ctx.restore();
+        ctx.restore(); // 結束相機位移
 
+        // 螢幕特效：微雨 / 飄雪
         if (mapObj.rain) {
           ctx.strokeStyle = (mapObj.theme === "snow") ? "#ffffff" : "rgba(255, 255, 255, 0.72)";
           ctx.lineWidth = (mapObj.theme === "snow") ? 2 : 1;
@@ -356,7 +375,7 @@ window.Aetheria = window.Aetheria || {};
           }
         }
 
-        // 左上角繪製 3 顆像素紅心
+        // 左上角 3 顆像素紅心
         const fullHearts = Math.ceil((s.hp / s.maxHp) * 3);
         const heartSp = Sprites.get("heart");
         for (let i = 0; i < 3; i++) {
@@ -366,12 +385,14 @@ window.Aetheria = window.Aetheria || {};
         ctx.globalAlpha = 1.0;
 
         this.drawMinimap(ctx, mapObj, s);
+
+        ctx.restore(); // 結束 3x 高清縮放
       } catch (err) {
         console.error("renderWorld error:", err);
       }
     },
 
-    drawMinimap(ctx, mapObj, s) {
+    drawMinimap: function(ctx, mapObj, s) {
       const mx = 6, my = 97, mw = 54, mh = 41;
       ctx.fillStyle = "rgba(20, 16, 19, 0.84)";
       ctx.fillRect(mx - 1, my - 1, mw + 2, mh + 2);
@@ -387,21 +408,21 @@ window.Aetheria = window.Aetheria || {};
 
       ctx.fillStyle = "#4cc9f0";
       if (mapObj.portals) {
-        mapObj.portals.forEach(p => {
+        mapObj.portals.forEach(function(p) {
           ctx.fillRect(mx + Math.round(p.x / mapObj.width * mw) - 1, my + Math.round(p.y / mapObj.height * mh) - 1, 3, 3);
         });
       }
 
       ctx.fillStyle = "#5ac54f";
       if (mapObj.npcs) {
-        mapObj.npcs.forEach(n => {
+        mapObj.npcs.forEach(function(n) {
           ctx.fillRect(mx + Math.round(n.x / mapObj.width * mw) - 1, my + Math.round(n.y / mapObj.height * mh) - 1, 3, 3);
         });
       }
 
       ctx.fillStyle = "#f5b700";
       if (mapObj.nodes) {
-        mapObj.nodes.forEach(n => {
+        mapObj.nodes.forEach(function(n) {
           if (!n.opened && !(s.openedNodes && s.openedNodes[n.id])) {
             ctx.fillRect(mx + Math.round(n.x / mapObj.width * mw), my + Math.round(n.y / mapObj.height * mh), 2, 2);
           }
@@ -410,7 +431,7 @@ window.Aetheria = window.Aetheria || {};
 
       ctx.fillStyle = "#ff595e";
       if (mapObj.monsters) {
-        mapObj.monsters.forEach(m => {
+        mapObj.monsters.forEach(function(m) {
           if (m.alive !== false) {
             ctx.fillRect(mx + Math.round(m.x / mapObj.width * mw), my + Math.round(m.y / mapObj.height * mh), 2, 2);
           }
