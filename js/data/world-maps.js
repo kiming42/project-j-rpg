@@ -1,358 +1,420 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 線性推進地圖鏈與營地室內地圖庫 (world-maps.js - v3.0)
- * 修正：1.營地改為純安全基地 camp_hub (無野怪，4大核心NPC強制獨立座標100%顯示)
- *       2.新增兩個可進入的大帳篷室內地圖 tent_guild 與 tent_forge
- *       3.改為線性推進：營地 ➔ 翠風森林 ➔ 流沙峽谷 ➔ 翡翠海岸 ➔ 極寒雪原 ➔ 熔岩火山 ➔ 深淵與天界
+ * Project J：艾瑟瑞亞的破曉 — 遞進式世界地圖鏈、可進入帳篷室內與巡邏怪物配置 (world-maps.js - v3.0)
+ * 結構：0.曙光營地(安全基地+可進入2座帳篷室內+4大NPC 100%顯示)
+ *       ➔ 第1區:翠風迷霧森林 (子迷宮:微光蘑菇洞窟)
+ *       ➔ 第2區:流沙繩索峽谷 ➔ 第3區:翡翠沉船海岸 ➔ 第4區:霜語極寒雪原
+ *       ➔ 第5區:赤紅熔岩火山 ➔ 第6區:天界浮空聖殿 & 100層無盡試煉之塔
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
 
 (function() {
-  function createSpatialPlacer() {
-    const occupied = [];
-    return {
-      reserve(x, y, radius = 26) {
-        occupied.push({ x, y, r: radius });
-      },
-      canPlace(x, y, radius = 24) {
-        for (let i = 0; i < occupied.length; i++) {
-          const item = occupied[i];
-          if (Math.hypot(x - item.x, y - item.y) < (radius + item.r)) return false;
-        }
-        return true;
-      },
-      tryAdd(list, obj, radius = 24) {
-        if (this.canPlace(obj.x, obj.y, radius)) {
-          this.reserve(obj.x, obj.y, radius);
-          list.push(obj);
-          return true;
-        }
-        return false;
-      }
-    };
-  }
-
-  function generateGroundDetails(width, height, count = 50) {
+  function generateGroundDetails(width, height, count = 40) {
     const pebbles = [];
     for (let i = 0; i < count; i++) {
       pebbles.push({
-        x: 45 + ((i * 137) % (width - 90)),
-        y: 45 + ((i * 293) % (height - 90)),
+        x: 36 + ((i * 137) % (width - 72)),
+        y: 36 + ((i * 293) % (height - 72)),
         kind: (i % 3 === 0) ? "tuft" : (i % 3 === 1) ? "pebble" : "puddle"
       });
     }
     return pebbles;
   }
 
-  function assignWildShiny(monsters) {
-    monsters.forEach((m, idx) => {
-      m.isShiny = (idx === 0) || (Math.random() < 0.12);
+  // 初始化野外魔物的 AI 巡邏參數 (供 Part 3 巡邏走動與接近加速追擊 AI 使用)
+  function initPatrolMonsters(list) {
+    return list.map((m, idx) => {
+      const ang = (idx * 1.7) % (Math.PI * 2);
+      return Object.assign({}, m, {
+        alive: true,
+        homeX: m.x,
+        homeY: m.y,
+        vx: Math.cos(ang) * 0.45,
+        vy: Math.sin(ang) * 0.45,
+        aggro: false,
+        patrolTimer: 40 + (idx * 25),
+        isShiny: Boolean(m.isShiny) || (idx === 1) || (Math.random() < 0.12)
+      });
     });
-    return monsters;
   }
 
-  // ================= 0. 曙光露營基地 (Safe Hub - 無野怪，4大核心NPC 100%獨立顯示 + 兩座可進入的大帳篷) =================
+  // ================= 第 0 區：曙光露營基地 (500x380 純安全基地，4大NPC 100%顯示，2座帳篷可進入！) =================
   function buildCampHub() {
+    const trees = [];
+    for (let x = 8; x < 480; x += 36) {
+      trees.push({ x, y: 6 });
+      trees.push({ x, y: 338 });
+    }
+    for (let y = 40; y < 330; y += 36) {
+      trees.push({ x: 8, y });
+      // 東側留出通往「第一區：翠風森林」的寬敞大門通道 (y: 160 ~ 250)
+      if (y < 145 || y > 255) trees.push({ x: 458, y });
+    }
+
     const decos = [
-      // 左側公會大帳篷 (走近按 A 鍵或觸發傳送門可進入室內)
-      { id: "tent_g_door", x: 180, y: 165, sprite: "tent", w: 44, h: 40, solid: true, isTentDoor: true, targetZone: "tent_guild", targetX: 250, targetY: 340, label: "公會帳篷" },
-      // 右側鐵匠工坊大帳篷
-      { id: "tent_f_door", x: 520, y: 165, sprite: "tent", w: 44, h: 40, solid: true, isTentDoor: true, targetZone: "tent_forge", targetX: 250, targetY: 340, label: "鐵匠工坊" },
-      { x: 350, y: 220, sprite: "campfire", w: 18, h: 18, solid: true },
-      { x: 310, y: 225, sprite: "deco_bench", w: 22, h: 12, solid: false },
-      { x: 395, y: 225, sprite: "deco_pot", w: 18, h: 18, solid: true },
-      { x: 520, y: 280, sprite: "deco_anvil", w: 18, h: 14, solid: true }
+      // 左上：冒險者公會大帳篷 (門口有進入傳送點)
+      { x: 135, y: 78, sprite: "tent", w: 48, h: 44, solid: true },
+      // 右上：鐵匠工坊大帳篷 (門口有進入傳送點)
+      { x: 315, y: 78, sprite: "tent", w: 48, h: 44, solid: true },
+      // 中央營火、原木長凳與滾燙燉肉鍋
+      { x: 242, y: 195, sprite: "campfire", w: 18, h: 18, solid: true },
+      { x: 204, y: 198, sprite: "deco_bench", w: 22, h: 12, solid: false },
+      { x: 272, y: 195, sprite: "deco_pot", w: 18, h: 18, solid: true },
+      // 鐵匠戶外打鐵砧與武器展示架
+      { x: 372, y: 135, sprite: "deco_anvil", w: 18, h: 14, solid: true },
+      { x: 396, y: 128, sprite: "deco_rack", w: 20, h: 18, solid: true },
+      // 營地石燈籠與東門指路木牌
+      { x: 112, y: 185, sprite: "deco_lantern", w: 16, h: 20, solid: true },
+      { x: 405, y: 175, sprite: "deco_sign", w: 18, h: 18, solid: true },
+      { x: 405, y: 235, sprite: "deco_lantern", w: 16, h: 20, solid: true }
     ];
 
-    // 4 大核心 NPC 強制獨立座標，絕不重疊！
+    // 4 大核心 NPC 強制獨立座標 (100% 保證顯示，絕不被過濾！)
     const npcs = [
-      { id: "npc_smith", name: "鐵匠大叔・巴爾", role: "武器鍛造 & 工具升級", sprite: "npc_blacksmith", badge: "⚒️", x: 480, y: 265 },
-      { id: "npc_astro", name: "星象少女・艾莉婭", role: "星象儀調頻 & 錯題淨化", sprite: "npc_astrologer", badge: "🔮", x: 235, y: 265 },
-      { id: "npc_guild", name: "公會會長・雷恩", role: "冒險階級 & 懸賞委託", sprite: "npc_guildmaster", badge: "🛡️", x: 265, y: 175 },
-      { id: "npc_merch", name: "神秘行商・奇奇", role: "物資交換與煉金", sprite: "npc_merchant", badge: "💰", x: 435, y: 175 }
+      { id: "npc_smith", name: "鐵匠大叔・巴爾", role: "神兵鍛造 & 工具升級", sprite: "npc_blacksmith", badge: "[鐵匠]", x: 348, y: 142 },
+      { id: "npc_guild", name: "公會會長・雷恩", role: "委託接取 & 冒險階級", sprite: "npc_guildmaster", badge: "[公會]", x: 172, y: 142 },
+      { id: "npc_astro", name: "星象少女・艾莉婭", role: "四科調頻 & 錯題淨化", sprite: "npc_astrologer", badge: "[星象]", x: 138, y: 228 },
+      { id: "npc_merch", name: "神秘行商・奇奇", role: "稀有藥水 & 煉金交換", sprite: "npc_merchant", badge: "[行商]", x: 348, y: 232 }
+    ];
+
+    // 營地新手補給箱与靈草
+    const nodes = [
+      { id: "camp_box1", x: 295, y: 132, type: "crate", name: "鐵匠鋪補給木箱" },
+      { id: "camp_herb1", x: 145, y: 285, type: "mushroom", name: "營地紅傘菇" },
+      { id: "camp_flw1",  x: 335, y: 285, type: "flower", name: "營地太陽花" }
+    ];
+
+    // 傳送門：可步行進入公會帳篷室內、鐵匠帳篷室內、或由東門步行前往「第一區：翠風迷霧森林」
+    const portals = [
+      { id: "p_enter_guild_tent", name: "進入【公會帳篷】", x: 159, y: 122, targetZone: "tent_guild", targetX: 160, targetY: 185, icon: "door" },
+      { id: "p_enter_forge_tent", name: "進入【鐵匠帳篷】", x: 339, y: 122, targetZone: "tent_forge", targetX: 160, targetY: 185, icon: "door" },
+      { id: "p_camp_to_z1", name: "前往【第一區：翠風森林】➔", x: 465, y: 205, targetZone: "zone1_forest", targetX: 65, targetY: 270, icon: "stairs" }
+    ];
+
+    return {
+      id: "camp_hub", name: "0. 曙光露營基地", recLv: 1, bgm: "forest", theme: "forest",
+      rain: false, fog: false, hasRiver: false, width: 500, height: 380,
+      dirtBlobs: [
+        { cx: 250, cy: 205, rx: 145, ry: 95 },
+        { cx: 410, cy: 205, rx: 75, ry: 32 }
+      ],
+      groundDetails: generateGroundDetails(500, 380, 28),
+      trees, decos, nodes, npcs, monsters: [], portals
+    };
+  }
+
+  // ================= 室內子地圖 A：公會大帳篷內部 (320x240) =================
+  function buildTentGuildInterior() {
+    return {
+      id: "tent_guild", name: "公會帳篷內部", recLv: 1, bgm: "forest", theme: "canyon",
+      rain: false, fog: false, hasRiver: false, width: 320, height: 240,
+      dirtBlobs: [{ cx: 160, cy: 120, rx: 135, ry: 90 }],
+      groundDetails: [],
+      trees: [],
+      decos: [
+        { x: 85,  y: 55, sprite: "deco_lantern", w: 16, h: 20, solid: true },
+        { x: 220, y: 55, sprite: "deco_lantern", w: 16, h: 20, solid: true },
+        { x: 148, y: 105, sprite: "deco_bench", w: 26, h: 14, solid: true }
+      ],
+      nodes: [
+        { id: "tg_box1", x: 75, y: 95, type: "crate", name: "公會儲備物資箱" },
+        { id: "tg_chest1", x: 230, y: 95, type: "chest", name: "公會見習補給箱" }
+      ],
+      npcs: [
+        { id: "npc_guild", name: "公會會長・雷恩", role: "委託接取 & 冒險階級", sprite: "npc_guildmaster", badge: "[公會]", x: 152, y: 72 }
+      ],
+      monsters: [],
+      portals: [
+        { id: "p_exit_guild_tent", name: "離開帳篷返回營地", x: 160, y: 215, targetZone: "camp_hub", targetX: 159, targetY: 148, icon: "stairs" }
+      ]
+    };
+  }
+
+  // ================= 室內子地圖 B：鐵匠工坊大帳篷內部 (320x240) =================
+  function buildTentForgeInterior() {
+    return {
+      id: "tent_forge", name: "鐵匠帳篷內部", recLv: 1, bgm: "forest", theme: "canyon",
+      rain: false, fog: false, hasRiver: false, width: 320, height: 240,
+      dirtBlobs: [{ cx: 160, cy: 120, rx: 135, ry: 90 }],
+      groundDetails: [],
+      trees: [],
+      decos: [
+        { x: 115, y: 82, sprite: "deco_anvil", w: 20, h: 16, solid: true },
+        { x: 195, y: 76, sprite: "deco_rack", w: 22, h: 20, solid: true },
+        { x: 152, y: 52, sprite: "campfire", w: 18, h: 18, solid: true }
+      ],
+      nodes: [
+        { id: "tf_box1", x: 72, y: 105, type: "crate", name: "鍛造鐵礦箱" },
+        { id: "tf_box2", x: 232, y: 105, type: "crystal", name: "工坊藍晶礦樣本" }
+      ],
+      npcs: [
+        { id: "npc_smith", name: "鐵匠大叔・巴爾", role: "神兵鍛造 & 工具升級", sprite: "npc_blacksmith", badge: "[鐵匠]", x: 152, y: 82 }
+      ],
+      monsters: [],
+      portals: [
+        { id: "p_exit_forge_tent", name: "離開帳篷返回營地", x: 160, y: 215, targetZone: "camp_hub", targetX: 339, targetY: 148, icon: "stairs" }
+      ]
+    };
+  }
+
+  // ================= 第 1 區：翠風迷霧森林 (760x540 Lv.1~5) =================
+  function buildZone1Forest() {
+    const trees = [];
+    for (let x = 8; x < 740; x += 38) {
+      if (Math.abs(x - 380) > 48) trees.push({ x, y: 8 });
+      trees.push({ x, y: 498 });
+    }
+    for (let y = 40; y < 480; y += 38) {
+      if (Math.abs(y - 270) > 48) trees.push({ x: 8, y });
+      if (Math.abs(y - 270) > 48) trees.push({ x: 718, y });
+    }
+    // 森林內部樹叢
+    [{x:220,y:150},{x:255,y:165},{x:230,y:370},{x:265,y:385},{x:480,y:155},{x:515,y:170}].forEach(t => trees.push(t));
+
+    const decos = [
+      { x: 95, y: 235, sprite: "deco_sign", w: 18, h: 18, solid: true },
+      { id: "fish_z1", x: 538, y: 210, sprite: "fishing_spot", w: 20, h: 16, isFishingSpot: true },
+      { id: "grap_z1_w", x: 536, y: 135, sprite: "grapple_post", w: 18, h: 20, isGrapple: true, targetX: 615, targetY: 135 },
+      { id: "grap_z1_e", x: 610, y: 135, sprite: "grapple_post", w: 18, h: 20, isGrapple: true, targetX: 530, targetY: 135 },
+      { id: "obs_z1_tree", x: 185, y: 425, sprite: "deadtree_block", w: 22, h: 22, solid: true, obstacleType: "deadtree" },
+      { id: "obs_z1_rock", x: 635, y: 395, sprite: "boulder_block", w: 22, h: 20, solid: true, obstacleType: "boulder" }
     ];
 
     const nodes = [
-      { id: "camp_c1", x: 350, y: 135, type: "crate", name: "營地補給箱" }
+      { id: "z1_n1", x: 165, y: 215, type: "mushroom", name: "紅傘微光菇" },
+      { id: "z1_n2", x: 315, y: 135, type: "mushroom", name: "紅傘微光菇" },
+      { id: "z1_n3", x: 295, y: 345, type: "flower", name: "翠風太陽花" },
+      { id: "z1_n4", x: 445, y: 385, type: "flower", name: "翠風太陽花" },
+      { id: "z1_n5", x: 335, y: 435, type: "crystal", name: "藍晶鐵礦簇" },
+      { id: "z1_n6", x: 425, y: 445, type: "crystal", name: "藍晶鐵礦簇" },
+      { id: "z1_n7", x: 495, y: 420, type: "crystal", name: "藍晶鐵礦簇" },
+      { id: "z1_n8", x: 135, y: 455, type: "chest", legendary: true, name: "枯木秘境傳說寶箱" },
+      { id: "z1_n9", x: 655, y: 125, type: "chest", legendary: true, name: "河東抓鉤傳說寶箱" },
+      { id: "z1_n10",x: 665, y: 435, type: "crystal", perfect: true, name: "閃光秘銀礦簇" }
     ];
 
-    // 東側出口通往第 1 區：【翠風迷霧森林】
-    const portals = [
-      { id: "p_camp_to_forest", name: "🌲 東側出口 ➔ 翠風迷霧森林 (Lv.1)", x: 735, y: 225, targetZone: "forest_world", targetX: 65, targetY: 340, icon: "stairs" }
-    ];
-
-    return {
-      id: "camp_hub", name: "曙光露營基地 (安全區)", recLv: 1, bgm: "forest", theme: "forest",
-      rain: false, fog: false, hasRiver: false, width: 780, height: 480,
-      dirtBlobs: [{ cx: 390, cy: 240, rx: 320, ry: 180 }],
-      groundDetails: generateGroundDetails(780, 480, 40),
-      trees: [{ x: 50, y: 30 }, { x: 700, y: 30 }, { x: 50, y: 420 }, { x: 700, y: 420 }],
-      decos, nodes, npcs, monsters: [], portals
-    };
-  }
-
-  // 帳篷室內子地圖 1：公會大廳內部
-  function buildTentGuild() {
-    return {
-      id: "tent_guild", name: "公會大廳內部", recLv: 1, bgm: "forest", theme: "cave",
-      rain: false, fog: false, hasRiver: false, width: 500, height: 400,
-      dirtBlobs: [{ cx: 250, cy: 200, rx: 200, ry: 150 }],
-      groundDetails: [], trees: [],
-      decos: [{ x: 225, y: 120, sprite: "deco_rack", w: 20, h: 18, solid: true }],
-      nodes: [],
-      npcs: [{ id: "npc_guild", name: "公會會長・雷恩", role: "懸賞大廳", sprite: "npc_guildmaster", badge: "🛡️", x: 250, y: 160 }],
-      monsters: [],
-      portals: [{ id: "p_out_guild", name: "🚪 離開帳篷返回營地", x: 250, y: 370, targetZone: "camp_hub", targetX: 200, targetY: 195, icon: "stairs" }]
-    };
-  }
-
-  // 帳篷室內子地圖 2：鐵匠工坊內部
-  function buildTentForge() {
-    return {
-      id: "tent_forge", name: "鐵匠工坊內部", recLv: 1, bgm: "forest", theme: "cave",
-      rain: false, fog: false, hasRiver: false, width: 500, height: 400,
-      dirtBlobs: [{ cx: 250, cy: 200, rx: 200, ry: 150 }],
-      groundDetails: [], trees: [],
-      decos: [{ x: 240, y: 140, sprite: "deco_anvil", w: 18, h: 14, solid: true }],
-      nodes: [],
-      npcs: [{ id: "npc_smith", name: "鐵匠大叔・巴爾", role: "鍛造車間", sprite: "npc_blacksmith", badge: "⚒️", x: 250, y: 175 }],
-      monsters: [],
-      portals: [{ id: "p_out_forge", name: "🚪 離開工坊返回營地", x: 250, y: 370, targetZone: "camp_hub", targetX: 540, targetY: 195, icon: "stairs" }]
-    };
-  }
-
-  // ================= 1. 翠風迷霧森林 (線性第 1 區) =================
-  function buildForestWorld() {
-    const placer = createSpatialPlacer();
-    const trees = [], decos = [], nodes = [], monsters = [];
-    const portals = [
-      { id: "p_for_back", name: "⛺ 返回曙光營地", x: 45,  y: 340, targetZone: "camp_hub",    targetX: 710, targetY: 225, icon: "stairs" },
-      { id: "p_for_cave", name: "🕳️ 微光蘑菇洞窟 (Lv.5)", x: 420, y: 65,  targetZone: "mushroom_cave", targetX: 280, targetY: 390, icon: "cave" },
-      { id: "p_for_next", name: "🏜️ 前往流沙峽谷 (Lv.12)", x: 835, y: 340, targetZone: "canyon_world",  targetX: 65,  targetY: 340, icon: "stairs" }
-    ];
-    portals.forEach(p => { placer.reserve(p.x, p.y, 32); });
-
-    decos.push(
-      { id: "obs_f_tree", x: 215, y: 235, sprite: "deadtree_block", w: 22, h: 22, solid: true, obstacleType: "deadtree" },
-      { id: "fish_f1", x: 625, y: 220, sprite: "fishing_spot", w: 20, h: 16, isFishingSpot: true }
-    );
-
-    const rawNodes = [
-      { id: "f_n1", x: 350, y: 135, type: "mushroom", name: "紅傘微光菇" },
-      { id: "f_n2", x: 510, y: 135, type: "flower", name: "翠風太陽花" },
-      { id: "f_n3", x: 385, y: 520, type: "crystal", name: "藍晶鐵礦簇" },
-      { id: "f_n4", x: 475, y: 520, type: "chest", legendary: true, name: "森林枯木後傳說寶箱" }
-    ];
-    rawNodes.forEach(n => placer.tryAdd(nodes, n, 22));
-
-    const rawMonsters = assignWildShiny([
-      { id: "m_f1", x: 420, y: 180, lv: 2, type: "bamboo", name: "翠風竹子妖" },
-      { id: "m_f2", x: 360, y: 460, lv: 3, type: "bamboo", name: "森林竹子守衛" },
-      { id: "m_f3", x: 745, y: 340, lv: 6, type: "boss", isBoss: true, name: "💀 翠風森林竹子統帥" }
+    const monsters = initPatrolMonsters([
+      { id: "m_z1_1", x: 235, y: 255, lv: 2, type: "bamboo", name: "翠風竹子妖" },
+      { id: "m_z1_2", x: 385, y: 195, lv: 3, type: "bamboo", name: "迷霧竹子精" },
+      { id: "m_z1_3", x: 395, y: 365, lv: 4, type: "bamboo", name: "礦道竹子守衛" },
+      { id: "m_z1_4", x: 645, y: 270, lv: 5, type: "skull",  name: "河東橋頭骷髏兵" }
     ]);
-    rawMonsters.forEach(m => placer.tryAdd(monsters, m, 24));
 
-    for (let x = 12; x < 860; x += 38) {
-      if (Math.abs(x - 420) > 45) placer.tryAdd(trees, { x, y: 12 }, 20);
-      if (Math.abs(x - 420) > 45) placer.tryAdd(trees, { x, y: 645 }, 20);
-    }
+    const portals = [
+      { id: "p_z1_to_camp", name: "⬅ 返回【0.曙光營地】", x: 36, y: 270, targetZone: "camp_hub", targetX: 430, targetY: 205, icon: "stairs" },
+      { id: "p_z1_to_cave", name: "進入【1-B 微光蘑菇洞窟】", x: 380, y: 48, targetZone: "cave1_mushroom", targetX: 280, targetY: 390, icon: "cave" },
+      { id: "p_z1_to_z2",   name: "前往【第二區：流沙峽谷】➔", x: 715, y: 270, targetZone: "zone2_canyon", targetX: 65, targetY: 270, icon: "stairs" }
+    ];
 
     return {
-      id: "forest_world", name: "翠風迷霧森林", recLv: 2, bgm: "forest", theme: "forest",
-      rain: true, fog: false, hasRiver: true, width: 900, height: 700,
-      dirtBlobs: [{ cx: 450, cy: 340, rx: 380, ry: 260 }],
-      groundDetails: generateGroundDetails(900, 700, 50),
+      id: "zone1_forest", name: "1. 翠風迷霧森林", recLv: 2, bgm: "forest", theme: "forest",
+      rain: true, fog: false, hasRiver: true, riverX: 555, bridgeY: 250, width: 760, height: 540,
+      dirtBlobs: [
+        { cx: 280, cy: 270, rx: 220, ry: 65 },
+        { cx: 380, cy: 150, rx: 65, ry: 95 },
+        { cx: 410, cy: 400, rx: 95, ry: 65 },
+        { cx: 640, cy: 270, rx: 75, ry: 95 }
+      ],
+      groundDetails: generateGroundDetails(760, 540, 45),
       trees, decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 2. 微光蘑菇洞窟 (子迷宮) =================
-  function buildMushroomCave() {
+  // ================= 第 1-B 子迷宮：微光蘑菇洞窟 (560x460 Lv.5~9) =================
+  function buildCave1Mushroom() {
     const decos = [
       { id: "brz_cave_1", x: 280, y: 335, sprite: "brazier_off", w: 18, h: 18, solid: true, isBrazier: true },
-      { id: "cw_cave_1", x: 145, y: 155, sprite: "cracked_wall", w: 24, h: 24, solid: true, isCrackedWall: true }
+      { id: "cw_cave_1",  x: 145, y: 155, sprite: "cracked_wall", w: 24, h: 24, solid: true, isCrackedWall: true }
     ];
     const nodes = [
-      { id: "c_n1", x: 165, y: 295, type: "crystal", perfect: true, name: "✨洞窟閃光秘銀礦" },
-      { id: "c_n2", x: 395, y: 295, type: "chest", legendary: true, name: "炸彈密室傳說寶箱" }
+      { id: "c1_n1", x: 165, y: 295, type: "crystal", perfect: true, name: "閃光秘銀礦簇" },
+      { id: "c1_n2", x: 395, y: 295, type: "crystal", perfect: true, name: "閃光秘銀礦簇" },
+      { id: "c1_n3", x: 195, y: 195, type: "mushroom", name: "夜光紅傘菇" },
+      { id: "c1_n4", x: 365, y: 195, type: "mushroom", name: "夜光紅傘菇" },
+      { id: "c1_n5", x: 95,  y: 95,  type: "chest", legendary: true, name: "炸彈密室傳說寶箱" }
     ];
-    const monsters = assignWildShiny([
-      { id: "m_c1", x: 280, y: 235, lv: 5, type: "skull", name: "洞窟骷髏衛兵" },
-      { id: "m_c2", x: 280, y: 115, lv: 9, type: "boss", isBoss: true, name: "💀 洞窟骷髏統領" }
+    const monsters = initPatrolMonsters([
+      { id: "m_c1_1", x: 280, y: 255, lv: 5, type: "skull", name: "洞窟骷髏衛兵" },
+      { id: "m_c1_2", x: 195, y: 235, lv: 6, type: "bamboo", name: "變異夜光竹妖" },
+      { id: "m_c1_3", x: 280, y: 115, lv: 9, type: "skull", isBoss: true, name: "洞窟骷髏統領" }
     ]);
     const portals = [
-      { id: "p_cave_out", name: "🚪 返回翠風森林", x: 280, y: 420, targetZone: "forest_world", targetX: 420, targetY: 90, icon: "stairs" }
+      { id: "p_cave_back", name: "返回【1.翠風迷霧森林】", x: 280, y: 420, targetZone: "zone1_forest", targetX: 380, targetY: 85, icon: "stairs" }
     ];
 
     return {
-      id: "mushroom_cave", name: "微光蘑菇洞窟", recLv: 5, bgm: "canyon", theme: "cave",
+      id: "cave1_mushroom", name: "1-B. 微光蘑菇洞窟", recLv: 5, bgm: "canyon", theme: "cave",
       rain: false, fog: true, hasRiver: false, width: 560, height: 460,
       dirtBlobs: [{ cx: 280, cy: 240, rx: 195, ry: 165 }],
       groundDetails: generateGroundDetails(560, 460, 25),
-      trees: [], decos, nodes, npcs: [], monsters, portals
+      trees: [{ x: 16, y: 14 }, { x: 505, y: 14 }],
+      decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 3. 流沙繩索大峽谷 (線性第 2 區) =================
-  function buildCanyonWorld() {
+  // ================= 第 2 區：流沙繩索大峽谷 (720x520 Lv.10~18) =================
+  function buildZone2Canyon() {
+    const trees = [];
+    for (let x = 16; x < 700; x += 52) {
+      trees.push({ x, y: 8 }, { x, y: 472 });
+    }
     const decos = [
-      { id: "obs_cy_rock", x: 450, y: 220, sprite: "boulder_block", w: 22, h: 20, solid: true, obstacleType: "boulder" }
+      { x: 350, y: 245, sprite: "campfire", w: 18, h: 18, solid: true },
+      { id: "obs_z2_rock", x: 545, y: 155, sprite: "boulder_block", w: 22, h: 20, solid: true, obstacleType: "boulder" }
     ];
     const nodes = [
-      { id: "cy_n1", x: 235, y: 215, type: "crystal", perfect: true, name: "✨峽谷秘銀礦簇" },
-      { id: "cy_n2", x: 565, y: 195, type: "chest", legendary: true, name: "太陽神殿紅金寶箱" }
+      { id: "z2_n1", x: 215, y: 175, type: "crystal", perfect: true, name: "峽谷秘銀礦簇" },
+      { id: "z2_n2", x: 485, y: 185, type: "crystal", perfect: true, name: "峽谷秘銀礦簇" },
+      { id: "z2_n3", x: 245, y: 385, type: "flower", name: "綠洲太陽花" },
+      { id: "z2_n4", x: 475, y: 385, type: "flower", name: "綠洲太陽花" },
+      { id: "z2_n5", x: 595, y: 125, type: "chest", legendary: true, name: "太陽金字塔秘寶箱" }
     ];
-    const monsters = assignWildShiny([
-      { id: "m_cy1", x: 320, y: 250, lv: 12, type: "skull", name: "流沙骷髏劍士" },
-      { id: "m_cy2", x: 610, y: 260, lv: 18, type: "boss", isBoss: true, name: "💀 金字塔守護魔神" }
+    const monsters = initPatrolMonsters([
+      { id: "m_z2_1", x: 245, y: 270, lv: 10, type: "skull", name: "流沙骷髏刀客" },
+      { id: "m_z2_2", x: 445, y: 265, lv: 12, type: "skull", name: "峽谷骷髏守衛" },
+      { id: "m_z2_3", x: 585, y: 270, lv: 16, type: "boss", isBoss: true, name: "金字塔守護魔神" }
     ]);
     const portals = [
-      { id: "p_can_back", name: "🌲 返回翠風森林", x: 55, y: 340, targetZone: "forest_world", targetX: 800, targetY: 340, icon: "stairs" },
-      { id: "p_can_next", name: "🏖️ 前往翡翠海岸 (Lv.21)", x: 745, y: 340, targetZone: "emerald_coast", targetX: 65, targetY: 340, icon: "stairs" }
+      { id: "p_z2_to_z1", name: "⬅ 返回【第一區：翠風森林】", x: 36, y: 270, targetZone: "zone1_forest", targetX: 675, targetY: 270, icon: "stairs" },
+      { id: "p_z2_to_z3", name: "前往【第三區：翡翠海岸】➔", x: 675, y: 270, targetZone: "zone3_coast", targetX: 65, targetY: 260, icon: "stairs" }
     ];
 
     return {
-      id: "canyon_world", name: "流沙繩索大峽谷", recLv: 12, bgm: "canyon", theme: "canyon",
-      rain: false, fog: false, hasRiver: false, width: 800, height: 600,
-      dirtBlobs: [{ cx: 400, cy: 310, rx: 320, ry: 220 }],
-      groundDetails: generateGroundDetails(800, 600, 40),
-      trees: [], decos, nodes, npcs: [], monsters, portals
+      id: "zone2_canyon", name: "2. 流沙繩索峽谷", recLv: 10, bgm: "canyon", theme: "canyon",
+      rain: false, fog: false, hasRiver: false, width: 720, height: 520,
+      dirtBlobs: [{ cx: 360, cy: 265, rx: 275, ry: 175 }],
+      groundDetails: generateGroundDetails(720, 520, 35),
+      trees, decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 4. 翡翠海岸與沉船灣 (線性第 3 區) =================
-  function buildEmeraldCoast() {
+  // ================= 第 3 區：翡翠沉船海岸 (700x520 Lv.20~30) =================
+  function buildZone3Coast() {
     const decos = [
-      { x: 350, y: 415, sprite: "ancient_ship", w: 42, h: 36, solid: true },
-      { id: "fish_c1", x: 215, y: 385, sprite: "fishing_spot", w: 20, h: 16, isFishingSpot: true },
-      { id: "grap_c_1", x: 525, y: 285, sprite: "grapple_post", w: 18, h: 20, isGrapple: true, targetX: 605, targetY: 285 }
+      { x: 345, y: 405, sprite: "ancient_ship", w: 42, h: 36, solid: true },
+      { id: "fish_z3_1", x: 215, y: 365, sprite: "fishing_spot", w: 20, h: 16, isFishingSpot: true },
+      { id: "fish_z3_2", x: 485, y: 365, sprite: "fishing_spot", w: 20, h: 16, isFishingSpot: true },
+      { id: "grap_z3_1", x: 515, y: 185, sprite: "grapple_post", w: 18, h: 20, isGrapple: true, targetX: 595, targetY: 185 },
+      { id: "grap_z3_2", x: 585, y: 185, sprite: "grapple_post", w: 18, h: 20, isGrapple: true, targetX: 505, targetY: 185 }
     ];
     const nodes = [
-      { id: "ec_n1", x: 175, y: 245, type: "crystal", perfect: true, name: "✨潮汐秘銀晶簇" },
-      { id: "ec_n2", x: 625, y: 265, type: "chest", legendary: true, name: "沉船灣孤島傳說寶箱" }
+      { id: "z3_n1", x: 185, y: 215, type: "crystal", perfect: true, name: "潮汐秘銀晶簇" },
+      { id: "z3_n2", x: 465, y: 215, type: "flower", name: "海濱太陽花" },
+      { id: "z3_n3", x: 625, y: 165, type: "chest", legendary: true, name: "沉船孤島傳說寶箱" }
     ];
-    const monsters = assignWildShiny([
-      { id: "m_ec1", x: 280, y: 265, lv: 21, type: "skull", name: "幽靈海盜水手" },
-      { id: "m_ec2", x: 420, y: 265, lv: 27, type: "boss", isBoss: true, name: "💀 深海幽靈船長 Lv.27" }
+    const monsters = initPatrolMonsters([
+      { id: "m_z3_1", x: 255, y: 265, lv: 20, type: "skull", name: "幽靈海盜水手" },
+      { id: "m_z3_2", x: 435, y: 265, lv: 23, type: "skull", name: "沉船骷髏大副" },
+      { id: "m_z3_3", x: 565, y: 265, lv: 28, type: "boss", isBoss: true, name: "深海幽靈船長" }
     ]);
     const portals = [
-      { id: "p_ec_back", name: "🏜️ 返回流沙峽谷", x: 55, y: 340, targetZone: "canyon_world", targetX: 710, targetY: 340, icon: "stairs" },
-      { id: "p_ec_next", name: "❄️ 前往極寒雪原 (Lv.45)", x: 645, y: 340, targetZone: "frost_snowfield", targetX: 65, targetY: 340, icon: "stairs" }
+      { id: "p_z3_to_z2", name: "⬅ 返回【第二區：流沙峽谷】", x: 36, y: 260, targetZone: "zone2_canyon", targetX: 635, targetY: 270, icon: "stairs" },
+      { id: "p_z3_to_z4", name: "前往【第四區：霜語雪原】➔", x: 655, y: 260, targetZone: "zone4_snow", targetX: 65, targetY: 260, icon: "stairs" }
     ];
 
     return {
-      id: "emerald_coast", name: "翡翠海岸與沉船灣", recLv: 21, bgm: "forest", theme: "coast",
-      rain: false, fog: false, hasRiver: false, width: 700, height: 540,
-      dirtBlobs: [{ cx: 350, cy: 270, rx: 300, ry: 200 }],
-      groundDetails: generateGroundDetails(700, 540, 35),
+      id: "zone3_coast", name: "3. 翡翠沉船海岸", recLv: 20, bgm: "forest", theme: "coast",
+      rain: false, fog: false, hasRiver: false, width: 700, height: 520,
+      dirtBlobs: [{ cx: 350, cy: 250, rx: 265, ry: 155 }],
+      groundDetails: generateGroundDetails(700, 360, 30),
       trees: [], decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 5. 霜語極寒雪原 (線性第 4 區) =================
-  function buildFrostSnowfield() {
+  // ================= 第 4 區：霜語極寒雪原 (700x520 Lv.35~50) =================
+  function buildZone4Snow() {
     const decos = [
-      { id: "obs_sn_tree", x: 245, y: 215, sprite: "deadtree_block", w: 22, h: 22, solid: true, obstacleType: "deadtree" }
+      { x: 345, y: 260, sprite: "campfire", w: 18, h: 18, solid: true },
+      { id: "obs_z4_tree", x: 195, y: 175, sprite: "deadtree_block", w: 22, h: 22, solid: true, obstacleType: "deadtree" }
     ];
     const nodes = [
-      { id: "sn_n1", x: 215, y: 325, type: "flower", snowLotus: true, name: "🪷 雪山永凍冰蓮" },
-      { id: "sn_n2", x: 485, y: 315, type: "chest", legendary: true, name: "冰龍巢穴傳說寶箱" }
+      { id: "z4_n1", x: 225, y: 335, type: "flower", snowLotus: true, name: "雪山永凍冰蓮" },
+      { id: "z4_n2", x: 475, y: 335, type: "flower", snowLotus: true, name: "雪山永凍冰蓮" },
+      { id: "z4_n3", x: 350, y: 155, type: "crystal", perfect: true, name: "永凍冰晶礦脈" },
+      { id: "z4_n4", x: 145, y: 135, type: "chest", legendary: true, name: "冰龍巢穴傳說寶箱" }
     ];
-    const monsters = assignWildShiny([
-      { id: "m_sn1", x: 310, y: 260, lv: 42, type: "skull", name: "寒霜骷髏騎士" },
-      { id: "m_sn2", x: 510, y: 270, lv: 52, type: "boss", isBoss: true, name: "💀 遠古永凍冰霜龍王 Lv.52" }
+    const monsters = initPatrolMonsters([
+      { id: "m_z4_1", x: 255, y: 245, lv: 35, type: "skull", name: "寒霜骷髏騎士" },
+      { id: "m_z4_2", x: 445, y: 245, lv: 40, type: "bamboo", name: "極地冰晶雪怪" },
+      { id: "m_z4_3", x: 565, y: 260, lv: 48, type: "boss", isBoss: true, name: "遠古永凍冰霜龍王" }
     ]);
     const portals = [
-      { id: "p_sn_back", name: "🏖️ 返回翡翠海岸", x: 55, y: 340, targetZone: "emerald_coast", targetX: 610, targetY: 340, icon: "stairs" },
-      { id: "p_sn_next", name: "🌋 前往熔岩火山 (Lv.60)", x: 645, y: 340, targetZone: "magma_volcano", targetX: 65,  targetY: 340, icon: "stairs" }
+      { id: "p_z4_to_z3", name: "⬅ 返回【第三區：翡翠海岸】", x: 36, y: 260, targetZone: "zone3_coast", targetX: 615, targetY: 260, icon: "stairs" },
+      { id: "p_z4_to_z5", name: "前往【第五區：熔岩火山】➔", x: 655, y: 260, targetZone: "zone5_volcano", targetX: 65, targetY: 260, icon: "stairs" }
     ];
 
     return {
-      id: "frost_snowfield", name: "霜語極寒雪原", recLv: 45, bgm: "canyon", theme: "snow",
-      rain: true, fog: false, hasRiver: false, width: 700, height: 540,
-      dirtBlobs: [{ cx: 350, cy: 270, rx: 300, ry: 200 }],
-      groundDetails: generateGroundDetails(700, 540, 35),
-      trees: [], decos, nodes, npcs: [], monsters, portals
+      id: "zone4_snow", name: "4. 霜語極寒雪原", recLv: 35, bgm: "canyon", theme: "snow",
+      rain: true, fog: false, hasRiver: false, width: 700, height: 520,
+      dirtBlobs: [{ cx: 350, cy: 260, rx: 265, ry: 170 }],
+      groundDetails: generateGroundDetails(700, 520, 30),
+      trees: [{ x: 30, y: 25 }, { x: 630, y: 25 }], decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 6. 赤紅熔岩火山帶 (線性第 5 區) =================
-  function buildMagmaVolcano() {
+  // ================= 第 5 區：赤紅熔岩火山帶 (700x520 Lv.55~75) =================
+  function buildZone5Volcano() {
     const decos = [
-      { id: "obs_mg_1", x: 420, y: 250, sprite: "boulder_block", w: 22, h: 20, solid: true, obstacleType: "boulder" }
+      { id: "obs_z5_rock", x: 495, y: 175, sprite: "boulder_block", w: 22, h: 20, solid: true, obstacleType: "boulder" }
     ];
     const nodes = [
-      { id: "mg_n1", x: 225, y: 215, type: "crystal", obsidianNode: true, name: "🔥 熔岩黑曜石簇" },
-      { id: "mg_n2", x: 545, y: 245, type: "chest", legendary: true, name: "火山熔岩神器寶箱" }
+      { id: "z5_n1", x: 225, y: 195, type: "crystal", obsidianNode: true, name: "熔岩黑曜石簇" },
+      { id: "z5_n2", x: 445, y: 345, type: "crystal", obsidianNode: true, name: "熔岩黑曜石簇" },
+      { id: "z5_n3", x: 545, y: 135, type: "chest", legendary: true, name: "火山熔岩神器寶箱" }
     ];
-    const monsters = assignWildShiny([
-      { id: "m_mg1", x: 310, y: 270, lv: 56, type: "skull", name: "熔岩黑鎧魔將" },
-      { id: "m_mg2", x: 510, y: 270, lv: 65, type: "boss", isBoss: true, name: "💀 紅蓮火山龍皇 Lv.65" }
+    const monsters = initPatrolMonsters([
+      { id: "m_z5_1", x: 265, y: 265, lv: 55, type: "skull", name: "熔岩黑鎧魔將" },
+      { id: "m_z5_2", x: 435, y: 265, lv: 62, type: "skull", name: "煉獄炎魔衛士" },
+      { id: "m_z5_3", x: 565, y: 260, lv: 72, type: "boss", isBoss: true, name: "紅蓮火山龍皇" }
     ]);
     const portals = [
-      { id: "p_mg_back", name: "❄️ 返回極寒雪原", x: 55, y: 340, targetZone: "frost_snowfield", targetX: 610, targetY: 340, icon: "stairs" },
-      { id: "p_mg_sky",  name: "👑 前往天界浮空群島 (終局)", x: 645, y: 340, targetZone: "sky_archipelago", targetX: 65, targetY: 340, icon: "stairs" }
+      { id: "p_z5_to_z4", name: "⬅ 返回【第四區：霜語雪原】", x: 36, y: 260, targetZone: "zone4_snow", targetX: 615, targetY: 260, icon: "stairs" },
+      { id: "p_z5_to_z6", name: "前往【第六區：天界聖殿】➔", x: 655, y: 260, targetZone: "zone6_sky", targetX: 65, targetY: 260, icon: "stairs" }
     ];
 
     return {
-      id: "magma_volcano", name: "赤紅熔岩火山帶", recLv: 60, bgm: "abyss", theme: "volcano",
-      rain: false, fog: false, hasRiver: false, width: 700, height: 540,
-      dirtBlobs: [{ cx: 350, cy: 275, rx: 300, ry: 200 }],
-      groundDetails: generateGroundDetails(700, 540, 35),
+      id: "zone5_volcano", name: "5. 赤紅熔岩火山", recLv: 55, bgm: "abyss", theme: "volcano",
+      rain: false, fog: false, hasRiver: false, width: 700, height: 520,
+      dirtBlobs: [{ cx: 350, cy: 260, rx: 265, ry: 170 }],
+      groundDetails: generateGroundDetails(700, 520, 30),
       trees: [], decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 7. 深淵星隕聖殿 (隱藏支線區) =================
-  function buildAbyssSanctum() {
+  // ================= 第 6 區：天界浮空群島與無盡之塔入口 (700x520 Lv.80~100) =================
+  function buildZone6Sky() {
     const decos = [
-      { id: "brz_ab_1", x: 280, y: 325, sprite: "brazier_off", w: 18, h: 18, solid: true, isBrazier: true }
+      { x: 335, y: 395, sprite: "sky_airship", w: 40, h: 32, solid: true },
+      { x: 245, y: 195, sprite: "deco_lantern", w: 16, h: 20, solid: true },
+      { x: 455, y: 195, sprite: "deco_lantern", w: 16, h: 20, solid: true }
     ];
     const nodes = [
-      { id: "ab_n1", x: 115, y: 115, type: "chest", legendary: true, name: "🟣 深淵星隕神器寶箱" }
+      { id: "z6_n1", x: 215, y: 315, type: "flower", goldLeafNode: true, name: "世界樹神聖金葉" },
+      { id: "z6_n2", x: 485, y: 315, type: "flower", goldLeafNode: true, name: "世界樹神聖金葉" },
+      { id: "z6_n3", x: 235, y: 155, type: "crystal", perfect: true, name: "天界星隕神鐵" },
+      { id: "z6_n4", x: 465, y: 155, type: "crystal", perfect: true, name: "天界星隕神鐵" },
+      { id: "z6_n5", x: 350, y: 95,  type: "chest", legendary: true, name: "破曉天空神殿至高寶箱" }
     ];
-    const monsters = assignWildShiny([
-      { id: "m_ab1", x: 280, y: 200, lv: 25, type: "boss", isBoss: true, name: "💀 深淵赤炎龍皇 Lv.25" }
+    const monsters = initPatrolMonsters([
+      { id: "m_z6_1", x: 265, y: 245, lv: 82, type: "skull", name: "星宮黃金聖衛" },
+      { id: "m_z6_2", x: 435, y: 245, lv: 88, type: "skull", name: "天界審判騎士" },
+      { id: "m_z6_3", x: 350, y: 165, lv: 99, type: "boss", isBoss: true, name: "破曉星辰神龍皇" }
     ]);
     const portals = [
-      { id: "p_ab_back", name: "🕳️ 返回蘑菇洞窟", x: 280, y: 415, targetZone: "mushroom_cave", targetX: 280, targetY: 80, icon: "stairs" }
+      { id: "p_z6_to_z5", name: "⬅ 返回【第五區：熔岩火山】", x: 36, y: 260, targetZone: "zone5_volcano", targetX: 615, targetY: 260, icon: "stairs" },
+      { id: "p_z6_to_tower", name: "進入【無盡試煉之塔 100層】", x: 645, y: 260, targetZone: "endless_tower", targetX: 250, targetY: 350, icon: "tower" }
     ];
 
     return {
-      id: "abyss_sanctum", name: "深淵星隕聖殿", recLv: 25, bgm: "abyss", theme: "cave",
-      rain: false, fog: true, hasRiver: false, width: 560, height: 460,
-      dirtBlobs: [{ cx: 280, cy: 235, rx: 195, ry: 160 }],
-      groundDetails: generateGroundDetails(560, 460, 25),
+      id: "zone6_sky", name: "6. 天界浮空聖殿", recLv: 80, bgm: "forest", theme: "sky",
+      rain: false, fog: false, hasRiver: false, width: 700, height: 520,
+      dirtBlobs: [{ cx: 350, cy: 260, rx: 265, ry: 175 }],
+      groundDetails: generateGroundDetails(700, 520, 28),
       trees: [], decos, nodes, npcs: [], monsters, portals
     };
   }
 
-  // ================= 8. 天界浮空群島 (終局主線區) =================
-  function buildSkyArchipelago() {
-    const decos = [
-      { x: 335, y: 405, sprite: "sky_airship", w: 40, h: 32, solid: true }
-    ];
-    const nodes = [
-      { id: "sky_n1", x: 195, y: 265, type: "flower", goldLeafNode: true, name: "🌳 世界樹神聖金葉" },
-      { id: "sky_n2", x: 350, y: 125, type: "chest", legendary: true, name: "👑 破曉天空神殿至高寶箱" }
-    ];
-    const monsters = assignWildShiny([
-      { id: "m_sky1", x: 350, y: 220, lv: 95, type: "boss", isBoss: true, name: "👑 破曉星辰神龍皇 Lv.95" }
-    ]);
-    const portals = [
-      { id: "p_sky_back", name: "🌋 返回熔岩火山", x: 55, y: 340, targetZone: "magma_volcano", targetX: 610, targetY: 340, icon: "stairs" }
-    ];
-
-    return {
-      id: "sky_archipelago", name: "天界浮空群島", recLv: 85, bgm: "forest", theme: "sky",
-      rain: false, fog: false, hasRiver: false, width: 700, height: 540,
-      dirtBlobs: [{ cx: 350, cy: 270, rx: 300, ry: 200 }],
-      groundDetails: generateGroundDetails(700, 540, 30),
-      trees: [], decos, nodes, npcs: [], monsters, portals
-    };
-  }
-
-  // ================= 9. 100 層《無盡試煉之塔》 =================
+  // ================= 終局：100 層《無盡試煉之塔》 =================
   function generateTowerFloor(floorNum = 1) {
     const recLv = Math.max(3, floorNum * 3);
     return {
@@ -360,35 +422,60 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       bgm: "abyss", theme: (floorNum % 3 === 0) ? "sky" : (floorNum % 2 === 0) ? "canyon" : "cave",
       rain: false, fog: (floorNum % 4 === 0), hasRiver: false, width: 520, height: 420,
       dirtBlobs: [{ cx: 260, cy: 210, rx: 185, ry: 145 }],
-      groundDetails: generateGroundDetails(520, 420, 20),
-      trees: [],
-      decos: [{ id: `brz_tw_${floorNum}`, x: 255, y: 310, sprite: "brazier_off", w: 18, h: 18, solid: true, isBrazier: true }],
-      nodes: [{ id: `tw_n1_${floorNum}`, x: 255, y: 185, type: "chest", legendary: true, name: `第 ${floorNum} 層試煉寶箱` }],
+      groundDetails: generateGroundDetails(520, 420, 22),
+      trees: [{ x: 20, y: 20 }, { x: 460, y: 20 }],
+      decos: [
+        { id: `brz_tw_${floorNum}`, x: 255, y: 310, sprite: "brazier_off", w: 18, h: 18, solid: true, isBrazier: true }
+      ],
+      nodes: [
+        { id: `tw_n1_${floorNum}`, x: 135, y: 185, type: "crystal", perfect: true, name: "試煉星隕礦" },
+        { id: `tw_n2_${floorNum}`, x: 375, y: 185, type: "chest", legendary: (floorNum % 5 === 0), name: `第 ${floorNum} 層試煉寶箱` }
+      ],
       npcs: [],
-      monsters: [{ id: `tw_boss_${floorNum}`, x: 255, y: 145, lv: recLv, type: "boss", isBoss: true, isShiny: true, name: `💀 第 ${floorNum} 層守關魔神` }],
+      monsters: initPatrolMonsters([
+        {
+          id: `tw_boss_${floorNum}`, x: 255, y: 155, lv: recLv,
+          type: (floorNum % 5 === 0) ? "boss" : "skull",
+          isBoss: (floorNum % 5 === 0), isShiny: (floorNum % 2 === 0),
+          name: (floorNum % 5 === 0) ? `第 ${floorNum} 層守關魔神` : `試煉塔幻影衛兵`
+        }
+      ]),
       portals: [
-        { id: "p_tw_next", name: `⬆️ 登上第 ${floorNum + 1} 層`, x: 255, y: 55, targetZone: "endless_tower_next", targetX: 250, targetY: 350, icon: "stairs" },
-        { id: "p_tw_exit", name: "⛺ 撤退返回曙光營地", x: 255, y: 385, targetZone: "camp_hub", targetX: 250, targetY: 220, icon: "stairs" }
+        { id: "p_tw_next", name: `登上第 ${floorNum + 1} 層`, x: 255, y: 55, targetZone: "endless_tower_next", targetX: 250, targetY: 350, icon: "stairs" },
+        { id: "p_tw_exit", name: "返回【0.曙光營地】", x: 255, y: 385, targetZone: "camp_hub", targetX: 250, targetY: 220, icon: "stairs" }
       ]
     };
   }
 
+  // Ordered Zone List for Teleport Menu (必須步行進入解鎖後才可傳送)
+  const ORDERED_WORLD_ZONES = [
+    { id: "camp_hub",       name: "0. 曙光露營基地 (安全區)", x: 250, y: 220, desc: "新手大本營，設有鐵匠、公會、星象師、行商與兩座可進入的帳篷。" },
+    { id: "zone1_forest",   name: "1. 翠風迷霧森林 (Lv.1~5)", x: 85,  y: 270, desc: "由營地東門進入。盛產藍晶鐵礦、紅傘微光菇與翠風太陽花。" },
+    { id: "cave1_mushroom", name: "1-B. 微光蘑菇洞窟 (Lv.5~9)", x: 280, y: 390, desc: "由第一區北方洞口進入。含火盆驅霧機關、裂縫炸彈密室與閃光秘銀。" },
+    { id: "zone2_canyon",   name: "2. 流沙繩索峽谷 (Lv.10~18)", x: 85,  y: 270, desc: "由第一區東岸進入。盛產流沙秘銀礦與綠洲太陽花。" },
+    { id: "zone3_coast",    name: "3. 翡翠沉船海岸 (Lv.20~30)", x: 85,  y: 260, desc: "由第二區東門進入。設有海濱釣魚點、飛爪鉤孤島與古代帆船。" },
+    { id: "zone4_snow",     name: "4. 霜語極寒雪原 (Lv.35~50)", x: 85,  y: 260, desc: "由第三區東門進入。盛產雪山冰蓮与永凍冰晶，棲息冰霜龍王。" },
+    { id: "zone5_volcano",  name: "5. 赤紅熔岩火山 (Lv.55~75)", x: 85,  y: 260, desc: "由第四區東門進入。盛產熔岩黑曜石，盤踞紅蓮火山龍皇。" },
+    { id: "zone6_sky",      name: "6. 天界浮空聖殿 (Lv.80~100)", x: 85, y: 260, desc: "由第五區東門進入。盛產世界樹金葉與天界星隕鐵，通往無盡之塔。" },
+    { id: "endless_tower",  name: "終局：無盡試煉之塔 (100層)", x: 250, y: 350, desc: "由第六區東側或解鎖後進入。100層隨機迷宮，高機率遭遇閃光怪。" }
+  ];
+
   const MAPS_DB = {
     camp_hub: buildCampHub(),
-    tent_guild: buildTentGuild(),
-    tent_forge: buildTentForge(),
-    forest_world: buildForestWorld(),
-    mushroom_cave: buildMushroomCave(),
-    canyon_world: buildCanyonWorld(),
-    emerald_coast: buildEmeraldCoast(),
-    frost_snowfield: buildFrostSnowfield(),
-    magma_volcano: buildMagmaVolcano(),
-    abyss_sanctum: buildAbyssSanctum(),
-    sky_archipelago: buildSkyArchipelago(),
+    tent_guild: buildTentGuildInterior(),
+    tent_forge: buildTentForgeInterior(),
+    zone1_forest: buildZone1Forest(),
+    cave1_mushroom: buildCave1Mushroom(),
+    zone2_canyon: buildZone2Canyon(),
+    zone3_coast: buildZone3Coast(),
+    zone4_snow: buildZone4Snow(),
+    zone5_volcano: buildZone5Volcano(),
+    zone6_sky: buildZone6Sky(),
     endless_tower: generateTowerFloor(1)
   };
 
   window.Aetheria.Data.Maps = {
+    ORDERED_WORLD_ZONES: ORDERED_WORLD_ZONES,
     getMap(zoneId) {
       return MAPS_DB[zoneId] || MAPS_DB.camp_hub;
     },
@@ -398,14 +485,15 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     refreshAllResources() {
       MAPS_DB.camp_hub = buildCampHub();
-      MAPS_DB.forest_world = buildForestWorld();
-      MAPS_DB.mushroom_cave = buildMushroomCave();
-      MAPS_DB.canyon_world = buildCanyonWorld();
-      MAPS_DB.emerald_coast = buildEmeraldCoast();
-      MAPS_DB.frost_snowfield = buildFrostSnowfield();
-      MAPS_DB.magma_volcano = buildMagmaVolcano();
-      MAPS_DB.abyss_sanctum = buildAbyssSanctum();
-      MAPS_DB.sky_archipelago = buildSkyArchipelago();
+      MAPS_DB.tent_guild = buildTentGuildInterior();
+      MAPS_DB.tent_forge = buildTentForgeInterior();
+      MAPS_DB.zone1_forest = buildZone1Forest();
+      MAPS_DB.cave1_mushroom = buildCave1Mushroom();
+      MAPS_DB.zone2_canyon = buildZone2Canyon();
+      MAPS_DB.zone3_coast = buildZone3Coast();
+      MAPS_DB.zone4_snow = buildZone4Snow();
+      MAPS_DB.zone5_volcano = buildZone5Volcano();
+      MAPS_DB.zone6_sky = buildZone6Sky();
     }
   };
 })();
