@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria)</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="app-container">
+  <!-- ================= 上半屏：像素大世界與戰鬥視覺舞台 (46%) ================= -->
+  <div id="upper-screen">
+    <!-- 頂部雙側分層 HUD（絕不重疊） -->
+    <div id="hud-overlay">
+      <!-- 左上角：紅心列(由 Canvas 繪製於最頂) + 等級武器 + 同行戰寵 + 公會階級 -->
+      <div class="hud-left-stack">
+        <div class="na-badge" id="hud-lv">Lv.1 蒼藍劍士・新手忍刀</div>
+        <div class="hud-sub-row">
+          <span class="na-badge badge-pet" id="hud-pet">🐾 藍水滴史萊姆</span>
+          <span class="na-badge badge-guild" id="hud-guild">🛡️ F級見習</span>
+        </div>
+      </div>
+
+      <!-- 右上角：三色區域危險度雷達 + 釘選鍛造配方 + 當前主線任務追蹤 -->
+      <div class="hud-right-stack">
+        <div style="display:flex; gap:4px; align-items:center;">
+          <span class="na-badge danger-safe" id="hud-zone">🟢 中央露營基地 (Lv.1)</span>
+          <button class="audio-btn" id="btn-bgm-toggle" onclick="Aetheria.Audio.toggleMute()" title="音效開關">🔊</button>
+        </div>
+        <div class="pinned-box" id="pinned-recipe">
+          📌 潮汐破盾刀：藍晶礦 <span id="pin-iron">0</span>/5｜紅傘菇 <span id="pin-herb">0</span>/3
+        </div>
+        <div class="quest-tracker" id="hud-quest">
+          📜 主線：找營地鐵匠巴爾對話 (0/1)
+        </div>
+      </div>
+    </div>
+
+    <!-- 主世界 256x144 原生 16-bit 捲動視窗 -->
+    <canvas id="world-canvas" width="256" height="144"></canvas>
+
+    <!-- 洞穴火把戰爭迷霧遮罩 (進入地下迷宮時自動啟用) -->
+    <div id="fog-overlay"></div>
+
+    <!-- 回合制 Break & Boost 戰鬥舞台覆蓋層 -->
+    <div id="battle-stage">
+      <canvas id="battle-canvas" width="256" height="144"></canvas>
+      <div class="battle-hud-layer">
+        <!-- 左側：主角與戰寵狀態 + BP 增幅珠 -->
+        <div class="battle-hero-hud">
+          <div class="bp-orbs" id="hero-bp-orbs"></div>
+          <div class="na-badge" id="battle-streak-tag" style="font-size:10px; color:#fbd000;">🔥 連勝 x0</div>
+        </div>
+
+        <!-- 右側：魔物名稱、護盾值、弱點屬性、HP 血條 -->
+        <div class="monster-hud">
+          <div class="monster-title-row">
+            <span id="enemy-name">翠風竹子妖 Lv.2</span>
+            <span id="enemy-shiny-tag" style="display:none; color:#fbd000;">✨閃光</span>
+          </div>
+          <div class="shield-row">
+            <span class="shield-badge" id="enemy-shield">🛡️ 2</span>
+            <span class="weak-text" id="enemy-weak">弱點: 🗡️刀 / 🔥火</span>
+          </div>
+          <div class="hp-bar-outer">
+            <div class="hp-bar-inner" id="enemy-hp-bar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 浮動通知橫幅 -->
+    <div id="toast-banner">系統提示</div>
+  </div>
+
+  <!-- ================= 下半屏：日式木框與羊皮紙控制台 (54%) ================= -->
+  <div id="lower-screen">
+
+    <!-- 【面板 1】大世界探索控制台 -->
+    <div id="panel-explore" class="sub-panel active">
+      <!-- 頂部 6 大核心系統木牌導航列 -->
+      <div class="quick-nav">
+        <button class="na-btn highlight" onclick="Aetheria.UI.openWorldMapModal()">🗺️ 傳送</button>
+        <button class="na-btn" onclick="Aetheria.UI.openGuildModal()">🛡️ 公會</button>
+        <button class="na-btn" onclick="Aetheria.UI.openForgeModal()">⚒️ 鍛造</button>
+        <button class="na-btn" onclick="Aetheria.UI.openJobPetModal()">🐾 職/寵</button>
+        <button class="na-btn" onclick="Aetheria.UI.openAstrolabeModal()">🔮 調頻</button>
+        <button class="na-btn" onclick="Aetheria.UI.openTestQuizModal()">📜 題型</button>
+      </div>
+
+      <!-- 羊皮紙探索日誌與環境提示 -->
+      <div id="explore-log">
+        ✨ <b>歡迎來到艾瑟瑞亞大陸！</b><br>
+        • 按住方向鍵平滑移動，走近<b>👴鐵匠/🧙‍♀️星象師/🛡️公會長</b>或<b>💎閃光素材</b>按【A鍵】互動。
+      </div>
+
+      <!-- 虛擬十字鍵 D-Pad + 右側動作鍵群 -->
+      <div class="controls-pads">
+        <div class="dpad">
+          <div></div>
+          <button class="dpad-btn" id="btn-up">▲</button>
+          <div></div>
+          <button class="dpad-btn" id="btn-left">◀</button>
+          <button class="dpad-btn dpad-center" onclick="Aetheria.Explore.interactNearby()">調查</button>
+          <button class="dpad-btn" id="btn-right">▶</button>
+          <div></div>
+          <button class="dpad-btn" id="btn-down">▼</button>
+          <div></div>
+        </div>
+
+        <div class="action-cluster">
+          <button class="btn-action-a" onclick="Aetheria.Explore.interactNearby()">
+            <span class="action-main-txt">A 鍵</span>
+            <span class="action-sub-txt" id="a-btn-hint">對話 / 採集</span>
+          </button>
+          <div style="display:flex; gap:4px;">
+            <button class="na-btn" style="padding:4px 7px;" onclick="Aetheria.Explore.useBomb()">💣 炸彈</button>
+            <button class="na-btn" style="padding:4px 7px;" onclick="Aetheria.Explore.warpToCamp()">⛺ 回營地</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 【面板 2】NPC 互動對話與《歧路旅人》式旅人技能面板 -->
+    <div id="panel-dialogue" class="sub-panel">
+      <div class="dialogue-header">
+        <canvas id="npc-portrait-canvas" width="36" height="36"></canvas>
+        <div class="npc-title-box">
+          <div id="npc-name-label" style="color:var(--na-gold); font-weight:900; font-size:14px;">👴 鐵匠大叔・巴爾</div>
+          <div id="npc-role-label" style="font-size:11px; color:#cbd5e1;">曙光營地首席武器師</div>
+        </div>
+        <button class="na-btn" style="margin-left:auto; padding:4px 10px;" onclick="Aetheria.UI.closePanelToExplore()">✖ 離開</button>
+      </div>
+
+      <div class="dialogue-scroll-box" id="npc-speech-text">
+        對話內容載入中...
+      </div>
+
+      <!-- 旅人技能 (Path Actions) + 專屬服務按鈕區 -->
+      <div class="path-actions-title">⚡ 發動【共鳴旅人指令】（需答題檢定）或選擇服務：</div>
+      <div id="npc-action-buttons" class="npc-btn-grid"></div>
+    </div>
+
+    <!-- 【面板 3】戰鬥指令與 7 大題型詠唱面板 -->
+    <div id="panel-battle" class="sub-panel">
+      <div class="battle-cmd-header">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span style="color:var(--na-gold); font-weight:900;" id="battle-phase-title">⚡ 詠唱符文破盾</span>
+          <span id="timer-badge" style="display:none;">⏱️ 12s</span>
+        </div>
+        <div style="display:flex; gap:4px;">
+          <button class="na-btn" id="btn-boost" onclick="Aetheria.Battle.toggleBoost()">🔥 Boost</button>
+          <button class="na-btn" id="btn-tame" style="display:none; border-color:#5ac54f;" onclick="Aetheria.Battle.attemptTame()">🍎 收服</button>
+          <button class="na-btn" onclick="Aetheria.Battle.useHealPotion()">🧪 補血</button>
+          <button class="na-btn" onclick="Aetheria.Battle.fleeBattle()">💨 撤退</button>
+        </div>
+      </div>
+
+      <!-- 題目卷軸框 -->
+      <div class="quiz-scroll-box">
+        <div class="quiz-meta">
+          <span id="q-subject-tag">[中文・龍語古卷]</span>
+          <span id="q-type-tag">四選一・疾風連斬</span>
+        </div>
+        <div class="quiz-prompt" id="q-prompt-text">題目載入中...</div>
+        <!-- 科學/人文附圖縮略圖 (點擊開啟全屏燈箱) -->
+        <div id="q-diagram-container" class="quiz-diagram-thumb" style="display:none;" onclick="Aetheria.QuizUI.openLightbox()">
+          <div id="q-diagram-svg"></div>
+          <span style="font-size:10px; color:var(--na-gold);">🔍 點擊放大檢視圖片細節</span>
+        </div>
+      </div>
+
+      <!-- 7 大題型動態互動容器 -->
+      <div id="quiz-interactive-area"></div>
+    </div>
+
+    <!-- 【面板 4】多功能系統視窗 (公會/鐵匠鋪/轉職與戰寵/星象儀/無盡之塔) -->
+    <div id="panel-modal" class="sub-panel">
+      <div class="modal-header-bar">
+        <h3 id="modal-title">系統選單</h3>
+        <button class="na-btn" style="padding:3px 10px;" onclick="Aetheria.UI.closePanelToExplore()">✖ 返回探索</button>
+      </div>
+      <div id="modal-body" class="modal-content-scroll"></div>
+    </div>
+
+  </div>
+
+  <!-- 科學/人文圖片全屏放大檢視燈箱 -->
+  <div id="image-lightbox" onclick="Aetheria.QuizUI.closeLightbox()">
+    <div style="color:var(--na-gold); font-weight:900; margin-bottom:10px;">🖼️ 古文明圖卷（點擊任意處關閉）</div>
+    <div id="lightbox-content"></div>
+  </div>
+</div>
+
+<!-- ================= 5 層解耦模組化載入順序 ================= -->
+<!-- Layer 1: 核心狀態存檔與 8-bit 音效引擎 (Pack 1B) -->
+<script src="js/engine/save-state.js"></script>
+<script src="js/engine/audio-synth.js"></script>
+
+<!-- Layer 2: 靜態資料庫與逐像素點陣圖資庫 (Pack 2 & Pack 3) -->
+<script src="js/data/pixel-sprites.js"></script>
+<script src="js/data/world-maps.js"></script>
+<script src="js/data/items-crafting.js"></script>
+<script src="js/data/jobs-monsters.js"></script>
+<script src="js/data/quests-npcs.js"></script>
+
+<!-- Layer 3: 四科題庫與智慧權重轉接器 (Pack 3) -->
+<script src="questions/question-bridge.js"></script>
+
+<!-- Layer 4 & 5: 相機渲染、探索採集、破防戰鬥、公會養成系統 (Pack 4 & Pack 5) -->
+<script src="js/engine/camera-renderer.js"></script>
+<script src="js/systems/exploration-gather.js"></script>
+<script src="js/systems/quiz-widgets.js"></script>
+<script src="js/systems/battle-break-boost.js"></script>
+<script src="js/systems/progression-town.js"></script>
+
+</body>
+</html>
