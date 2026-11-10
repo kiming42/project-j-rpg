@@ -1,16 +1,15 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 六大職業、戰寵收服與魔物生態資料庫 (jobs-monsters.js)
- * 包含：6大職業被動天賦、4款戰寵協同技能(含閃光加成)、魔物護盾弱點與Break掉寶
+ * Project J：艾瑟瑞亞的破曉 — 六大職業、戰寵收服與魔物生態資料庫 (jobs-monsters.js - v3.5)
+ * 升級：實裝公會 S 級 / SS 級特權「異色閃光魔物 (Shiny) 出現率翻倍 (16%)」！
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
 
 (function() {
-  // 1. 六大職業轉職系統 (隨等級與祠堂解鎖，可隨時於控制台自由切換)
   const JOBS = {
     swordsman: {
       id: "swordsman",
-      name: "🗡️ 蒼藍劍士",
+      name: "蒼藍劍士",
       unlockLv: 1,
       atkMult: 1.15,
       title: "破陣先鋒",
@@ -18,7 +17,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     scholar: {
       id: "scholar",
-      name: "📖 符文學者",
+      name: "符文學者",
       unlockLv: 5,
       atkMult: 1.25,
       title: "古語解讀者",
@@ -26,15 +25,15 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     hunter: {
       id: "hunter",
-      name: "🏹 荒野獵人",
+      name: "荒野獵人",
       unlockLv: 12,
       atkMult: 1.3,
       title: "靈獸馴師",
-      passiveDesc: "戰寵每回合協同攻擊傷害翻倍，且收服野生魔物成功率提升至 100%！"
+      passiveDesc: "可同時攜帶 2 隻戰寵雙重助戰（觸發雙寵技能），戰寵協同傷害翻倍！"
     },
     thief: {
       id: "thief",
-      name: "⚡ 暗影盜賊",
+      name: "暗影盜賊",
       unlockLv: 20,
       atkMult: 1.4,
       title: "秘境疾風",
@@ -42,37 +41,36 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     alchemist: {
       id: "alchemist",
-      name: "⚗️ 煉金藥師",
+      name: "煉金藥師",
       unlockLv: 30,
       atkMult: 1.5,
       title: "真理調合師",
-      passiveDesc: "每回合自動回復 15% HP，且四選一題目自動排除 1 個錯誤干擾項！"
+      passiveDesc: "每回合答對自動回復 15% 最大生命，且四選一題目自動排除 1 個錯誤選項！"
     },
     archmage: {
       id: "archmage",
-      name: "🌌 星界魔導",
+      name: "星界魔導",
       unlockLv: 50,
       atkMult: 1.8,
       title: "破曉大宗師",
-      passiveDesc: "全屬性額外削盾 +1，進入戰鬥時自帶 3 顆 BP 增幅珠，英文盲串暴擊 x3 倍！"
+      passiveDesc: "全屬性額外削盾 +1，進場自帶 3 顆 BP 增幅珠，英文盲串暴擊 x3 倍！"
     }
   };
 
-  // 2. 四款像素戰寵圖鑑與同行助戰技能 (支援收服與 ✨異色閃光版 Shiny)
   const PETS = {
     pet_slime: {
       id: "pet_slime",
-      name: "💧 藍水滴史萊姆",
+      name: "藍水滴史萊姆",
       spriteKey: "pet_slime",
       shinySpriteKey: "pet_slime_shiny",
       skillName: "水滴治癒",
-      skillDesc: "每回合答對後，自動為 Justin 回復 12 點生命值並追加水滴連擊。",
+      skillDesc: "每回合答對後，自動回復 12 點生命值並追加 20% 水滴連擊。",
       healPerTurn: 12,
       bonusDmgRatio: 0.2
     },
     pet_dragon: {
       id: "pet_dragon",
-      name: "🔥 赤炎小幼龍",
+      name: "赤炎小幼龍",
       spriteKey: "pet_dragon",
       shinySpriteKey: "pet_dragon_shiny",
       skillName: "龍炎吐息",
@@ -82,7 +80,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     pet_fox: {
       id: "pet_fox",
-      name: "🦊 雷光九尾靈狐",
+      name: "雷光九尾靈狐",
       spriteKey: "pet_fox",
       shinySpriteKey: "pet_fox_shiny",
       skillName: "雷鳴共鳴",
@@ -93,18 +91,17 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     pet_icedragon: {
       id: "pet_icedragon",
-      name: "❄️ 永凍冰晶幼龍",
+      name: "永凍冰晶幼龍",
       spriteKey: "pet_icedragon",
       shinySpriteKey: "pet_icedragon_shiny",
       skillName: "絕對零度",
-      skillDesc: "【傳說戰寵】每回合追加 50% 冰霜傷害，且開局自動削減敵人 1 點護盾！",
+      skillDesc: "每回合追加 50% 冰霜傷害、回復 10 點生命，且開局自動削減敵人 1 點護盾！",
       healPerTurn: 10,
       bonusDmgRatio: 0.5,
       openingShieldBreak: 1
     }
   };
 
-  // 3. 魔物原型與 Break 破防掉寶表
   const MONSTER_TEMPLATES = {
     bamboo: {
       type: "bamboo",
@@ -112,12 +109,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       baseHp: 55,
       hpPerLv: 16,
       baseShield: 2,
-      weak: "🗡️忍刀 / 🔥火遁",
+      weak: "忍刀 / 火遁",
       normalDrop: "iron",
       breakDrop: "coreBamboo",
       tamePetId: "pet_fox",
       expBase: 24,
-      goldBase: 18
+      goldBase: 20
     },
     skull: {
       type: "skull",
@@ -125,12 +122,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       baseHp: 85,
       hpPerLv: 22,
       baseShield: 3,
-      weak: "🌊水遁 / ⚡雷鳴",
+      weak: "水遁 / 雷鳴",
       normalDrop: "mithril",
       breakDrop: "coreSkull",
       tamePetId: "pet_dragon",
       expBase: 38,
-      goldBase: 32
+      goldBase: 35
     },
     boss: {
       type: "boss",
@@ -138,7 +135,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       baseHp: 220,
       hpPerLv: 30,
       baseShield: 5,
-      weak: "❄️冰晶 / 🌌星隕",
+      weak: "冰晶 / 星隕",
       normalDrop: "obsidian",
       breakDrop: "coreDragon",
       tamePetId: "pet_icedragon",
@@ -147,15 +144,16 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   };
 
-  // 根據地圖魔物節點生成完整戰鬥實例 (自動判定 8% 異色閃光魔物 Shiny)
   function createBattleEnemy(mapMonsterNode) {
     const mType = mapMonsterNode ? (mapMonsterNode.type || "bamboo") : "bamboo";
     const tpl = MONSTER_TEMPLATES[mType] || MONSTER_TEMPLATES.bamboo;
     const lv = mapMonsterNode ? (mapMonsterNode.lv || 2) : 2;
     const isBoss = Boolean(mapMonsterNode && mapMonsterNode.isBoss);
 
-    // 8% 機率遇到全身發金光的異色閃光魔物 (若收服可直接獲得 Shiny 閃光戰寵！)
-    const isShiny = Boolean(mapMonsterNode && mapMonsterNode.forceShiny) || (Math.random() < 0.08);
+    // 公會 S 級 / SS 級特權：異色閃光怪出現機率翻倍 (8% -> 16%)
+    const state = (window.Aetheria.State && window.Aetheria.State.data) || {};
+    const shinyRate = (state.guildRank === "S" || state.guildRank === "SS") ? 0.16 : 0.08;
+    const isShiny = Boolean(mapMonsterNode && (mapMonsterNode.forceShiny || mapMonsterNode.isShiny)) || (Math.random() < shinyRate);
 
     const maxHp = Math.round((tpl.baseHp + lv * tpl.hpPerLv) * (isBoss ? 1.6 : 1.0));
     const maxShield = isBoss ? Math.max(4, tpl.baseShield + Math.floor(lv / 6)) : tpl.baseShield + (lv >= 10 ? 1 : 0);
@@ -163,7 +161,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     return {
       id: mapMonsterNode ? mapMonsterNode.id : "wild_mon",
       type: mType,
-      name: (mapMonsterNode ? mapMonsterNode.name : "翠風竹子妖") + ` Lv.${lv}`,
+      name: (mapMonsterNode ? mapMonsterNode.name : "翠風竹子妖") + " Lv." + lv,
       lv: lv,
       isBoss: isBoss,
       isShiny: isShiny,
