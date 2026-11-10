@@ -49,7 +49,6 @@ body, html {
   box-shadow: 0 0 45px rgba(0,0,0,0.95);
 }
 
-/* 內嵌開源像素小圖標通用樣式 (代替 Emoji) */
 .px-icon {
   width: 16px;
   height: 16px;
@@ -57,6 +56,7 @@ body, html {
   margin-right: 4px;
   display: inline-block;
   image-rendering: pixelated;
+  flex-shrink: 0;
 }
 .px-icon-lg {
   width: 24px;
@@ -65,9 +65,10 @@ body, html {
   margin-right: 6px;
   display: inline-block;
   image-rendering: pixelated;
+  flex-shrink: 0;
 }
 
-/* ================= 0. 遊戲首頁封面 (Title Screen) ================= */
+/* ================= 0. 遊戲首頁封面 ================= */
 #title-screen {
   position: absolute;
   inset: 0;
@@ -156,10 +157,10 @@ body, html {
   opacity: 0.95;
 }
 
-/* ================= 上半屏：極簡清爽大世界舞台 (46%) ================= */
+/* ================= 上半屏：大世界舞台 (45%) ================= */
 #upper-screen {
   width: 100%;
-  height: 46%;
+  height: 45%;
   position: relative;
   background: #a8ba59;
   overflow: hidden;
@@ -181,7 +182,6 @@ body, html {
   background: radial-gradient(circle 95px at 50% 50%, rgba(0,0,0,0) 0%, rgba(16,12,24,0.78) 65%, rgba(6,4,10,0.96) 100%);
 }
 
-/* 極簡單行頂欄：左邊紅心旁顯示 Lv，右邊顯示區域名稱，絕不擋路！ */
 #hud-overlay {
   position: absolute;
   top: 6px; left: 60px; right: 8px;
@@ -193,7 +193,7 @@ body, html {
 }
 
 .na-badge {
-  background: rgba(20, 16, 19, 0.85);
+  background: rgba(20, 16, 19, 0.88);
   border: 2px solid var(--na-wood-light);
   color: #fff;
   padding: 3px 8px;
@@ -207,7 +207,7 @@ body, html {
 .danger-warn { color: #ffd166; border-color: #f4be78; }
 .danger-deadly { color: #ff758f; border-color: #ff595e; }
 
-/* ================= 戰鬥舞台 (純 DOM/CSS + 像素圖資) ================= */
+/* ================= 戰鬥舞台 ================= */
 #battle-stage {
   position: absolute;
   inset: 0;
@@ -242,12 +242,7 @@ body, html {
   min-width: 122px;
 }
 
-.bt-card-label {
-  font-size: 11px;
-  color: var(--na-wood-light);
-  font-weight: 900;
-}
-
+.bt-card-label { font-size: 11px; color: var(--na-wood-light); font-weight: 900; }
 .bp-orbs { display: flex; gap: 6px; padding: 2px 0; }
 .bp-orb {
   width: 12px; height: 12px;
@@ -453,10 +448,10 @@ body, html {
   white-space: nowrap;
 }
 
-/* ================= 下半屏：大字體清晰版日式木框控制台 (54%) ================= */
+/* ================= 下半屏：3x2 工整導航列與大字體控制台 (55%) ================= */
 #lower-screen {
   width: 100%;
-  height: 54%;
+  height: 55%;
   background: #282024;
   border-top: 3px solid var(--na-wood-light);
   display: flex;
@@ -470,25 +465,35 @@ body, html {
   height: 100%;
   display: none;
   flex-direction: column;
-  padding: 8px 10px;
+  padding: 7px 10px;
   overflow-y: auto;
 }
 .sub-panel.active { display: flex; }
 
+/* 改善排位：改為 3 欄 x 2 列寬敞木牌，圖標與文字單行水平居中，絕不斷行！ */
 .quick-nav {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 5px;
-  margin-bottom: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
 }
 
-/* 全面放大按鈕字體至 13px ~ 14px，清晰易讀 */
+.quick-nav .na-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 .na-btn {
   background: var(--na-wood-mid);
   color: #fff;
   border: 2px solid var(--na-outline);
   box-shadow: inset 0 2px 0 var(--na-wood-light), inset 0 -2px 0 var(--na-wood-dark), 0 2px 0 rgba(0,0,0,0.5);
-  padding: 7px 4px;
+  padding: 6px 8px;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 900;
@@ -531,30 +536,29 @@ body, html {
 .bag-slot-name { font-size: 13px; font-weight: 900; color: var(--na-scroll); }
 .bag-slot-count { font-size: 14px; font-weight: 900; color: var(--na-gold); margin-top: 3px; }
 
-/* 探索日誌框：整合主線與釘選配方，字體放大至 14px */
 #explore-log {
   background: var(--na-scroll);
   color: var(--na-outline);
   border: 3px solid var(--na-outline);
   box-shadow: inset 0 -3px 0 var(--na-scroll-dark);
   border-radius: 6px;
-  padding: 8px 10px;
-  font-size: 14px;
+  padding: 6px 10px;
+  font-size: 13px;
   font-weight: 900;
-  line-height: 1.5;
-  margin-bottom: 6px;
+  line-height: 1.4;
+  margin-bottom: 4px;
 }
 
 .log-quest-line {
   color: #7f2b1d;
   border-bottom: 1px dashed #b59b6d;
-  padding-bottom: 4px;
-  margin-bottom: 4px;
+  padding-bottom: 3px;
+  margin-bottom: 3px;
 }
 
 .log-pin-line {
   color: #1d3557;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .controls-pads {
@@ -567,8 +571,8 @@ body, html {
 
 .dpad {
   display: grid;
-  grid-template-columns: repeat(3, 48px);
-  grid-template-rows: repeat(3, 42px);
+  grid-template-columns: repeat(3, 46px);
+  grid-template-rows: repeat(3, 39px);
   gap: 4px;
 }
 
@@ -595,13 +599,13 @@ body, html {
 .action-cluster {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
 }
 
 .btn-action-a {
-  width: 82px;
-  height: 82px;
+  width: 78px;
+  height: 78px;
   border-radius: 50%;
   background: var(--na-gold);
   border: 3px solid var(--na-outline);
@@ -616,9 +620,8 @@ body, html {
 }
 .btn-action-a:active { transform: translateY(2px); }
 .action-main-txt { font-size: 16px; }
-.action-sub-txt { font-size: 12px; margin-top: 2px; }
+.action-sub-txt { font-size: 11px; margin-top: 2px; }
 
-/* NPC 對話與戰鬥題目面板 (全面放大字體至 15px ~ 16px) */
 .dialogue-header {
   display: flex;
   align-items: center;
@@ -785,14 +788,14 @@ body, html {
   border-bottom: 2px solid var(--na-wood-mid);
 }
 #modal-title { color: var(--na-gold); font-size: 16px; font-weight: 900; }
-.modal-content-scroll { font-size: 14px; line-height: 1.5; overflow-y: auto; flex: 1; }
+.modal-content-scroll { font-size: 14px; line-height: 1.45; overflow-y: auto; flex: 1; }
 
 .sys-card {
   background: #141013;
   border: 2px solid var(--na-wood-mid);
   border-radius: 6px;
-  padding: 9px 11px;
-  margin-bottom: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
   font-size: 14px;
 }
 .sys-card-scroll {
@@ -800,8 +803,8 @@ body, html {
   color: var(--na-outline);
   border: 3px solid var(--na-outline);
   border-radius: 6px;
-  padding: 9px 11px;
-  margin-bottom: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
   font-size: 14px;
 }
 
