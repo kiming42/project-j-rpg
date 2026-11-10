@@ -1,7 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — NPC單次指令鎖定、金幣商店與公會鍛造總管 (progression-town.js - v3.5)
- * 升級：1.NPC 旅人指令支援 onceKey 單次領取鎖定，防止無限刷素材與聲望
- *       2.整合「金幣物資補給商店 (GOLD_SHOP)」至工坊與行商奇奇介面，賦予金幣完整購買力
+ * Project J：艾瑟瑞亞的破曉 — NPC單次指令防刷、金幣補給商店與公會鍛造總管 (progression-town.js - v3.5)
+ * 新增：1.檢查 pa.onceKey 鎖定已完成的一次性 NPC 旅人指令，杜絕無限刷物資漏洞
+ *       2.於「煉金提煉」分頁及行商奇奇對話中加入「金幣物資補給店 (GOLD_SHOP)」
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -239,7 +239,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // ================= 1. NPC 對話與旅人指令 (支援 onceKey 單次領取鎖定) =================
+    // ================= 1. NPC 對話與旅人指令 (支援 onceKey 單次鎖定，防止無限刷) =================
     openNpcDialogue: function(npcId) {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -289,15 +289,11 @@ window.Aetheria = window.Aetheria || {};
         btn.style.padding = "8px";
 
         if (alreadyDone) {
-          btn.style.opacity = "0.45";
+          btn.style.opacity = "0.5";
           btn.style.pointerEvents = "none";
-          btn.innerHTML = '<div style="color:#8d99ae; font-size:14px;">[已完成] ' + cleanText(pa.label) + '</div><div style="font-size:12px; color:#8d99ae; margin-top:2px;">已領取過此項單次獎勵</div>';
+          btn.innerHTML = '<div style="color:#8d99ae; font-size:14px;">[已完成] ' + cleanText(pa.label) + '</div><div style="font-size:12px; color:#8d99ae; margin-top:2px;">已領取過此項旅人獎勵</div>';
         } else {
-          let descTxt = cleanText(pa.desc);
-          if (pa.id === "pa_smith_spar" && s.questProgress && s.questProgress.done_pa_smith_spar) {
-            descTxt = "已領首勝秘銀；再次切磋獲勝可得【藍晶鐵礦 x1、40 G】";
-          }
-          btn.innerHTML = '<div style="color:var(--na-gold); font-size:14px;">' + S.iconHtml("icon_sword") + cleanText(pa.label) + '</div><div style="font-size:12px; font-weight:normal; color:#cbd5e1; margin-top:2px;">' + descTxt + '</div>';
+          btn.innerHTML = '<div style="color:var(--na-gold); font-size:14px;">' + S.iconHtml("icon_sword") + cleanText(pa.label) + '</div><div style="font-size:12px; font-weight:normal; color:#cbd5e1; margin-top:2px;">' + cleanText(pa.desc) + '</div>';
           btn.onclick = function() {
             if (pa.type === "spar") {
               window.Aetheria.Battle.pathActionRef = { action: pa, npc: npc };
@@ -315,7 +311,7 @@ window.Aetheria = window.Aetheria || {};
       this.openForgeModal("alchemy");
     },
 
-    // ================= 2. 傳送陣 (必須步行進入該區才解鎖) =================
+    // ================= 2. 傳送陣 =================
     openWorldMapModal: function() {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -374,7 +370,7 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("已傳送至【" + mapObj.name + "】！");
     },
 
-    // ================= 3. 冒險者公會：精簡文字版 + 每級俸祿限領一次 =================
+    // ================= 3. 冒險者公會 =================
     openGuildModal: function() {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -619,7 +615,7 @@ window.Aetheria = window.Aetheria || {};
       this.openGuildModal();
     },
 
-    // ================= 4. 鐵匠鋪：4 大分類 Tab (含金幣補給商店與萬能煉金爐) =================
+    // ================= 4. 鐵匠鋪：4 大分類 Tab + 金幣補給商店 =================
     openForgeModal: function(activeTab) {
       activeTab = activeTab || "weapon";
       const s = window.Aetheria.State.data;
@@ -629,7 +625,7 @@ window.Aetheria = window.Aetheria || {};
       const self = this;
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerHTML = S.iconHtml("icon_forge") + "鐵匠工坊 & 補給店 (Lv." + s.lv + "｜" + s.gold + " G)";
+      document.getElementById("modal-title").innerHTML = S.iconHtml("icon_forge") + "鐵匠工坊 & 補給 (Lv." + s.lv + "｜" + s.gold + " G)";
 
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
@@ -764,16 +760,16 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 4：金幣補給商店 + 萬能煉金提煉爐
       else if (activeTab === "alchemy") {
+        // A. 金幣物資補給店 (GOLD_SHOP)
         const shopHeader = document.createElement("div");
-        shopHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:2px 0 5px; font-size:14px;";
-        shopHeader.innerHTML = S.iconHtml("icon_coin") + "金幣物資補給店（持有金幣：" + s.gold + " G）";
+        shopHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:2px 0 4px; font-size:14px;";
+        shopHeader.innerHTML = S.iconHtml("icon_coin") + "行商金幣補給店 (持有金幣：" + s.gold + " G)";
         body.appendChild(shopHeader);
 
         (window.Aetheria.Data.GOLD_SHOP || []).forEach(function(item) {
           const canBuy = s.gold >= item.goldCost;
-          const haveNow = inv[item.toKey] || 0;
+          const have = inv[item.toKey] || 0;
           const row = document.createElement("div");
           row.className = "sys-card";
           row.style.display = "flex";
@@ -781,16 +777,17 @@ window.Aetheria = window.Aetheria || {};
           row.style.alignItems = "center";
           row.innerHTML =
             '<div>' +
-              '<b style="font-size:14px;">' + S.iconHtml(getItemSpriteKey(item.toKey)) + cleanText(item.name) + '</b>' +
-              '<div style="font-size:12px; color:#cbd5e1; margin-top:2px;">售價：' + item.goldCost + ' G（目前持有：' + haveNow + '）</div>' +
+              '<b style="font-size:14px;">' + S.iconHtml(getItemSpriteKey(item.toKey)) + item.name + '</b>' +
+              '<div style="font-size:12px; color:#cbd5e1; margin-top:2px;">售價：' + item.goldCost + ' G (當前擁有：' + have + ')</div>' +
             '</div>' +
-            '<button class="na-btn ' + (canBuy ? 'highlight' : '') + '" style="padding:5px 12px;" onclick="Aetheria.UI.buyWithGold(\'' + item.id + '\')">購買</button>';
+            '<button class="na-btn ' + (canBuy ? 'highlight' : '') + '" style="padding:5px 12px;" onclick="Aetheria.UI.buyGoldItem(\'' + item.id + '\')">購買</button>';
           body.appendChild(row);
         });
 
+        // B. 萬能素材提煉爐
         const alchHeader = document.createElement("div");
-        alchHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:10px 0 5px; font-size:14px;";
-        alchHeader.innerHTML = S.iconHtml("icon_potion") + "萬能煉金提煉爐（低階素材合成高階礦石與藥水）";
+        alchHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px; font-size:14px;";
+        alchHeader.innerHTML = S.iconHtml("icon_potion") + "萬能素材提煉爐 (低階合高階)";
         body.appendChild(alchHeader);
 
         window.Aetheria.Data.ALCHEMY_CONVERSIONS.forEach(function(c) {
@@ -812,19 +809,19 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    buyWithGold: function(shopId) {
+    buyGoldItem: function(shopId) {
       const s = window.Aetheria.State.data;
       const item = (window.Aetheria.Data.GOLD_SHOP || []).find(function(i) { return i.id === shopId; });
       if (!item) return;
       if (s.gold < item.goldCost) {
-        this.showToast("金幣不足！可透過擊敗魔物、完成主線或公會委託賺取金幣。");
+        this.showToast("金幣不足！可透過擊敗魔物、完成主線或交付公會委託賺取金幣。");
         return;
       }
       s.gold -= item.goldCost;
       s.inventory[item.toKey] = (s.inventory[item.toKey] || 0) + item.toCount;
       window.Aetheria.Audio.sfxGather();
       window.Aetheria.State.save();
-      this.showToast("購買成功：" + cleanText(item.name) + "！");
+      this.showToast("購買成功：" + item.name + "！");
       this.openForgeModal("alchemy");
       this.updateAllHud();
     },
@@ -1005,7 +1002,7 @@ window.Aetheria = window.Aetheria || {};
       document.getElementById("modal-title").innerHTML = S.iconHtml("icon_sword") + "職業祠堂 & 戰寵牧場";
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = '<div style="color:var(--na-gold); font-weight:900; margin-bottom:4px; font-size:14px;">同行戰寵（荒野獵人可雙寵同行）</div>';
+      body.innerHTML = '<div style="color:var(--na-gold); font-weight:900; margin-bottom:4px; font-size:14px;">同行戰寵（荒野獵人可雙寵同行並疊加雙寵技能）</div>';
 
       Object.values(window.Aetheria.Data.PETS).forEach(function(p) {
         const unlocked = s.unlockedPets.indexOf(p.id) !== -1;
@@ -1078,11 +1075,17 @@ window.Aetheria = window.Aetheria || {};
 
     selectJob: function(jobId) {
       const s = window.Aetheria.State.data;
+      const j = window.Aetheria.Data.JOBS[jobId];
+      if (!j) return;
+      if (s.lv < j.unlockLv && s.unlockedJobs.indexOf(jobId) === -1) {
+        this.showToast("需達到 Lv." + j.unlockLv + " 才可轉職為【" + cleanText(j.name) + "】！");
+        return;
+      }
       if (s.unlockedJobs.indexOf(jobId) === -1) s.unlockedJobs.push(jobId);
       s.currentJob = jobId;
       window.Aetheria.Audio.sfxLevelUp();
       window.Aetheria.State.save();
-      this.showToast("已轉職為【" + cleanText(window.Aetheria.Data.JOBS[jobId].name) + "】！");
+      this.showToast("已轉職為【" + cleanText(j.name) + "】！");
       this.openJobPetModal();
       this.updateAllHud();
     },
@@ -1191,7 +1194,7 @@ window.Aetheria = window.Aetheria || {};
             '<button class="na-btn" style="padding:9px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原)</button>' +
             '<button class="na-btn" style="padding:9px;" onclick="document.getElementById(\'title-screen\').style.display=\'flex\'; Aetheria.UI.initTitleScreen();">返回遊戲首頁</button>' +
             '<button class="na-btn" style="padding:9px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm(\'確定要清除所有進度並以零素材重新開始嗎？\')) Aetheria.State.resetSave()">重置遊戲 (清除所有進度重新開始)</button>' +
-          </div>';
+          '</div>';
         body.appendChild(sysCard);
       }
     },
