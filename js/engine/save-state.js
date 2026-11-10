@@ -1,9 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 全域狀態、成長公式與永久存檔中心 (save-state.js - v3.0)
- * 新增：1.首頁存檔偵測 hasExistingSave()
- *       2.步行踩點解鎖傳送陣 unlockedZones: ["camp_hub"]
- *       3.公會委託接取列表 activeBounties: [] (上限 3 張)
- *       4.初始區域設為純安全基地 camp_hub (0.曙光露營基地)
+ * Project J：艾瑟瑞亞的破曉 — 全域狀態、零素材開局與單次俸祿記錄 (save-state.js - v3.4)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -11,7 +7,7 @@ window.Aetheria = window.Aetheria || {};
   const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V3";
 
   const DEFAULT_STATE = {
-    version: "3.0",
+    version: "3.4",
     lv: 1,
     exp: 0,
     hp: 100,
@@ -22,7 +18,7 @@ window.Aetheria = window.Aetheria || {};
     maxBp: 5,
     streak: 0,
     maxStreak: 0,
-    gold: 150,
+    gold: 0,
 
     // 職業與裝備
     currentJob: "swordsman",
@@ -46,24 +42,24 @@ window.Aetheria = window.Aetheria || {};
     shinyPets: [],
     expeditionCounter: 0,
 
-    // 背包素材與消耗品
+    // 新遊戲時：背包初始完全為 0 (必須靠任務、採集與戰鬥收集)
     inventory: {
-      iron: 2,
+      iron: 0,
       mithril: 0,
       obsidian: 0,
       starIron: 0,
-      herb: 2,
-      flower: 1,
+      herb: 0,
+      flower: 0,
       iceLotus: 0,
       goldLeaf: 0,
-      wood: 2,
+      wood: 0,
       coreBamboo: 0,
       coreSkull: 0,
       coreDragon: 0,
-      potionHeal: 3,
-      potionHint: 3,
-      bombItem: 3,
-      tameFruit: 3
+      potionHeal: 0,
+      potionHint: 0,
+      bombItem: 0,
+      tameFruit: 0
     },
 
     // 星象儀溫習科目與錯題記錄
@@ -76,11 +72,12 @@ window.Aetheria = window.Aetheria || {};
     questionMastery: {},
     wrongBook: [],
 
-    // 公會階級、已接委託 (上限 3 張) 與主線任務進度
+    // 公會階級、每階級單次俸祿領取紀錄、已接委託 (上限 3 張)
     guildPoints: 0,
     guildRank: "F",
-    activeBounties: [],     // 儲存玩家已在公會接取的委託 ID (最多 3 張)
-    completedBounties: [],  // 累計已交付的委託紀錄
+    claimedRankSupplies: [], // 記錄已領取過俸祿的階級 (如 ["F", "E"])，每級限領一次！
+    activeBounties: [],
+    completedBounties: [],
     activeMainQuest: "mq_01",
     questProgress: {
       mq_01_talked: false,
@@ -93,7 +90,7 @@ window.Aetheria = window.Aetheria || {};
       pasture: 1
     },
 
-    // 位置與「步行解鎖傳送區域」記錄 (初始僅解鎖第 0 區：曙光營地 camp_hub)
+    // 位置與步行解鎖傳送區域
     currentZone: "camp_hub",
     unlockedZones: ["camp_hub"],
     heroX: 250,
@@ -112,7 +109,7 @@ window.Aetheria = window.Aetheria || {};
   function deepMerge(target, source) {
     const output = Object.assign({}, target);
     if (isObject(target) && isObject(source)) {
-      Object.keys(source).forEach(key => {
+      Object.keys(source).forEach(function(key) {
         if (isObject(source[key])) {
           if (!(key in target)) Object.assign(output, { [key]: source[key] });
           else output[key] = deepMerge(target[key], source[key]);
@@ -127,7 +124,7 @@ window.Aetheria = window.Aetheria || {};
   const StateManager = {
     data: JSON.parse(JSON.stringify(DEFAULT_STATE)),
 
-    hasExistingSave() {
+    hasExistingSave: function() {
       try {
         return Boolean(localStorage.getItem(SAVE_KEY));
       } catch (e) {
@@ -135,7 +132,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    getSaveSummary() {
+    getSaveSummary: function() {
       try {
         const raw = localStorage.getItem(SAVE_KEY);
         if (!raw) return null;
@@ -150,7 +147,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    init() {
+    init: function() {
       try {
         const raw = localStorage.getItem(SAVE_KEY);
         if (raw) {
@@ -162,6 +159,9 @@ window.Aetheria = window.Aetheria || {};
           if (!Array.isArray(this.data.activeBounties)) {
             this.data.activeBounties = [];
           }
+          if (!Array.isArray(this.data.claimedRankSupplies)) {
+            this.data.claimedRankSupplies = [];
+          }
         }
       } catch (e) {
         console.warn("讀取存檔失敗，使用預設進度:", e);
@@ -169,19 +169,19 @@ window.Aetheria = window.Aetheria || {};
       return this.data;
     },
 
-    startFreshNewGame() {
+    startFreshNewGame: function() {
       this.data = JSON.parse(JSON.stringify(DEFAULT_STATE));
       this.save();
       return this.data;
     },
 
-    save() {
+    save: function() {
       try {
         localStorage.setItem(SAVE_KEY, JSON.stringify(this.data));
       } catch (e) {}
     },
 
-    resetSave() {
+    resetSave: function() {
       try {
         localStorage.removeItem(SAVE_KEY);
       } catch (e) {}
@@ -189,12 +189,10 @@ window.Aetheria = window.Aetheria || {};
       window.location.reload();
     },
 
-    // 當角色步行進入新區域時，解鎖該區的傳送石碑
-    unlockZone(zoneId) {
+    unlockZone: function(zoneId) {
       if (!zoneId) return false;
-      // 室內帳篷不列入大世界傳送清單
       if (zoneId === "tent_guild" || zoneId === "tent_forge") return false;
-      if (!this.data.unlockedZones.includes(zoneId)) {
+      if (this.data.unlockedZones.indexOf(zoneId) === -1) {
         this.data.unlockedZones.push(zoneId);
         this.save();
         return true;
@@ -202,11 +200,11 @@ window.Aetheria = window.Aetheria || {};
       return false;
     },
 
-    exportJSON() {
+    exportJSON: function() {
       return JSON.stringify(this.data);
     },
 
-    importJSON(jsonStr) {
+    importJSON: function(jsonStr) {
       try {
         const parsed = JSON.parse(jsonStr);
         this.data = deepMerge(DEFAULT_STATE, parsed);
@@ -217,21 +215,22 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    getExpRequired(lv = this.data.lv) {
+    getExpRequired: function(lv) {
+      lv = lv || this.data.lv;
       return Math.floor(35 * Math.pow(lv, 1.35));
     },
 
-    getTotalAtk() {
+    getTotalAtk: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
       const jobs = (window.Aetheria.Data && window.Aetheria.Data.JOBS) || {};
       const wBonus = weapons[s.equippedWeapon] ? weapons[s.equippedWeapon].atk : 15;
       const jMult = jobs[s.currentJob] ? jobs[s.currentJob].atkMult : 1.0;
-      const shinyBonus = (s.shinyPets && s.shinyPets.includes(s.activePet)) ? 1.2 : 1.0;
+      const shinyBonus = (s.shinyPets && s.shinyPets.indexOf(s.activePet) !== -1) ? 1.2 : 1.0;
       return Math.round((s.baseAtk + wBonus) * jMult * shinyBonus);
     },
 
-    getBonusShieldBreak() {
+    getBonusShieldBreak: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
       let bonus = weapons[s.equippedWeapon] ? (weapons[s.equippedWeapon].shieldBreak || 0) : 0;
@@ -240,7 +239,9 @@ window.Aetheria = window.Aetheria || {};
       return bonus;
     },
 
-    gainRewards(expAmount, goldAmount = 0, guildPts = 5) {
+    gainRewards: function(expAmount, goldAmount, guildPts) {
+      goldAmount = goldAmount || 0;
+      guildPts = guildPts || 5;
       const s = this.data;
       let mult = 1.0;
       if (s.streak >= 5) mult = 1.5;
@@ -267,7 +268,7 @@ window.Aetheria = window.Aetheria || {};
       return leveledUp;
     },
 
-    updateGuildRank() {
+    updateGuildRank: function() {
       const pts = this.data.guildPoints;
       if (pts >= 600) this.data.guildRank = "SS";
       else if (pts >= 350) this.data.guildRank = "S";
@@ -277,17 +278,17 @@ window.Aetheria = window.Aetheria || {};
       else this.data.guildRank = "F";
     },
 
-    checkJobUnlocks() {
+    checkJobUnlocks: function() {
       const lv = this.data.lv;
       const unlocked = this.data.unlockedJobs;
-      if (lv >= 5 && !unlocked.includes("scholar")) unlocked.push("scholar");
-      if (lv >= 12 && !unlocked.includes("hunter")) unlocked.push("hunter");
-      if (lv >= 20 && !unlocked.includes("thief")) unlocked.push("thief");
-      if (lv >= 30 && !unlocked.includes("alchemist")) unlocked.push("alchemist");
-      if (lv >= 50 && !unlocked.includes("archmage")) unlocked.push("archmage");
+      if (lv >= 5 && unlocked.indexOf("scholar") === -1) unlocked.push("scholar");
+      if (lv >= 12 && unlocked.indexOf("hunter") === -1) unlocked.push("hunter");
+      if (lv >= 20 && unlocked.indexOf("thief") === -1) unlocked.push("thief");
+      if (lv >= 30 && unlocked.indexOf("alchemist") === -1) unlocked.push("alchemist");
+      if (lv >= 50 && unlocked.indexOf("archmage") === -1) unlocked.push("archmage");
     },
 
-    tickPassiveProduction() {
+    tickPassiveProduction: function() {
       const s = this.data;
       s.expeditionCounter = (s.expeditionCounter || 0) + 1;
       let msg = null;
@@ -295,13 +296,13 @@ window.Aetheria = window.Aetheria || {};
       if (s.expeditionCounter >= 5) {
         s.expeditionCounter = 0;
         const idlePetCount = Math.max(1, s.unlockedPets.length);
-        const minedIron = idlePetCount * 2;
+        const minedIron = idlePetCount;
         s.inventory.iron += minedIron;
         if (s.campBuildings.greenhouse > 0) {
           s.inventory.potionHint += 1;
-          msg = `牧場戰寵遠征歸來：藍晶礦 +${minedIron}｜溫室產出：洞察藥水 +1`;
+          msg = "牧場戰寵歸來：藍晶礦 +" + minedIron + "｜溫室產出：洞察藥水 +1";
         } else {
-          msg = `牧場戰寵自動挖礦歸來：獲得【藍晶礦 +${minedIron}】`;
+          msg = "牧場戰寵挖礦歸來：藍晶礦 +" + minedIron;
         }
         this.save();
       }
