@@ -1,11 +1,20 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — Break & Boost 回合制戰鬥、戰寵協同、收服與檢定系統 (battle-break-boost.js)
- * 包含：1.護盾削減與Break破防暈眩 2.BP增幅爆發 3.戰寵每回合協同連擊與補血
- *       4.殘血收服戰寵(含異色閃光Shiny) 5.8秒完美採集爆擊挑戰 6.NPC旅人指令檢定
+ * Project J：艾瑟瑞亞的破曉 — 純 DOM/CSS/SVG 戰鬥系統與破防收服引擎 (battle-break-boost.js - v3.0)
+ * 升級：1.徹底捨棄戰鬥 Canvas 與 Emoji，改用上下分層 DOM 狀態列 + 立體地台 <img> 角色對決
+ *       2.支援揮刀前衝動畫 (.bt-lunge-right)、刀光閃擊 (.bt-slash-effect) 與破防傾斜動畫
+ *       3.自動清除弱點與物品名稱中的所有 Emoji，保持純正像素 RPG 質感
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
 (function() {
+  // 輔助函式：過濾字串中的 Emoji 符號，確保戰鬥介面純淨無 Emoji
+  function stripEmoji(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "")
+      .trim();
+  }
+
   const BattleEngine = {
     active: false,
     mode: "combat", // "combat" | "harvest" | "path_inquire" | "bounty" | "tame_trial"
@@ -26,13 +35,14 @@ window.Aetheria = window.Aetheria || {};
 
       const s = window.Aetheria.State.data;
       this.enemy = window.Aetheria.Data.createBattleEnemy(mapMonsterNode);
+      this.enemy.name = stripEmoji(this.enemy.name);
+      this.enemy.weak = "弱點：" + stripEmoji(this.enemy.weak);
 
-      // 星界魔導職業開局自帶 3 BP
       if (s.currentJob === "archmage" && s.bp < 3) {
         s.bp = 3;
       }
 
-      // 開局被動破盾判定 (爆破袋 Lv.2/Lv.3 或 冰晶幼龍戰寵)
+      // 開局被動破盾 (爆破袋 Lv.2/Lv.3 或 冰晶幼龍)
       let openBreak = 0;
       if (s.tools.bomb >= 3) openBreak += 2;
       else if (s.tools.bomb === 2) openBreak += 1;
@@ -49,14 +59,15 @@ window.Aetheria = window.Aetheria || {};
 
       const phaseTitle = document.getElementById("battle-phase-title");
       if (phaseTitle) {
-        phaseTitle.innerText = (customMode === "bounty") ? "🟣 討伐暗影錯題幻象" : "⚡ 詠唱符文破盾";
+        phaseTitle.innerText = (customMode === "bounty") ? "討伐暗影錯題幻象" : "符文破盾詠唱";
       }
 
+      this.renderBattleDomStage();
       this.updateBattleHUD();
       this.nextTurnQuestion(customQuestionId);
     },
 
-    // 2. 啟動「✨閃光礦脈 8 秒完美採集 x3 大爆擊」快速挑戰
+    // 2. 啟動閃光礦脈 10 秒限時完美採集挑戰
     startHarvestChallenge(node) {
       this.active = true;
       this.mode = "harvest";
@@ -64,7 +75,7 @@ window.Aetheria = window.Aetheria || {};
       this.boostActive = false;
 
       this.enemy = {
-        name: `✨ ${node.name}`,
+        name: stripEmoji(node.name),
         lv: 5,
         isBoss: false,
         isShiny: true,
@@ -74,20 +85,21 @@ window.Aetheria = window.Aetheria || {};
         shield: 1,
         maxShield: 1,
         broken: false,
-        weak: "⛏️ 限時答對即獲 3 倍爆擊產量！"
+        weak: "限時答對即獲 3 倍爆擊產量"
       };
 
       document.getElementById("battle-stage").style.display = "flex";
       window.Aetheria.UI.setActivePanel("panel-battle");
 
       const phaseTitle = document.getElementById("battle-phase-title");
-      if (phaseTitle) phaseTitle.innerText = "⛏️ 完美共鳴採集 (限時 10 秒)";
+      if (phaseTitle) phaseTitle.innerText = "完美共鳴採集 (限時 10 秒)";
 
+      this.renderBattleDomStage();
       this.updateBattleHUD();
       this.nextTurnQuestion(null, 10);
     },
 
-    // 3. 啟動 NPC 旅人指令【探查 / 討教 / 議價】單題檢定
+    // 3. 啟動 NPC 旅人指令單題檢定
     startPathActionChallenge(actionObj, npcObj) {
       this.active = true;
       this.mode = "path_inquire";
@@ -95,7 +107,7 @@ window.Aetheria = window.Aetheria || {};
       this.boostActive = false;
 
       this.enemy = {
-        name: `${npcObj.name}（旅人檢定）`,
+        name: `${stripEmoji(npcObj.name)}（旅人檢定）`,
         lv: 3,
         isBoss: false,
         isShiny: false,
@@ -105,20 +117,92 @@ window.Aetheria = window.Aetheria || {};
         shield: 1,
         maxShield: 1,
         broken: false,
-        weak: "🔍 答對即可發動旅人指令！"
+        weak: "答對即可發動旅人指令"
       };
 
       document.getElementById("battle-stage").style.display = "flex";
       window.Aetheria.UI.setActivePanel("panel-battle");
 
       const phaseTitle = document.getElementById("battle-phase-title");
-      if (phaseTitle) phaseTitle.innerText = `${actionObj.label}`;
+      if (phaseTitle) phaseTitle.innerText = stripEmoji(actionObj.label);
 
+      this.renderBattleDomStage();
       this.updateBattleHUD();
       this.nextTurnQuestion();
     },
 
-    // 更新戰鬥畫面 HUD 與【🍎 收服】按鈕顯示狀態
+    // ================= 渲染純 DOM/CSS 對決舞台與角色 <img> (零 Canvas、零遮擋) =================
+    renderBattleDomStage() {
+      const s = window.Aetheria.State.data;
+      const e = this.enemy;
+      const Sprites = window.Aetheria.Data.Sprites;
+      const mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
+
+      // 1. 切換舞台背景主題色
+      const arenaEl = document.getElementById("bt-arena-bg");
+      if (arenaEl) {
+        arenaEl.className = `bt-arena-field theme-${mapObj.theme || "forest"}`;
+      }
+
+      // 2. 渲染左側主角
+      const heroSlot = document.getElementById("bt-dom-hero");
+      if (heroSlot) {
+        heroSlot.innerHTML = `<img src="${Sprites.getDataURL("hero_right_0")}" alt="Hero">`;
+      }
+
+      // 3. 渲染左側主戰寵 + 荒野獵人副戰寵
+      const petSlot = document.getElementById("bt-dom-pet");
+      const subPetSlot = document.getElementById("bt-dom-subpet");
+      const petData = window.Aetheria.Data.PETS[s.activePet] || window.Aetheria.Data.PETS.pet_slime;
+      const isShinyPet = s.shinyPets && s.shinyPets.includes(s.activePet);
+      const petKey = isShinyPet ? petData.shinySpriteKey : petData.spriteKey;
+
+      if (petSlot) {
+        petSlot.innerHTML = `<img src="${Sprites.getDataURL(petKey)}" alt="Pet">`;
+      }
+
+      if (subPetSlot) {
+        if (s.currentJob === "hunter" && s.unlockedPets.length >= 2) {
+          const subId = s.unlockedPets.find(id => id !== s.activePet) || s.unlockedPets[0];
+          const subData = window.Aetheria.Data.PETS[subId];
+          const subShiny = s.shinyPets && s.shinyPets.includes(subId);
+          const subKey = subShiny ? subData.shinySpriteKey : subData.spriteKey;
+          subPetSlot.innerHTML = `<img src="${Sprites.getDataURL(subKey)}" alt="SubPet">`;
+          subPetSlot.style.display = "block";
+        } else {
+          subPetSlot.innerHTML = "";
+          subPetSlot.style.display = "none";
+        }
+      }
+
+      // 4. 渲染右側敵方魔物 / Boss / 礦脈
+      const enemySlot = document.getElementById("bt-dom-enemy");
+      if (enemySlot && e) {
+        let eKey = e.spriteKey || "mon_bamboo";
+        if (e.isShiny && !e.isBoss && Sprites.get(eKey + "_shiny")) {
+          eKey += "_shiny";
+        }
+        enemySlot.className = "bt-enemy-slot" + (e.isBoss ? " boss" : "") + (e.broken ? " broken" : "");
+        enemySlot.innerHTML = `<img src="${Sprites.getDataURL(eKey)}" alt="Enemy">`;
+      }
+    },
+
+    // 播放揮刀前衝與刀光特效
+    playAttackAnimation() {
+      const heroSlot = document.getElementById("bt-dom-hero");
+      const slashEl = document.getElementById("bt-slash-fx");
+
+      if (heroSlot) {
+        heroSlot.classList.remove("bt-lunge-right");
+        void heroSlot.offsetWidth;
+        heroSlot.classList.add("bt-lunge-right");
+      }
+      if (slashEl) {
+        slashEl.style.display = "block";
+        setTimeout(() => { slashEl.style.display = "none"; }, 220);
+      }
+    },
+
     updateBattleHUD() {
       const s = window.Aetheria.State.data;
       const e = this.enemy;
@@ -126,16 +210,32 @@ window.Aetheria = window.Aetheria || {};
 
       document.getElementById("enemy-name").innerText = e.name;
       const shinyTag = document.getElementById("enemy-shiny-tag");
-      if (shinyTag) shinyTag.style.display = e.isShiny ? "inline" : "none";
+      if (shinyTag) shinyTag.style.display = e.isShiny ? "inline-block" : "none";
 
-      document.getElementById("enemy-shield").innerText = e.broken ? "💥 BREAK (破防暈眩)" : `🛡️ ${e.shield}`;
+      const shieldBox = document.getElementById("enemy-shield-box");
+      const shieldTxt = document.getElementById("enemy-shield");
+      if (shieldBox && shieldTxt) {
+        if (e.broken) {
+          shieldBox.classList.add("broken");
+          shieldTxt.innerText = "BREAK 破防";
+        } else {
+          shieldBox.classList.remove("broken");
+          shieldTxt.innerText = `護盾 ${e.shield}`;
+        }
+      }
+
+      const enemySlot = document.getElementById("bt-dom-enemy");
+      if (enemySlot) {
+        if (e.broken) enemySlot.classList.add("broken");
+        else enemySlot.classList.remove("broken");
+      }
+
       document.getElementById("enemy-weak").innerText = e.weak;
       document.getElementById("enemy-hp-bar").style.width = Math.max(0, (e.hp / e.maxHp) * 100) + "%";
 
       const streakEl = document.getElementById("battle-streak-tag");
-      if (streakEl) streakEl.innerText = `🔥 連勝 x${s.streak || 0}`;
+      if (streakEl) streakEl.innerText = `連勝 x${s.streak || 0}`;
 
-      // BP 增幅珠
       const orbs = document.getElementById("hero-bp-orbs");
       if (orbs) {
         orbs.innerHTML = "";
@@ -148,11 +248,10 @@ window.Aetheria = window.Aetheria || {};
 
       const boostBtn = document.getElementById("btn-boost");
       if (boostBtn) {
-        boostBtn.innerText = this.boostActive ? "🔥 BOOST 發動中" : `🔥 Boost (${s.bp})`;
+        boostBtn.innerText = this.boostActive ? "BOOST 發動中" : `Boost (${s.bp})`;
         boostBtn.className = "na-btn" + (this.boostActive ? " highlight" : "");
       }
 
-      // 當處於一般戰鬥且魔物被 Break 或殘血 (<45% HP) 時，顯示【🍎 收服】按鈕
       const tameBtn = document.getElementById("btn-tame");
       if (tameBtn) {
         const canTame = (this.mode === "combat") && (e.broken || (e.hp / e.maxHp) <= 0.45);
@@ -163,7 +262,7 @@ window.Aetheria = window.Aetheria || {};
     toggleBoost() {
       const s = window.Aetheria.State.data;
       if (s.bp <= 0) {
-        window.Aetheria.UI.showToast("⚠️ BP 增幅珠不足！每回合答對題目即可充能 BP。");
+        window.Aetheria.UI.showToast("BP 增幅珠不足！每回合答對題目即可充能 BP。");
         return;
       }
       this.boostActive = !this.boostActive;
@@ -171,29 +270,27 @@ window.Aetheria = window.Aetheria || {};
       this.updateBattleHUD();
     },
 
-    // 點擊【🍎 收服】：消耗 1 顆靈獸誘餌果，答對當前題目即可直接收服魔物為戰寵！
     attemptTame() {
       const s = window.Aetheria.State.data;
       if ((s.inventory.tameFruit || 0) <= 0) {
-        window.Aetheria.UI.showToast("⚠️ 靈獸誘餌果不足！可在公會委託或鐵匠煉金台調配。");
+        window.Aetheria.UI.showToast("靈獸誘餌果不足！可在公會委託或鐵匠煉金台調配。");
         return;
       }
       s.inventory.tameFruit--;
       this.mode = "tame_trial";
       const phaseTitle = document.getElementById("battle-phase-title");
-      if (phaseTitle) phaseTitle.innerText = `🍎 投出誘餌果！答對本題即可收服！(剩餘 ${s.inventory.tameFruit} 顆)`;
-      window.Aetheria.UI.showToast("🍎 已投出靈獸誘餌果！請答對下方題目完成契約共鳴！");
+      if (phaseTitle) phaseTitle.innerText = `已投出誘餌果！答對本題即可收服 (剩餘 ${s.inventory.tameFruit})`;
+      window.Aetheria.UI.showToast("已投出靈獸誘餌果！請答對下方題目完成契約共鳴！");
     },
 
-    // 點擊【🧪 補血】：使用生命藥水
     useHealPotion() {
       const s = window.Aetheria.State.data;
       if ((s.inventory.potionHeal || 0) <= 0) {
-        window.Aetheria.UI.showToast("⚠️ 生命藥水不足！可在鐵匠煉金爐用紅傘菇熬製。");
+        window.Aetheria.UI.showToast("生命藥水不足！可在鐵匠煉金爐用紅傘菇熬製。");
         return;
       }
       if (s.hp >= s.maxHp) {
-        window.Aetheria.UI.showToast("❤️ 生命值已經是滿的！");
+        window.Aetheria.UI.showToast("生命值已經是滿的！");
         return;
       }
       s.inventory.potionHeal--;
@@ -201,16 +298,14 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.Audio.sfxGather();
       window.Aetheria.State.save();
       window.Aetheria.UI.spawnFloatingText("+60 HP", "#5ac54f", false);
-      window.Aetheria.UI.showToast(`🧪 飲用生命藥水，回復 60 點生命！(剩餘 ${s.inventory.potionHeal} 瓶)`);
+      window.Aetheria.UI.showToast(`飲用生命藥水，回復 60 點生命！(剩餘 ${s.inventory.potionHeal} 瓶)`);
     },
 
-    // 載入下一道題目並啟動倒數計時器（若為高危險度越級戰或完美採集）
     nextTurnQuestion(forceId = null, customSeconds = null) {
       clearInterval(this.timerInterval);
       const s = window.Aetheria.State.data;
       const e = this.enemy;
 
-      // 判定是否處於跨級高壓模式 (魔物比主角高 6 級以上)
       const isHighPressure = e && ((e.lv - s.lv) >= 6);
       const limitSec = customSeconds || (isHighPressure ? 14 : 0);
 
@@ -218,10 +313,10 @@ window.Aetheria = window.Aetheria || {};
       if (limitSec > 0 && timerBadge) {
         this.timeLeft = limitSec;
         timerBadge.style.display = "inline-block";
-        timerBadge.innerText = `⏱️ ${this.timeLeft}s`;
+        timerBadge.innerText = `${this.timeLeft}s`;
         this.timerInterval = setInterval(() => {
           this.timeLeft--;
-          timerBadge.innerText = `⏱️ ${this.timeLeft}s`;
+          timerBadge.innerText = `${this.timeLeft}s`;
           if (this.timeLeft <= 0) {
             clearInterval(this.timerInterval);
             this.resolveTurn(false, "詠唱逾時", { id: "timeout" });
@@ -241,7 +336,6 @@ window.Aetheria = window.Aetheria || {};
       });
     },
 
-    // 結算答題結果
     resolveTurn(isCorrect, correctText, qObj) {
       clearInterval(this.timerInterval);
       const s = window.Aetheria.State.data;
@@ -251,41 +345,42 @@ window.Aetheria = window.Aetheria || {};
         window.Aetheria.QuizBridge.recordAnswer(qObj.id, isCorrect);
       }
 
-      // 處理特殊模式 A：完美採集挑戰
+      // 模式 A：完美採集挑戰
       if (this.mode === "harvest") {
         if (isCorrect) {
+          this.playAttackAnimation();
           window.Aetheria.Audio.sfxLevelUp();
           s.inventory.iron += 4;
           s.inventory.mithril += 3;
           s.inventory.starIron += 1;
           window.Aetheria.State.gainRewards(35, 40, 10);
-          window.Aetheria.UI.showToast("✨ 完美採集 x3 大爆擊！獲得【流沙秘銀 +3】、【藍晶礦 +4】、【星隕鐵 +1】！");
+          window.Aetheria.UI.showToast("完美採集 x3 大爆擊！獲得【流沙秘銀 +3】、【藍晶礦 +4】、【星隕鐵 +1】！");
         } else {
           window.Aetheria.Audio.sfxWrong();
           s.inventory.iron += 1;
-          window.Aetheria.UI.showToast(`⛏️ 採集失誤（正解：${correctText}），僅獲得基礎【藍晶礦 +1】。`);
+          window.Aetheria.UI.showToast(`採集失誤（正解：${correctText}），獲得基礎【藍晶礦 +1】。`);
         }
         this.endBattle();
         return;
       }
 
-      // 處理特殊模式 B：NPC 旅人指令檢定
+      // 模式 B：NPC 旅人指令檢定
       if (this.mode === "path_inquire") {
         const ref = this.pathActionRef;
         if (isCorrect && ref && ref.action) {
           window.Aetheria.Audio.sfxLevelUp();
           ref.action.onSuccess(s);
           window.Aetheria.State.save();
-          window.Aetheria.UI.showToast(`🎉 旅人指令成功！${ref.action.rewardSummary}`);
+          window.Aetheria.UI.showToast(`旅人指令成功！${stripEmoji(ref.action.rewardSummary)}`);
         } else {
           window.Aetheria.Audio.sfxWrong();
-          window.Aetheria.UI.showToast(`📖 檢定未通過！正確答案為：【${correctText}】`);
+          window.Aetheria.UI.showToast(`檢定未通過！正確答案為：【${correctText}】`);
         }
         this.endBattle();
         return;
       }
 
-      // 處理特殊模式 C：投擲靈果收服戰寵判定
+      // 模式 C：投擲靈果收服戰寵判定
       if (this.mode === "tame_trial") {
         if (isCorrect) {
           const petId = e.tamePetId || "pet_fox";
@@ -296,43 +391,38 @@ window.Aetheria = window.Aetheria || {};
           if (this.mapMonsterRef) this.mapMonsterRef.alive = false;
           window.Aetheria.Audio.sfxLevelUp();
           const petInfo = window.Aetheria.Data.PETS[petId];
-          const shinyPrefix = e.isShiny ? "✨【異色閃光】" : "";
+          const shinyPrefix = e.isShiny ? "【異色閃光】" : "";
           window.Aetheria.State.gainRewards(e.expReward, e.goldReward, 20);
-          window.Aetheria.UI.showToast(`🎊 收服成功！${shinyPrefix}${petInfo ? petInfo.name : "新戰寵"} 已加入同行隊伍！`);
+          window.Aetheria.UI.showToast(`收服成功！${shinyPrefix}${petInfo ? stripEmoji(petInfo.name) : "新戰寵"} 已加入同行隊伍！`);
           this.endBattle();
           return;
         } else {
           this.mode = "combat";
           const phaseTitle = document.getElementById("battle-phase-title");
-          if (phaseTitle) phaseTitle.innerText = "⚡ 詠唱符文破盾";
+          if (phaseTitle) phaseTitle.innerText = "符文破盾詠唱";
         }
       }
 
-      // ================= 一般戰鬥：答對破盾、Boost 爆發與戰寵協同攻擊 =================
+      // 一般戰鬥結算
       if (isCorrect) {
+        this.playAttackAnimation();
+
         let shieldDmg = 1 + window.Aetheria.State.getBonusShieldBreak();
         let dmgMult = 1.0;
 
         const wData = window.Aetheria.Data.WEAPONS[s.equippedWeapon] || {};
-        const jData = window.Aetheria.Data.JOBS[s.currentJob] || {};
 
-        // 符文學者被動：看圖題與配對題額外削盾 +1
         if (s.currentJob === "scholar" && (qObj.type === "matching" || qObj.type === "image_spell" || qObj.type === "image_mcq")) {
           shieldDmg += 1;
         }
-
-        // 赤炎太刀被動：拼字題傷害加成
         if (wData.spellBonus && (qObj.type === "tile_spell" || qObj.type === "image_spell")) {
           dmgMult *= wData.spellBonus;
         }
-
-        // 英文全盲串字：真名解放 100% 暴擊 + 額外削盾
         if (qObj.type === "blind_spell") {
           dmgMult *= (s.currentJob === "archmage") ? 3.0 : 2.0;
           shieldDmg += 1;
         }
 
-        // Boost 增幅消耗與爆發倍率
         if (this.boostActive && s.bp > 0) {
           dmgMult *= (1.5 + s.bp * 0.45);
           shieldDmg += 1;
@@ -343,7 +433,6 @@ window.Aetheria = window.Aetheria || {};
           s.bp = Math.min(s.maxBp, s.bp + bpGain);
         }
 
-        // 削減護盾與觸發 BREAK 破防暈眩
         let justBroken = false;
         if (!e.broken) {
           e.shield = Math.max(0, e.shield - shieldDmg);
@@ -351,19 +440,16 @@ window.Aetheria = window.Aetheria || {};
             e.broken = true;
             justBroken = true;
             window.Aetheria.Audio.sfxBreakShield();
-            window.Aetheria.UI.spawnFloatingText("💥 BREAK! 破防暈眩!", "#38b6ff", true);
+            window.Aetheria.UI.spawnFloatingText("BREAK! 破防暈眩!", "#38b6ff", true);
           }
         }
 
         if (!justBroken) window.Aetheria.Audio.sfxAttackHit();
 
-        // Break 狀態下承受 200% 傷害，且無視跨級減傷壓制
         if (e.broken) dmgMult *= 2.0;
         else if ((e.lv - s.lv) >= 6) dmgMult *= 0.4;
 
         const heroDmg = Math.round(window.Aetheria.State.getTotalAtk() * dmgMult);
-
-        // 戰寵每回合協同攻擊與治癒
         const petInfo = window.Aetheria.Data.PETS[s.activePet] || window.Aetheria.Data.PETS.pet_slime;
         const hunterMult = (s.currentJob === "hunter") ? 2.0 : 1.0;
         const petDmg = Math.round(window.Aetheria.State.getTotalAtk() * (petInfo.bonusDmgRatio || 0.2) * hunterMult);
@@ -376,13 +462,11 @@ window.Aetheria = window.Aetheria || {};
           s.hp = Math.min(s.maxHp, s.hp + healAmt);
         }
 
-        // 暗影盜賊被動：35% 機率直接偷取礦石
         if (s.currentJob === "thief" && Math.random() < 0.35) {
           s.inventory.iron += 1;
-          window.Aetheria.UI.spawnFloatingText("⚡盜取藍晶礦+1", "#5ac54f", false);
+          window.Aetheria.UI.spawnFloatingText("盜取藍晶礦+1", "#5ac54f", false);
         }
 
-        // 觸發牧場戰寵遠征計數
         const passiveMsg = window.Aetheria.State.tickPassiveProduction();
         if (passiveMsg) window.Aetheria.UI.showToast(passiveMsg);
 
@@ -401,10 +485,9 @@ window.Aetheria = window.Aetheria || {};
           setTimeout(() => this.nextTurnQuestion(), 520);
         }
       } else {
-        // 答錯溫和防挫敗機制：顯示正確答案 1.3 秒 + 收入錯題魔導書
         window.Aetheria.Audio.sfxWrong();
         window.Aetheria.UI.spawnFloatingText(`擦傷! 正解: ${correctText}`, "#ff595e", false);
-        window.Aetheria.UI.showToast(`📖 古文明殘響提示：正確答案為【${correctText}】`);
+        window.Aetheria.UI.showToast(`古文明殘響提示：正確答案為【${correctText}】`);
 
         const enemyCounterDmg = (e.lv >= 15) ? 25 : 12;
         s.hp = Math.max(15, s.hp - enemyCounterDmg);
@@ -415,31 +498,28 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // 戰鬥勝利與 Break 破防專屬掉寶結算
     winBattle() {
       const s = window.Aetheria.State.data;
       const e = this.enemy;
 
       window.Aetheria.Audio.sfxLevelUp();
 
-      // 發放基礎掉落與 Break 破防擊殺專屬魔物核心
       const normKey = e.normalDrop || "iron";
       s.inventory[normKey] = (s.inventory[normKey] || 0) + 2;
 
       let dropSummary = `${window.Aetheria.Data.MATERIALS[normKey].name} +2`;
       if (e.broken && e.breakDrop) {
         s.inventory[e.breakDrop] = (s.inventory[e.breakDrop] || 0) + 1;
-        dropSummary += `、💥破防獎勵【${window.Aetheria.Data.MATERIALS[e.breakDrop].name} +1】`;
+        dropSummary += `、破防獎勵【${window.Aetheria.Data.MATERIALS[e.breakDrop].name} +1】`;
       }
 
       if (e.isBoss) {
         s.questProgress.mq_03_boss = true;
       }
 
-      // 若為 NPC 切磋勝利
       if (this.pathActionRef && this.pathActionRef.action) {
         this.pathActionRef.action.onSuccess(s);
-        dropSummary += `、${this.pathActionRef.action.rewardSummary}`;
+        dropSummary += `、${stripEmoji(this.pathActionRef.action.rewardSummary)}`;
         this.pathActionRef = null;
       }
 
@@ -450,9 +530,9 @@ window.Aetheria = window.Aetheria || {};
       }
 
       if (leveledUp) {
-        window.Aetheria.UI.showToast(`🎉 升級至 Lv.${s.lv}！獲得 ${dropSummary}！`);
+        window.Aetheria.UI.showToast(`升級至 Lv.${s.lv}！獲得 ${dropSummary}！`);
       } else {
-        window.Aetheria.UI.showToast(`⚔️ 戰鬥勝利！獲得 ${dropSummary}！`);
+        window.Aetheria.UI.showToast(`戰鬥勝利！獲得 ${dropSummary}！`);
       }
 
       this.endBattle();
@@ -461,7 +541,7 @@ window.Aetheria = window.Aetheria || {};
     fleeBattle() {
       const s = window.Aetheria.State.data;
       s.heroY += 20;
-      window.Aetheria.UI.showToast("💨 投擲煙霧玉安全撤退！");
+      window.Aetheria.UI.showToast("投擲煙霧玉安全撤退！");
       this.endBattle();
     },
 
