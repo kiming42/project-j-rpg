@@ -1,11 +1,8 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 首頁、背包、設定、公會接單上限、階梯式分類鍛造總管 (progression-town.js - v3.0)
- * 升級：1.遊戲首頁 (Title Screen)：繼續遊戲 (自動偵測存檔) / 新遊戲
- *       2.傳送陣：必須角色步行進入過該區 (s.unlockedZones.includes) 才開放傳送按鈕
- *       3.冒險者公會：先接受委託 (上限最多 3 張) ➔ 才顯示進度與「交付完成」按鈕
- *       4.鐵匠鋪：4 大分類 Tab (武器 / 聖物 / 工具 / 煉金)，且完成前一階才顯示下一階配方！
- *       5.獨立「背包 (Bag)」頁面：分類格仔展示所有收集素材與消耗品，支援直接使用藥水
- *       6.獨立「設定 (Settings)」頁面：整合星象調頻、題型預覽、四科報告、存檔備份與「重置遊戲」
+ * Project J：艾瑟瑞亞的破曉 — 大字體像素小圖標 UI 與系統總管 (progression-town.js - v3.2)
+ * 升級：1.全面注入開源風格像素小圖標 (Sprites.iconHtml)，徹底代替 Emoji
+ *       2.上半屏僅保留極簡 Lv 與區域名稱，主線任務與釘選配方移至下半屏大字體資訊欄
+ *       3.背包格仔直接顯示真實像素素材圖片 (藍晶礦/紅傘菇/太陽花/藥水/炸彈等)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -17,15 +14,45 @@ window.Aetheria = window.Aetheria || {};
     return String(str).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, "").trim();
   }
 
+  // 將物品 key 對應到真實像素圖資 key
+  function getItemSpriteKey(matKey) {
+    if (matKey === "iron" || matKey === "mithril" || matKey === "obsidian" || matKey === "starIron") return "mat_crystal";
+    if (matKey === "herb") return "mat_mushroom";
+    if (matKey === "flower" || matKey === "iceLotus" || matKey === "goldLeaf") return "mat_flower";
+    if (matKey === "potionHeal" || matKey === "potionHint") return "icon_potion";
+    if (matKey === "bombItem") return "icon_bomb";
+    if (matKey === "tameFruit") return "heart";
+    return "crate";
+  }
+
   const UIManager = {
-    // ================= 0. 遊戲首頁 (Title Screen：繼續遊戲 / 新遊戲) =================
+    // 為頂部 6 格導航列與炸彈按鈕注入像素小圖標
+    decorateNavIcons() {
+      const S = window.Aetheria.Data.Sprites;
+      const mapBtn   = document.getElementById("nav-btn-map");
+      const guildBtn = document.getElementById("nav-btn-guild");
+      const forgeBtn = document.getElementById("nav-btn-forge");
+      const bagBtn   = document.getElementById("nav-btn-bag");
+      const jobBtn   = document.getElementById("nav-btn-job");
+      const setBtn   = document.getElementById("nav-btn-set");
+      const bombBtn  = document.getElementById("btn-use-bomb");
+
+      if (mapBtn)   mapBtn.innerHTML   = `${S.iconHtml("icon_map")}傳送`;
+      if (guildBtn) guildBtn.innerHTML = `${S.iconHtml("icon_shield")}公會`;
+      if (forgeBtn) forgeBtn.innerHTML = `${S.iconHtml("icon_forge")}鍛造`;
+      if (bagBtn)   bagBtn.innerHTML   = `${S.iconHtml("icon_bag")}背包`;
+      if (jobBtn)   jobBtn.innerHTML   = `${S.iconHtml("icon_sword")}職/寵`;
+      if (setBtn)   setBtn.innerHTML   = `${S.iconHtml("icon_gear")}設定`;
+      if (bombBtn)  bombBtn.innerHTML  = `${S.iconHtml("icon_bomb")}炸彈`;
+    },
+
     initTitleScreen() {
       const Sprites = window.Aetheria.Data.Sprites;
       const previewBox = document.getElementById("title-hero-preview");
       if (previewBox) {
         previewBox.innerHTML = `
           <img src="${Sprites.getDataURL("pet_slime")}" alt="Slime">
-          <img src="${Sprites.getDataURL("hero_down_0")}" style="width:68px;height:68px;" alt="Hero">
+          <img src="${Sprites.getDataURL("hero_down_0")}" style="width:72px;height:72px;" alt="Hero">
           <img src="${Sprites.getDataURL("pet_dragon")}" alt="Dragon">
         `;
       }
@@ -38,7 +65,7 @@ window.Aetheria = window.Aetheria || {};
         const sum = window.Aetheria.State.getSaveSummary();
         const mapObj = window.Aetheria.Data.Maps.getMap(sum.zone);
         if (btnCont) btnCont.classList.remove("disabled");
-        if (infoEl) infoEl.innerText = `存檔紀錄：Lv.${sum.lv}｜公會 ${sum.guildRank} 級｜位於【${mapObj.name}】`;
+        if (infoEl) infoEl.innerText = `存檔：Lv.${sum.lv}｜公會 ${sum.guildRank} 級｜位於【${mapObj.name}】`;
       } else {
         if (btnCont) btnCont.classList.add("disabled");
         if (infoEl) infoEl.innerText = "尚無存檔紀錄，請選擇「新遊戲」";
@@ -64,10 +91,9 @@ window.Aetheria = window.Aetheria || {};
       document.getElementById("title-screen").style.display = "none";
       window.Aetheria.Audio.playBgm("forest");
       this.updateAllHud();
-      this.showToast("新冒險展開！請先在【0.曙光露營基地】找鐵匠大叔・巴爾對話！");
+      this.showToast("新冒險展開！請先在營地找【鐵匠大叔・巴爾】對話！");
     },
 
-    // ================= 基礎面板與 HUD 控制 =================
     setActivePanel(panelId) {
       document.querySelectorAll(".sub-panel").forEach(p => p.classList.remove("active"));
       const target = document.getElementById(panelId);
@@ -101,51 +127,46 @@ window.Aetheria = window.Aetheria || {};
       setTimeout(() => el.remove(), 880);
     },
 
+    // 更新極簡上半屏頂欄 + 下半屏清晰任務與釘選框
     updateAllHud() {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       const jobs = window.Aetheria.Data.JOBS;
       const weapons = window.Aetheria.Data.WEAPONS;
-      const pets = window.Aetheria.Data.PETS;
       const materials = window.Aetheria.Data.MATERIALS;
 
       const jobName = jobs[s.currentJob] ? cleanText(jobs[s.currentJob].name) : "蒼藍劍士";
-      const wepName = weapons[s.equippedWeapon] ? cleanText(weapons[s.equippedWeapon].name) : "新手忍刀";
 
+      // 上半屏左欄：只顯示簡潔 Lv 與職業及公會階級
       const lvEl = document.getElementById("hud-lv");
-      if (lvEl) lvEl.innerText = `Lv.${s.lv} ${jobName}・${wepName} (ATK ${window.Aetheria.State.getTotalAtk()})`;
-
-      const petObj = pets[s.activePet] || pets.pet_slime;
-      const isShiny = s.shinyPets && s.shinyPets.includes(s.activePet);
-      const hunterDual = (s.currentJob === "hunter" && s.unlockedPets.length >= 2) ? "+副寵" : "";
-      const petEl = document.getElementById("hud-pet");
-      if (petEl) petEl.innerText = `戰寵：${isShiny ? "[閃光]" : ""}${cleanText(petObj.name)}${hunterDual}`;
-
-      const guildEl = document.getElementById("hud-guild");
-      if (guildEl) guildEl.innerText = `公會：${s.guildRank}級 (${s.guildPoints}pt)`;
-
-      const pinBox = document.getElementById("pinned-recipe");
-      if (pinBox) {
-        const pinWep = weapons[s.pinnedRecipe] || weapons.w_tide;
-        const costParts = [];
-        for (const [k, req] of Object.entries(pinWep.cost || {})) {
-          const m = materials[k] || { name: k };
-          costParts.push(`${m.name.slice(0, 3)} ${s.inventory[k] || 0}/${req}`);
-        }
-        pinBox.innerHTML = `釘選：${cleanText(pinWep.name)} (${costParts.join("｜") || "已擁有"})`;
+      if (lvEl) {
+        lvEl.innerHTML = `${S.iconHtml("icon_sword")}Lv.${s.lv} ${jobName} (${s.guildRank}級)`;
       }
 
+      // 下半屏羊皮紙第 1 行：當前主線任務
       const questEl = document.getElementById("hud-quest");
       if (questEl) {
         const mq = window.Aetheria.Data.getCurrentMainQuest(s);
         if (mq) {
           const done = mq.checkComplete(s);
           questEl.innerHTML = done
-            ? `<b>${cleanText(mq.title)} (已完成！點【公會】領獎)</b>`
-            : `${mq.chapter}：${cleanText(mq.title)}`;
-          questEl.style.borderColor = done ? "#5ac54f" : "#f5b700";
+            ? `${S.iconHtml("icon_scroll")}<b>主線達成：${cleanText(mq.title)} (請點上方【公會】領獎！)</b>`
+            : `${S.iconHtml("icon_scroll")}${mq.chapter}：${cleanText(mq.title)}`;
         } else {
-          questEl.innerHTML = `主線全破！無盡試煉之塔最高：第 ${s.maxTowerFloor} 層`;
+          questEl.innerHTML = `${S.iconHtml("icon_scroll")}主線全破！無盡試煉之塔最高紀錄：第 ${s.maxTowerFloor} 層`;
         }
+      }
+
+      // 下半屏羊皮紙第 2 行：釘選鍛造配方進度
+      const pinBox = document.getElementById("pinned-recipe");
+      if (pinBox) {
+        const pinWep = weapons[s.pinnedRecipe] || weapons.w_tide;
+        const costParts = [];
+        for (const [k, req] of Object.entries(pinWep.cost || {})) {
+          const m = materials[k] || { name: k };
+          costParts.push(`${m.name} ${s.inventory[k] || 0}/${req}`);
+        }
+        pinBox.innerHTML = `${S.iconHtml("icon_forge")}目標配方：<b>${cleanText(pinWep.name)}</b> (${costParts.join("｜") || "已擁有"})`;
       }
 
       const mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
@@ -161,13 +182,13 @@ window.Aetheria = window.Aetheria || {};
 
       if (mapObj.id === "camp_hub" || mapObj.id === "tent_guild" || mapObj.id === "tent_forge") {
         zoneBadge.className = "na-badge danger-safe";
-        zoneBadge.innerText = `${mapObj.name} (安全區)`;
+        zoneBadge.innerText = `${mapObj.name}`;
       } else if (diff <= 2) {
         zoneBadge.className = "na-badge danger-safe";
-        zoneBadge.innerText = `${mapObj.name} (推薦 Lv.${effLv})`;
+        zoneBadge.innerText = `${mapObj.name} (Lv.${effLv})`;
       } else if (diff <= 6) {
         zoneBadge.className = "na-badge danger-warn";
-        zoneBadge.innerText = `${mapObj.name} (警戒 Lv.${effLv})`;
+        zoneBadge.innerText = `${mapObj.name} (Lv.${effLv})`;
       } else {
         zoneBadge.className = "na-badge danger-deadly";
         zoneBadge.innerText = `${mapObj.name} (高危 Lv.${effLv})`;
@@ -177,6 +198,7 @@ window.Aetheria = window.Aetheria || {};
     // ================= 1. NPC 對話與旅人指令 =================
     openNpcDialogue(npcId) {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       const npc = window.Aetheria.Data.NPCS_DB[npcId] || window.Aetheria.Data.NPCS_DB.npc_smith;
 
       if (npcId === "npc_smith") {
@@ -194,9 +216,9 @@ window.Aetheria = window.Aetheria || {};
       if (portCanvas) {
         const pCtx = portCanvas.getContext("2d");
         pCtx.imageSmoothingEnabled = false;
-        pCtx.clearRect(0, 0, 36, 36);
-        const sp = window.Aetheria.Data.Sprites.get(npc.sprite);
-        if (sp) pCtx.drawImage(sp, 2, 2, 32, 32);
+        pCtx.clearRect(0, 0, 40, 40);
+        const sp = S.get(npc.sprite);
+        if (sp) pCtx.drawImage(sp, 2, 2, 36, 36);
       }
 
       const btnGrid = document.getElementById("npc-action-buttons");
@@ -205,8 +227,8 @@ window.Aetheria = window.Aetheria || {};
       const srvBtn = document.createElement("button");
       srvBtn.className = "na-btn highlight";
       srvBtn.style.gridColumn = "span 2";
-      srvBtn.style.padding = "7px";
-      srvBtn.innerText = cleanText(npc.serviceLabel);
+      srvBtn.style.padding = "9px";
+      srvBtn.innerHTML = `${S.iconHtml("icon_forge")}${cleanText(npc.serviceLabel)}`;
       srvBtn.onclick = () => {
         if (npc.serviceAction === "openAstrolabeModal") this.openSettingsModal("astrolabe");
         else if (this[npc.serviceAction]) this[npc.serviceAction]();
@@ -217,8 +239,8 @@ window.Aetheria = window.Aetheria || {};
         const btn = document.createElement("button");
         btn.className = "na-btn";
         btn.style.textAlign = "left";
-        btn.style.padding = "6px";
-        btn.innerHTML = `<div style="color:var(--na-gold);">${cleanText(pa.label)}</div><div style="font-size:10px; font-weight:normal; color:#cbd5e1;">${cleanText(pa.desc)}</div>`;
+        btn.style.padding = "8px";
+        btn.innerHTML = `<div style="color:var(--na-gold); font-size:14px;">${S.iconHtml("icon_sword")}${cleanText(pa.label)}</div><div style="font-size:12px; font-weight:normal; color:#cbd5e1; margin-top:2px;">${cleanText(pa.desc)}</div>`;
         btn.onclick = () => {
           if (pa.type === "spar") {
             window.Aetheria.Battle.pathActionRef = { action: pa, npc: npc };
@@ -231,16 +253,17 @@ window.Aetheria = window.Aetheria || {};
       });
     },
 
-    // ================= 2. 傳送陣 (必須角色曾步行進入該區才開放傳送！) =================
+    // ================= 2. 傳送陣 (必須步行進入該區才解鎖) =================
     openWorldMapModal() {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       const unlockedList = s.unlockedZones || ["camp_hub"];
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = `大陸傳送陣 (已探索解鎖：${unlockedList.length} / ${window.Aetheria.Data.Maps.ORDERED_WORLD_ZONES.length} 區)`;
+      document.getElementById("modal-title").innerHTML = `${S.iconHtml("icon_map")}大陸傳送陣 (已解鎖：${unlockedList.length}/${window.Aetheria.Data.Maps.ORDERED_WORLD_ZONES.length} 區)`;
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = `<div style="margin-bottom:6px; color:#cbd5e1; font-size:11px;">規則：必須先操控角色由地圖邊界<b>步行進入</b>下一區域，才可點亮該區的傳送石碑！</div>`;
+      body.innerHTML = `<div style="margin-bottom:8px; color:#cbd5e1; font-size:13px;">規則：請先操控角色由地圖出口<b>步行進入</b>下一區域，即可點亮該區傳送石碑！</div>`;
 
       window.Aetheria.Data.Maps.ORDERED_WORLD_ZONES.forEach(z => {
         const isUnlocked = unlockedList.includes(z.id);
@@ -251,19 +274,19 @@ window.Aetheria = window.Aetheria || {};
         if (isUnlocked) {
           card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <b style="font-size:12px;">${z.name}</b>
-              <button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.teleportToZone('${z.id}', ${z.x}, ${z.y})">${isCurrent ? "刷新資源" : "傳送"}</button>
+              <b style="font-size:15px;">${S.iconHtml("icon_map")}${z.name}</b>
+              <button class="na-btn highlight" style="padding:6px 12px;" onclick="Aetheria.UI.teleportToZone('${z.id}', ${z.x}, ${z.y})">${isCurrent ? "刷新資源" : "立即傳送"}</button>
             </div>
-            <div style="font-size:11px; margin-top:3px;">${z.desc}</div>
+            <div style="font-size:13px; margin-top:4px;">${z.desc}</div>
           `;
         } else {
           card.style.opacity = "0.55";
           card.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <b style="color:#8d99ae; font-size:12px;">[未探索區域] ${z.name}</b>
-              <span style="font-size:10px; color:#ff595e; font-weight:bold;">需步行進入解鎖</span>
+              <b style="color:#8d99ae; font-size:15px;">[未探索] ${z.name}</b>
+              <span style="font-size:12px; color:#ff595e; font-weight:bold;">需步行進入解鎖</span>
             </div>
-            <div style="font-size:10px; color:#8d99ae; margin-top:2px;">請先由前一區域的出口步行抵達此處以開啟傳送石碑。</div>
+            <div style="font-size:12px; color:#8d99ae; margin-top:3px;">請先由前一區域的出口步行抵達此處以開啟傳送石碑。</div>
           `;
         }
         body.appendChild(card);
@@ -296,23 +319,23 @@ window.Aetheria = window.Aetheria || {};
     // ================= 3. 冒險者公會：先接受委託 (上限 3 張) ➔ 才顯示並交付 =================
     openGuildModal() {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       if (!Array.isArray(s.activeBounties)) s.activeBounties = [];
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = `記憶共鳴者公會 (${s.guildRank}級｜聲望 ${s.guildPoints}pt)`;
+      document.getElementById("modal-title").innerHTML = `${S.iconHtml("icon_shield")}冒險者公會 (${s.guildRank}級｜聲望 ${s.guildPoints}pt)`;
 
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
 
-      // 頂部：領取每日階級補給 + 建造溫室
       const ghLv = s.campBuildings.greenhouse || 0;
       const topBar = document.createElement("div");
-      topBar.style.cssText = "display:flex; gap:5px; margin-bottom:6px;";
+      topBar.style.cssText = "display:flex; gap:6px; margin-bottom:8px;";
       topBar.innerHTML = `
-        <button class="na-btn highlight" style="flex:1; padding:6px;" onclick="Aetheria.UI.claimGuildSupply()">領取 ${s.guildRank} 級俸祿補給</button>
+        <button class="na-btn highlight" style="flex:1; padding:8px;" onclick="Aetheria.UI.claimGuildSupply()">${S.iconHtml("icon_coin")}領取 ${s.guildRank} 級俸祿補給</button>
         ${ghLv === 0
-          ? `<button class="na-btn" style="flex:1; padding:6px;" onclick="Aetheria.UI.buildGreenhouse()">建造煉金溫室(木2鐵2)</button>`
-          : `<button class="na-btn" style="flex:1; padding:6px; opacity:0.8;" onclick="Aetheria.UI.showToast('煉金溫室運作中：每答對5題自動產出洞察藥水！')">煉金溫室運作中</button>`
+          ? `<button class="na-btn" style="flex:1; padding:8px;" onclick="Aetheria.UI.buildGreenhouse()">建造煉金溫室(木2鐵2)</button>`
+          : `<button class="na-btn" style="flex:1; padding:8px;" onclick="Aetheria.UI.showToast('煉金溫室運作中：每答對5題自動產出洞察藥水！')">溫室運作中</button>`
         }
       `;
       body.appendChild(topBar);
@@ -324,18 +347,18 @@ window.Aetheria = window.Aetheria || {};
         const mqCard = document.createElement("div");
         mqCard.className = "sys-card-scroll";
         mqCard.innerHTML = `
-          <div style="font-weight:900; color:#8f563b;">【當前主線】${mq.chapter}：${cleanText(mq.title)}</div>
-          <div style="font-size:11px; margin:3px 0;">${cleanText(mq.desc)}</div>
-          <div style="font-size:11px; color:#1d5eb8; font-weight:bold;">獎勵：${cleanText(mq.rewardText)}</div>
-          ${isDone ? `<button class="na-btn highlight" style="width:100%; margin-top:5px; padding:6px;" onclick="Aetheria.UI.claimMainQuest('${mq.id}')">任務達成！點擊領取主線獎勵</button>` : ""}
+          <div style="font-weight:900; color:#8f563b; font-size:15px;">${S.iconHtml("icon_scroll")}【當前主線】${mq.chapter}：${cleanText(mq.title)}</div>
+          <div style="font-size:13px; margin:4px 0;">${cleanText(mq.desc)}</div>
+          <div style="font-size:13px; color:#1d5eb8; font-weight:bold;">獎勵：${cleanText(mq.rewardText)}</div>
+          ${isDone ? `<button class="na-btn highlight" style="width:100%; margin-top:6px; padding:8px;" onclick="Aetheria.UI.claimMainQuest('${mq.id}')">任務達成！點擊領取主線獎勵</button>` : ""}
         `;
         body.appendChild(mqCard);
       }
 
-      // B. 已接受的委託欄 (上限 3 張 — 必須先在此欄才能交付完成！)
+      // B. 已接受的委託欄 (上限 3 張)
       const activeHeader = document.createElement("div");
-      activeHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:6px 0 4px;";
-      activeHeader.innerText = `【進行中委託】(${s.activeBounties.length} / ${MAX_ACTIVE_BOUNTIES} 張上限 — 集齊物資後在此交付)`;
+      activeHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 5px; font-size:15px;";
+      activeHeader.innerHTML = `${S.iconHtml("icon_sword")}【進行中委託】(${s.activeBounties.length} / ${MAX_ACTIVE_BOUNTIES} 張上限)`;
       body.appendChild(activeHeader);
 
       const Helper = window.Aetheria.Data.CraftingHelper;
@@ -343,8 +366,8 @@ window.Aetheria = window.Aetheria || {};
       if (s.activeBounties.length === 0) {
         const emptyCard = document.createElement("div");
         emptyCard.className = "sys-card";
-        emptyCard.style.color = "#8d99ae";
-        emptyCard.innerText = "目前尚未接受任何委託。請從下方「公會懸賞板」選擇並接受委託（最多同時接 3 張）。";
+        emptyCard.style.color = "#cbd5e1";
+        emptyCard.innerText = "目前尚未接受任何委託。請從下方「公會懸賞公告板」選擇並接受委託（最多同時接 3 張）。";
         body.appendChild(emptyCard);
       } else {
         s.activeBounties.forEach(bId => {
@@ -354,16 +377,16 @@ window.Aetheria = window.Aetheria || {};
             sCard.className = "sys-card-scroll";
             sCard.innerHTML = `
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>【特級錯題懸賞】討伐暗影記憶幻象 (待淨化: ${wrongCount})</b>
-                <div style="display:flex; gap:4px;">
+                <b style="font-size:15px;">【特級錯題懸賞】暗影記憶幻象 (待淨化: ${wrongCount})</b>
+                <div style="display:flex; gap:5px;">
                   ${wrongCount > 0
-                    ? `<button class="na-btn highlight" style="padding:3px 8px;" onclick="Aetheria.UI.huntWrongQuestion()">出擊討伐</button>`
-                    : `<button class="na-btn highlight" style="padding:3px 8px;" onclick="Aetheria.UI.deliverWrongBounty()">交付領獎</button>`
+                    ? `<button class="na-btn highlight" style="padding:5px 10px;" onclick="Aetheria.UI.huntWrongQuestion()">出擊討伐</button>`
+                    : `<button class="na-btn highlight" style="padding:5px 10px;" onclick="Aetheria.UI.deliverWrongBounty()">交付領獎</button>`
                   }
-                  <button class="na-btn" style="padding:3px 6px;" onclick="Aetheria.UI.abandonBounty('bounty_wrong_shadow')">放棄</button>
+                  <button class="na-btn" style="padding:5px 8px;" onclick="Aetheria.UI.abandonBounty('bounty_wrong_shadow')">放棄</button>
                 </div>
               </div>
-              <div style="font-size:11px; margin-top:2px;">擊敗錯題幻象將錯題清零後，即可點擊「交付領獎」獲雙倍聲望與秘銀礦 x2！</div>
+              <div style="font-size:13px; margin-top:4px;">擊敗錯題幻象將錯題清零後，即可點擊「交付領獎」獲雙倍聲望與秘銀礦 x2！</div>
             `;
             body.appendChild(sCard);
             return;
@@ -377,26 +400,25 @@ window.Aetheria = window.Aetheria || {};
           aCard.className = "sys-card-scroll";
           aCard.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <b>${cleanText(b.title)}</b>
-              <div style="display:flex; gap:4px;">
-                <button class="na-btn ${canDeliver ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.deliverGuildBounty('${b.id}')">${canDeliver ? "交付完成" : "物資未齊"}</button>
-                <button class="na-btn" style="padding:3px 6px;" onclick="Aetheria.UI.abandonBounty('${b.id}')">放棄</button>
+              <b style="font-size:15px;">${cleanText(b.title)}</b>
+              <div style="display:flex; gap:5px;">
+                <button class="na-btn ${canDeliver ? "highlight" : ""}" style="padding:5px 10px;" onclick="Aetheria.UI.deliverGuildBounty('${b.id}')">${canDeliver ? "交付完成" : "物資未齊"}</button>
+                <button class="na-btn" style="padding:5px 8px;" onclick="Aetheria.UI.abandonBounty('${b.id}')">放棄</button>
               </div>
             </div>
-            <div style="font-size:11px; margin:2px 0;">進度：${cleanText(Helper.formatCostText(s.inventory, b.cost))}</div>
-            <div style="font-size:11px; color:#1d5eb8; font-weight:bold;">報酬：${cleanText(b.rewardText)}</div>
+            <div style="font-size:13px; margin:4px 0;">需求進度：${cleanText(Helper.formatCostText(s.inventory, b.cost))}</div>
+            <div style="font-size:13px; color:#1d5eb8; font-weight:bold;">報酬：${cleanText(b.rewardText)}</div>
           `;
           body.appendChild(aCard);
         });
       }
 
-      // C. 公會懸賞公告板 (尚未接取的委託池)
+      // C. 公會懸賞公告板
       const boardHeader = document.createElement("div");
-      boardHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px;";
-      boardHeader.innerText = "【公會懸賞公告板】（請先接受委託，完成後再交付）";
+      boardHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:10px 0 5px; font-size:15px;";
+      boardHeader.innerHTML = `${S.iconHtml("icon_scroll")}【公會懸賞公告板】（先接受委託，完成後交付）`;
       body.appendChild(boardHeader);
 
-      // 特級錯題懸賞單
       if (!s.activeBounties.includes("bounty_wrong_shadow")) {
         const wrongCount = (s.wrongBook || []).length;
         const wCard = document.createElement("div");
@@ -404,10 +426,10 @@ window.Aetheria = window.Aetheria || {};
         wCard.style.borderColor = "#9d4edd";
         wCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b style="color:#e0aaff;">【S級錯題懸賞】討伐暗影記憶幻象 (當前錯題: ${wrongCount} 題)</b>
-            <button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.acceptBounty('bounty_wrong_shadow')">接受委託</button>
+            <b style="color:#e0aaff; font-size:15px;">【S級錯題懸賞】討伐暗影記憶幻象 (錯題: ${wrongCount})</b>
+            <button class="na-btn highlight" style="padding:5px 10px;" onclick="Aetheria.UI.acceptBounty('bounty_wrong_shadow')">接受委託</button>
           </div>
-          <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">接取後可專門挑戰曾答錯的題目，淨化完成可獲雙倍聲望與流沙秘銀 x2。</div>
+          <div style="font-size:13px; color:#cbd5e1; margin-top:4px;">接取後可挑戰曾答錯的題目，淨化完成可獲雙倍聲望與流沙秘銀 x2。</div>
         `;
         body.appendChild(wCard);
       }
@@ -418,11 +440,11 @@ window.Aetheria = window.Aetheria || {};
         bCard.className = "sys-card";
         bCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b style="color:var(--na-gold);">${cleanText(b.title)}</b>
-            <button class="na-btn highlight" style="padding:4px 10px;" onclick="Aetheria.UI.acceptBounty('${b.id}')">接受委託</button>
+            <b style="color:var(--na-gold); font-size:15px;">${cleanText(b.title)}</b>
+            <button class="na-btn highlight" style="padding:5px 10px;" onclick="Aetheria.UI.acceptBounty('${b.id}')">接受委託</button>
           </div>
-          <div style="font-size:11px; color:#cbd5e1; margin:2px 0;">${cleanText(b.desc)}</div>
-          <div style="font-size:11px; color:#8ce0ff;">報酬：${cleanText(b.rewardText)}</div>
+          <div style="font-size:13px; color:#cbd5e1; margin:4px 0;">${cleanText(b.desc)}</div>
+          <div style="font-size:13px; color:#8ce0ff;">報酬：${cleanText(b.rewardText)}</div>
         `;
         body.appendChild(bCard);
       });
@@ -440,7 +462,7 @@ window.Aetheria = window.Aetheria || {};
       s.activeBounties.push(bId);
       window.Aetheria.Audio.sfxTalkBlip();
       window.Aetheria.State.save();
-      this.showToast(`已接受委託！（當前進行中：${s.activeBounties.length}/${MAX_ACTIVE_BOUNTIES}）`);
+      this.showToast(`已接受委託！（進行中：${s.activeBounties.length}/${MAX_ACTIVE_BOUNTIES}）`);
       this.openGuildModal();
     },
 
@@ -482,7 +504,7 @@ window.Aetheria = window.Aetheria || {};
       s.questProgress.bountiesCleared = (s.questProgress.bountiesCleared || 0) + 1;
       window.Aetheria.State.gainRewards(100, 120, 35);
       window.Aetheria.Audio.sfxLevelUp();
-      this.showToast("特級錯題委託交付完成！獲得【流沙秘銀 x2】与聲望 +35！");
+      this.showToast("特級錯題委託交付完成！獲得【流沙秘銀 x2】與聲望 +35！");
       this.openGuildModal();
       this.updateAllHud();
     },
@@ -537,37 +559,35 @@ window.Aetheria = window.Aetheria || {};
       this.openGuildModal();
     },
 
-    // ================= 4. 鐵匠鋪：4 大分類 Tab + 階梯式解鎖（完成前一級才顯示下一級！） =================
+    // ================= 4. 鐵匠鋪：4 大分類 Tab + 完成前一級才解鎖下一級 =================
     openForgeModal(activeTab = "weapon") {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       const inv = s.inventory;
       const Helper = window.Aetheria.Data.CraftingHelper;
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = "曙光鐵匠工坊 (分類階梯式鍛造)";
+      document.getElementById("modal-title").innerHTML = `${S.iconHtml("icon_forge")}曙光鐵匠工坊 (分類階梯式鍛造)`;
 
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
 
-      // 頂部 4 大分類頁籤 (武器鍛造 / 聖物飾品 / 工具升級 / 煉金提煉)
       const tabBar = document.createElement("div");
       tabBar.className = "tab-bar";
-      const tabs = [
-        { id: "weapon",  label: "武器鍛造" },
-        { id: "tool",    label: "工具升級" },
-        { id: "relic",   label: "聖物飾品" },
-        { id: "alchemy", label: "煉金提煉" }
-      ];
-      tabs.forEach(t => {
+      [
+        { id: "weapon",  label: "武器鍛造", icon: "icon_sword" },
+        { id: "tool",    label: "工具升級", icon: "icon_forge" },
+        { id: "relic",   label: "聖物飾品", icon: "icon_shield" },
+        { id: "alchemy", label: "煉金提煉", icon: "icon_potion" }
+      ].forEach(t => {
         const b = document.createElement("button");
         b.className = "na-btn" + (activeTab === t.id ? " highlight" : "");
-        b.innerText = t.label;
+        b.innerHTML = `${S.iconHtml(t.icon)}${t.label}`;
         b.onclick = () => this.openForgeModal(t.id);
         tabBar.appendChild(b);
       });
       body.appendChild(tabBar);
 
-      // 分類 1：武器鍛造（嚴格執行：完成前一階 tier，才顯示下一階配方！）
       if (activeTab === "weapon") {
         const weaponList = Object.values(window.Aetheria.Data.WEAPONS).sort((a, b) => a.tier - b.tier);
         let highestOwnedTier = 1;
@@ -581,37 +601,35 @@ window.Aetheria = window.Aetheria || {};
           const owned = s.unlockedWeapons.includes(w.id);
           const equipped = (s.equippedWeapon === w.id);
 
-          // 規則：只顯示已擁有的武器，以及「當前最高已擁有階級 + 1」的下一把武器！更高階顯示為鎖定未知
           if (w.tier <= highestOwnedTier + 1) {
             const canCraft = Helper.canAfford(inv, w.cost);
             const card = document.createElement("div");
             card.className = owned ? "sys-card-scroll" : "sys-card";
             card.innerHTML = `
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>[Tier ${w.tier}] ${cleanText(w.name)} (ATK +${w.atk}｜破盾 +${1 + (w.shieldBreak || 0)})</b>
-                <div style="display:flex; gap:4px;">
-                  ${!owned ? `<button class="na-btn" style="padding:2px 6px;" onclick="Aetheria.UI.pinWeapon('${w.id}')">釘選</button>` : ""}
+                <b style="font-size:15px;">${S.iconHtml("icon_sword")}[Tier ${w.tier}] ${cleanText(w.name)} (ATK +${w.atk})</b>
+                <div style="display:flex; gap:5px;">
+                  ${!owned ? `<button class="na-btn" style="padding:4px 8px;" onclick="Aetheria.UI.pinWeapon('${w.id}')">釘選</button>` : ""}
                   ${owned
-                    ? `<button class="na-btn ${equipped ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.equipWeapon('${w.id}')">${equipped ? "已裝備" : "裝備"}</button>`
-                    : `<button class="na-btn ${canCraft ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.craftWeapon('${w.id}')">鍛造</button>`
+                    ? `<button class="na-btn ${equipped ? "highlight" : ""}" style="padding:5px 10px;" onclick="Aetheria.UI.equipWeapon('${w.id}')">${equipped ? "已裝備" : "裝備"}</button>`
+                    : `<button class="na-btn ${canCraft ? "highlight" : ""}" style="padding:5px 10px;" onclick="Aetheria.UI.craftWeapon('${w.id}')">鍛造</button>`
                   }
                 </div>
               </div>
-              <div style="font-size:11px; margin-top:2px;">${cleanText(w.desc)}</div>
-              ${!owned ? `<div style="font-size:11px; margin-top:2px;">需求：${cleanText(Helper.formatCostText(inv, w.cost))}</div>` : ""}
+              <div style="font-size:13px; margin-top:4px;">${cleanText(w.desc)}</div>
+              ${!owned ? `<div style="font-size:13px; margin-top:4px;">需求：${cleanText(Helper.formatCostText(inv, w.cost))}</div>` : ""}
             `;
             body.appendChild(card);
           } else if (w.tier === highestOwnedTier + 2) {
             const lockCard = document.createElement("div");
             lockCard.className = "sys-card";
-            lockCard.style.opacity = "0.5";
-            lockCard.innerHTML = `<b>[Tier ${w.tier} 未解鎖配方] ???</b><div style="font-size:11px; color:#ff595e; margin-top:2px;">需先完成【Tier ${highestOwnedTier + 1}】武器鍛造後才會揭曉此配方！</div>`;
+            lockCard.style.opacity = "0.55";
+            lockCard.innerHTML = `<b style="font-size:15px;">[Tier ${w.tier} 未解鎖配方] ???</b><div style="font-size:13px; color:#ff595e; margin-top:3px;">需先完成【Tier ${highestOwnedTier + 1}】武器鍛造後才會揭曉此配方！</div>`;
             body.appendChild(lockCard);
           }
         });
       }
 
-      // 分類 2：四大探索工具升級（每種工具只顯示當前等級 -> 下一級！）
       else if (activeTab === "tool") {
         Object.entries(window.Aetheria.Data.TOOLS_UPGRADE).forEach(([tKey, tDef]) => {
           const curLv = s.tools[tKey] || 1;
@@ -622,20 +640,19 @@ window.Aetheria = window.Aetheria || {};
           tCard.className = "sys-card";
           tCard.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center;">
-              <b>${cleanText(tDef.name)} Lv.${curLv}（${tDef.levels[curLv].title}）</b>
+              <b style="font-size:15px;">${S.iconHtml("icon_forge")}${cleanText(tDef.name)} Lv.${curLv}（${tDef.levels[curLv].title}）</b>
               ${nextData
-                ? `<button class="na-btn highlight" style="padding:3px 8px;" onclick="Aetheria.UI.upgradeTool('${tKey}')">升至 Lv.${nextLv}</button>`
-                : `<span style="color:#5ac54f; font-weight:bold;">已達最高階</span>`
+                ? `<button class="na-btn highlight" style="padding:5px 10px;" onclick="Aetheria.UI.upgradeTool('${tKey}')">升至 Lv.${nextLv}</button>`
+                : `<span style="color:#5ac54f; font-weight:bold;">已滿階</span>`
               }
             </div>
-            <div style="font-size:11px; color:#cbd5e1; margin-top:3px;">當前效果：${cleanText(tDef.levels[curLv].desc)}</div>
-            ${nextData ? `<div style="font-size:11px; color:var(--na-gold); margin-top:3px;">下一階【Lv.${nextLv} ${nextData.title}】：${cleanText(nextData.desc)}<br>升級需求：${cleanText(Helper.formatCostText(inv, nextData.cost))}</div>` : ""}
+            <div style="font-size:13px; color:#cbd5e1; margin-top:4px;">當前效果：${cleanText(tDef.levels[curLv].desc)}</div>
+            ${nextData ? `<div style="font-size:13px; color:var(--na-gold); margin-top:4px;">下一階【Lv.${nextLv} ${nextData.title}】：${cleanText(nextData.desc)}<br>需求：${cleanText(Helper.formatCostText(inv, nextData.cost))}</div>` : ""}
           `;
           body.appendChild(tCard);
         });
       }
 
-      // 分類 3：聖物飾品（完成前一件聖物才解鎖下一件！）
       else if (activeTab === "relic") {
         const relicList = Object.values(window.Aetheria.Data.RELICS);
         const ownedCount = (s.unlockedRelics || []).length;
@@ -648,27 +665,26 @@ window.Aetheria = window.Aetheria || {};
             rCard.className = owned ? "sys-card-scroll" : "sys-card";
             rCard.innerHTML = `
               <div style="display:flex; justify-content:space-between; align-items:center;">
-                <b>[聖物 ${idx + 1}] ${cleanText(rel.name)}</b>
+                <b style="font-size:15px;">${S.iconHtml("icon_shield")}[聖物 ${idx + 1}] ${cleanText(rel.name)}</b>
                 ${owned
                   ? `<span style="color:#1d5eb8; font-weight:900;">已生效</span>`
-                  : `<button class="na-btn ${canCraft ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.craftRelic('${rel.id}')">鍛造聖物</button>`
+                  : `<button class="na-btn ${canCraft ? "highlight" : ""}" style="padding:5px 10px;" onclick="Aetheria.UI.craftRelic('${rel.id}')">鍛造聖物</button>`
                 }
               </div>
-              <div style="font-size:11px; margin-top:2px;">${cleanText(rel.desc)}</div>
-              ${!owned ? `<div style="font-size:11px; margin-top:2px;">需求：${cleanText(Helper.formatCostText(inv, rel.cost))}</div>` : ""}
+              <div style="font-size:13px; margin-top:4px;">${cleanText(rel.desc)}</div>
+              ${!owned ? `<div style="font-size:13px; margin-top:4px;">需求：${cleanText(Helper.formatCostText(inv, rel.cost))}</div>` : ""}
             `;
             body.appendChild(rCard);
           } else {
             const lockCard = document.createElement("div");
             lockCard.className = "sys-card";
-            lockCard.style.opacity = "0.5";
-            lockCard.innerHTML = `<b>[聖物 ${idx + 1} 未解鎖] ???</b><div style="font-size:11px; color:#ff595e;">請先完成前一件古文明聖物的鍛造。</div>`;
+            lockCard.style.opacity = "0.55";
+            lockCard.innerHTML = `<b style="font-size:15px;">[聖物 ${idx + 1} 未解鎖] ???</b><div style="font-size:13px; color:#ff595e; margin-top:3px;">請先完成前一件古文明聖物的鍛造。</div>`;
             body.appendChild(lockCard);
           }
         });
       }
 
-      // 分類 4：萬能煉金提煉爐
       else if (activeTab === "alchemy") {
         window.Aetheria.Data.ALCHEMY_CONVERSIONS.forEach(c => {
           const fromMat = window.Aetheria.Data.MATERIALS[c.fromKey];
@@ -680,10 +696,10 @@ window.Aetheria = window.Aetheria || {};
           row.style.alignItems = "center";
           row.innerHTML = `
             <div>
-              <b>${cleanText(c.name)}</b>
-              <div style="font-size:10px; color:#cbd5e1;">消耗：${fromMat.name} (擁有 ${have} / 需 ${c.fromCount})</div>
+              <b style="font-size:15px;">${S.iconHtml("icon_potion")}${cleanText(c.name)}</b>
+              <div style="font-size:13px; color:#cbd5e1; margin-top:2px;">消耗：${fromMat.name} (擁有 ${have} / 需 ${c.fromCount})</div>
             </div>
-            <button class="na-btn ${have >= c.fromCount ? "highlight" : ""}" style="padding:4px 10px;" onclick="Aetheria.UI.alchemyConvert('${c.id}')">提煉</button>
+            <button class="na-btn ${have >= c.fromCount ? "highlight" : ""}" style="padding:6px 12px;" onclick="Aetheria.UI.alchemyConvert('${c.id}')">提煉</button>
           `;
           body.appendChild(row);
         });
@@ -694,7 +710,7 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.State.data.pinnedRecipe = wId;
       window.Aetheria.State.save();
       this.updateAllHud();
-      this.showToast("已將配方釘選至右上角 HUD 追蹤！");
+      this.showToast("已將配方釘選至下半屏資訊框追蹤！");
     },
 
     craftWeapon(wId) {
@@ -775,46 +791,49 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // ================= 5. 新增！獨立「背包 (Bag)」頁面 =================
+    // ================= 5. 獨立「背包 (Bag)」頁面 (每個格仔附帶真實像素素材圖標) =================
     openBagModal(selectedKey = "iron") {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       const inv = s.inventory;
       const mats = window.Aetheria.Data.MATERIALS;
 
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = `冒險者背包 (金幣：${s.gold} G｜HP：${s.hp}/${s.maxHp})`;
+      document.getElementById("modal-title").innerHTML = `${S.iconHtml("icon_bag")}冒險者背包 (金幣：${s.gold} G｜HP：${s.hp}/${s.maxHp})`;
 
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
 
-      // 頂部選中物品詳情與「使用」框
       const selMat = mats[selectedKey] || mats.iron;
       const selCount = inv[selectedKey] || 0;
+      const selSpKey = getItemSpriteKey(selectedKey);
+
       const detailBox = document.createElement("div");
       detailBox.className = "sys-card-scroll";
       detailBox.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center;">
-          <b>【${selMat.name}】 (持有數量：${selCount})</b>
+          <b style="font-size:16px;">${S.iconHtml(selSpKey, true)}【${selMat.name}】 (持有：${selCount})</b>
           ${selectedKey === "potionHeal" && selCount > 0
-            ? `<button class="na-btn highlight" style="padding:3px 10px;" onclick="Aetheria.UI.useBagHealPotion()">立即飲用 (+60 HP)</button>`
-            : `<span style="font-size:10px; color:#5c3824;">階級 Tier ${selMat.tier}</span>`
+            ? `<button class="na-btn highlight" style="padding:5px 12px;" onclick="Aetheria.UI.useBagHealPotion()">立即飲用 (+60 HP)</button>`
+            : `<span style="font-size:12px; color:#5c3824; font-weight:bold;">Tier ${selMat.tier} 素材</span>`
           }
         </div>
-        <div style="font-size:11px; margin-top:3px;">用途說明：${selMat.desc}</div>
+        <div style="font-size:14px; margin-top:4px;">用途說明：${selMat.desc}</div>
       `;
       body.appendChild(detailBox);
 
-      // 背包格仔網格展示所有素材與消耗品
       const grid = document.createElement("div");
       grid.className = "bag-grid";
 
       Object.keys(mats).forEach(k => {
         const m = mats[k];
         const count = inv[k] || 0;
+        const spKey = getItemSpriteKey(k);
         const slot = document.createElement("div");
         slot.className = "bag-slot" + (k === selectedKey ? " active" : "");
-        slot.style.opacity = count > 0 ? "1" : "0.42";
+        slot.style.opacity = count > 0 ? "1" : "0.45";
         slot.innerHTML = `
+          <div>${S.iconHtml(spKey, true)}</div>
           <div class="bag-slot-name">${m.name}</div>
           <div class="bag-slot-count">x${count}</div>
         `;
@@ -841,37 +860,39 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("已飲用生命藥水，回復 60 點生命值！");
     },
 
-    // ================= 6. 職業與戰寵頁面 =================
+    // ================= 6. 職業與戰寵頁面 (附帶像素角色與戰寵立繪圖標) =================
     openJobPetModal() {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = "古文明職業祠堂 & 同行戰寵牧場";
+      document.getElementById("modal-title").innerHTML = `${S.iconHtml("icon_sword")}古文明職業祠堂 & 同行戰寵牧場`;
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = `<div style="color:var(--na-gold); font-weight:900; margin-bottom:4px;">【同行戰寵切換】（轉職「荒野獵人」可同時帶 2 隻戰寵上場）</div>`;
+      body.innerHTML = `<div style="color:var(--na-gold); font-weight:900; margin-bottom:6px; font-size:15px;">【同行戰寵切換】（轉職「荒野獵人」可同時帶 2 隻戰寵上場）</div>`;
 
       Object.values(window.Aetheria.Data.PETS).forEach(p => {
         const unlocked = s.unlockedPets.includes(p.id);
         const isActive = (s.activePet === p.id);
         const isShiny = s.shinyPets && s.shinyPets.includes(p.id);
+        const spKey = isShiny ? p.shinySpriteKey : p.spriteKey;
 
         const pCard = document.createElement("div");
         pCard.className = unlocked ? "sys-card-scroll" : "sys-card";
         pCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b>${isShiny ? "[異色閃光] " : ""}${cleanText(p.name)} — ${p.skillName}</b>
+            <b style="font-size:15px;">${S.iconHtml(spKey, true)}${isShiny ? "[異色閃光] " : ""}${cleanText(p.name)}</b>
             ${unlocked
-              ? `<button class="na-btn ${isActive ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.selectPet('${p.id}')">${isActive ? "主戰寵" : "設為主寵"}</button>`
-              : `<button class="na-btn" style="padding:3px 8px;" onclick="Aetheria.UI.quickUnlockPet('${p.id}')">誘餌果x2 契約</button>`
+              ? `<button class="na-btn ${isActive ? "highlight" : ""}" style="padding:5px 10px;" onclick="Aetheria.UI.selectPet('${p.id}')">${isActive ? "同行中" : "攜帶同行"}</button>`
+              : `<button class="na-btn" style="padding:5px 10px;" onclick="Aetheria.UI.quickUnlockPet('${p.id}')">誘餌果x2 契約</button>`
             }
           </div>
-          <div style="font-size:11px; margin-top:2px;">${p.skillDesc}</div>
+          <div style="font-size:13px; margin-top:4px;">技能【${p.skillName}】：${p.skillDesc}</div>
         `;
         body.appendChild(pCard);
       });
 
       const jobHeader = document.createElement("div");
-      jobHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px;";
+      jobHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:10px 0 6px; font-size:15px;";
       jobHeader.innerText = "【六大古文明職業轉職】";
       body.appendChild(jobHeader);
 
@@ -883,13 +904,13 @@ window.Aetheria = window.Aetheria || {};
         jCard.className = unlocked ? "sys-card-scroll" : "sys-card";
         jCard.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b>${cleanText(j.name)}（${j.title}｜ATK x${j.atkMult}）</b>
+            <b style="font-size:15px;">${S.iconHtml("icon_sword")}${cleanText(j.name)}（${j.title}｜ATK x${j.atkMult}）</b>
             ${unlocked
-              ? `<button class="na-btn ${active ? "highlight" : ""}" style="padding:3px 8px;" onclick="Aetheria.UI.selectJob('${j.id}')">${active ? "當前職業" : "轉職"}</button>`
-              : `<span style="font-size:11px; color:#ff595e;">Lv.${j.unlockLv} 解鎖</span>`
+              ? `<button class="na-btn ${active ? "highlight" : ""}" style="padding:5px 10px;" onclick="Aetheria.UI.selectJob('${j.id}')">${active ? "當前職業" : "轉職"}</button>`
+              : `<span style="font-size:13px; color:#ff595e; font-weight:bold;">Lv.${j.unlockLv} 解鎖</span>`
             }
           </div>
-          <div style="font-size:11px; margin-top:2px;">${j.passiveDesc}</div>
+          <div style="font-size:13px; margin-top:4px;">${j.passiveDesc}</div>
         `;
         body.appendChild(jCard);
       });
@@ -933,11 +954,12 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // ================= 7. 新增！獨立「設定 (Settings)」頁面 (整合調頻、題型預覽、四科報告與重置遊戲) =================
+    // ================= 7. 獨立「設定 (Settings)」頁面 (整合調頻、題型、報告、BGM開關與重置遊戲) =================
     openSettingsModal(tab = "astrolabe") {
       const s = window.Aetheria.State.data;
+      const S = window.Aetheria.Data.Sprites;
       this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerText = "系統設定：星象調頻 / 題型預覽 / 存檔與重置";
+      document.getElementById("modal-title").innerHTML = `${S.iconHtml("icon_gear")}系統設定：星象調頻 / 題型預覽 / 存檔與重置`;
 
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
@@ -958,7 +980,6 @@ window.Aetheria = window.Aetheria || {};
       });
       body.appendChild(tabBar);
 
-      // 頁籤 1：星象儀溫習科目調頻
       if (tab === "astrolabe") {
         const subjects = [
           { key: "chinese",    name: "中文科（龍語古卷：字詞四選一、例句候選字拼字）" },
@@ -974,20 +995,19 @@ window.Aetheria = window.Aetheria || {};
           row.style.justifyContent = "space-between";
           row.style.alignItems = "center";
           row.innerHTML = `
-            <span style="font-size:11px;">${sub.name}</span>
-            <button class="na-btn ${on ? "highlight" : ""}" style="padding:4px 10px;" onclick="Aetheria.UI.toggleSubject('${sub.key}')">${on ? "已啟用" : "未啟用"}</button>
+            <span style="font-size:14px;">${S.iconHtml("icon_scroll")}${sub.name}</span>
+            <button class="na-btn ${on ? "highlight" : ""}" style="padding:6px 12px;" onclick="Aetheria.UI.toggleSubject('${sub.key}')">${on ? "已啟用" : "未啟用"}</button>
           `;
           body.appendChild(row);
         });
       }
 
-      // 頁籤 2：7 大題型快速預覽
       else if (tab === "preview") {
         window.Aetheria.QuizBridge.getAllQuestions().forEach((q, idx) => {
           const btn = document.createElement("button");
           btn.className = "na-btn";
-          btn.style.cssText = "width:100%; text-align:left; padding:7px 10px; margin-bottom:5px;";
-          btn.innerHTML = `${idx + 1}. <b>[${cleanText(q.subjectLabel)}]</b> — ${cleanText(q.typeLabel)}`;
+          btn.style.cssText = "width:100%; text-align:left; padding:9px 12px; margin-bottom:6px; font-size:14px;";
+          btn.innerHTML = `${S.iconHtml("icon_scroll")}${idx + 1}. <b>[${cleanText(q.subjectLabel)}]</b> — ${cleanText(q.typeLabel)}`;
           btn.onclick = () => {
             window.Aetheria.Battle.startBattle(null, "combat", q.id);
           };
@@ -995,7 +1015,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 頁籤 3：四科掌握度報告与圖鑑統計
       else if (tab === "report") {
         const allQ = window.Aetheria.QuizBridge.getAllQuestions();
         const subjStats = {
@@ -1016,10 +1035,10 @@ window.Aetheria = window.Aetheria || {};
         const repCard = document.createElement("div");
         repCard.className = "sys-card-scroll";
         repCard.innerHTML = `
-          <div style="font-weight:900; margin-bottom:4px;">Justin 四科古文明符文掌握度報告（最高連勝：${s.maxStreak || 0} 題）</div>
+          <div style="font-weight:900; margin-bottom:6px; font-size:15px;">Justin 四科古文明符文掌握度報告（最高連勝：${s.maxStreak || 0} 題）</div>
           ${Object.values(subjStats).map(st => {
             const pct = st.total > 0 ? Math.round((st.mastered / st.total) * 100) : 0;
-            return `<div style="display:flex; justify-content:space-between; font-size:11px; margin:3px 0;">
+            return `<div style="display:flex; justify-content:space-between; font-size:14px; margin:4px 0;">
               <span>${st.name}：已掌握 <b>${st.mastered}/${st.total}</b> 題 (${pct}%)</span>
               <span style="color:#8f563b; font-weight:bold;">熟練星級 ★${st.stars}</span>
             </div>`;
@@ -1028,17 +1047,17 @@ window.Aetheria = window.Aetheria || {};
         body.appendChild(repCard);
       }
 
-      // 頁籤 4：存檔備份、返回首頁與「重置遊戲」
       else if (tab === "system") {
         const sysCard = document.createElement("div");
         sysCard.className = "sys-card";
         sysCard.innerHTML = `
-          <div style="color:var(--na-gold); font-weight:900; margin-bottom:6px;">存檔備份與系統管理</div>
-          <div style="display:flex; flex-direction:column; gap:6px;">
-            <button class="na-btn highlight" style="padding:8px;" onclick="Aetheria.UI.exportSavePrompt()">複製存檔 JSON 代碼 (備份進度)</button>
-            <button class="na-btn" style="padding:8px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原進度)</button>
-            <button class="na-btn" style="padding:8px;" onclick="document.getElementById('title-screen').style.display='flex'; Aetheria.UI.initTitleScreen();">返回遊戲首頁標題畫面</button>
-            <button class="na-btn" style="padding:8px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm('警告：確定要徹底刪除所有存檔進度並重置遊戲嗎？')) Aetheria.State.resetSave()">重置遊戲 (清除所有進度重新開始)</button>
+          <div style="color:var(--na-gold); font-weight:900; margin-bottom:8px; font-size:15px;">音效、存檔備份與重置管理</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="na-btn" style="padding:10px;" onclick="Aetheria.Audio.toggleMute(); Aetheria.UI.showToast('已切換背景音樂與音效開關！');">切換 8-bit 背景音樂 (開 / 關)</button>
+            <button class="na-btn highlight" style="padding:10px;" onclick="Aetheria.UI.exportSavePrompt()">複製存檔 JSON 代碼 (備份進度)</button>
+            <button class="na-btn" style="padding:10px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原進度)</button>
+            <button class="na-btn" style="padding:10px;" onclick="document.getElementById('title-screen').style.display='flex'; Aetheria.UI.initTitleScreen();">返回遊戲首頁標題畫面</button>
+            <button class="na-btn" style="padding:10px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm('警告：確定要徹底刪除所有存檔進度並重置遊戲嗎？')) Aetheria.State.resetSave()">重置遊戲 (清除所有進度重新開始)</button>
           </div>
         `;
         body.appendChild(sysCard);
@@ -1084,16 +1103,9 @@ window.Aetheria = window.Aetheria || {};
     window.Aetheria.Data.Sprites.init();
     window.Aetheria.State.init();
     window.Aetheria.Explore.initControls();
+    window.Aetheria.UI.decorateNavIcons();
     window.Aetheria.UI.initTitleScreen();
     window.Aetheria.UI.updateAllHud();
-
-    // 同步音效按鈕文字 (不帶 Emoji)
-    const origToggle = window.Aetheria.Audio.toggleMute.bind(window.Aetheria.Audio);
-    window.Aetheria.Audio.toggleMute = function() {
-      origToggle();
-      const btn = document.getElementById("btn-bgm-toggle");
-      if (btn) btn.innerText = (btn.innerText.includes("🔇") || btn.innerText === "BGM:關") ? "BGM:關" : "BGM:開";
-    };
 
     function frameStep() {
       window.Aetheria.Renderer.tick++;
