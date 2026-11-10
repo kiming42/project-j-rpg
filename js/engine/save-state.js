@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 全域狀態、零素材開局與單次俸祿記錄 (save-state.js - v3.4)
+ * Project J：艾瑟瑞亞的破曉 — 全域狀態、公會特權加成與存檔中心 (save-state.js - v3.5)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -7,7 +7,7 @@ window.Aetheria = window.Aetheria || {};
   const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V3";
 
   const DEFAULT_STATE = {
-    version: "3.4",
+    version: "3.5",
     lv: 1,
     exp: 0,
     hp: 100,
@@ -42,7 +42,7 @@ window.Aetheria = window.Aetheria || {};
     shinyPets: [],
     expeditionCounter: 0,
 
-    // 新遊戲時：背包初始完全為 0 (必須靠任務、採集與戰鬥收集)
+    // 新遊戲時：背包初始完全為 0
     inventory: {
       iron: 0,
       mithril: 0,
@@ -72,10 +72,10 @@ window.Aetheria = window.Aetheria || {};
     questionMastery: {},
     wrongBook: [],
 
-    // 公會階級、每階級單次俸祿領取紀錄、已接委託 (上限 3 張)
+    // 公會階級、單次俸祿紀錄、已接委託 (上限 3 張)
     guildPoints: 0,
     guildRank: "F",
-    claimedRankSupplies: [], // 記錄已領取過俸祿的階級 (如 ["F", "E"])，每級限領一次！
+    claimedRankSupplies: [],
     activeBounties: [],
     completedBounties: [],
     activeMainQuest: "mq_01",
@@ -220,6 +220,7 @@ window.Aetheria = window.Aetheria || {};
       return Math.floor(35 * Math.pow(lv, 1.35));
     },
 
+    // 計算總攻擊力 (含武器、職業、閃光戰寵 +20%、以及 SS 級公會階級 +30% 加成)
     getTotalAtk: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
@@ -227,7 +228,8 @@ window.Aetheria = window.Aetheria || {};
       const wBonus = weapons[s.equippedWeapon] ? weapons[s.equippedWeapon].atk : 15;
       const jMult = jobs[s.currentJob] ? jobs[s.currentJob].atkMult : 1.0;
       const shinyBonus = (s.shinyPets && s.shinyPets.indexOf(s.activePet) !== -1) ? 1.2 : 1.0;
-      return Math.round((s.baseAtk + wBonus) * jMult * shinyBonus);
+      const ssBonus = (s.guildRank === "SS") ? 1.3 : 1.0;
+      return Math.round((s.baseAtk + wBonus) * jMult * shinyBonus * ssBonus);
     },
 
     getBonusShieldBreak: function() {
@@ -239,16 +241,20 @@ window.Aetheria = window.Aetheria || {};
       return bonus;
     },
 
+    // 獲得經驗、金幣與聲望 (實裝 A/S/SS 級公會特權：經驗與金幣 +25%)
     gainRewards: function(expAmount, goldAmount, guildPts) {
       goldAmount = goldAmount || 0;
       guildPts = guildPts || 5;
       const s = this.data;
-      let mult = 1.0;
-      if (s.streak >= 5) mult = 1.5;
-      else if (s.streak >= 3) mult = 1.2;
 
-      s.exp += Math.round(expAmount * mult);
-      s.gold += goldAmount;
+      let streakMult = 1.0;
+      if (s.streak >= 5) streakMult = 1.5;
+      else if (s.streak >= 3) streakMult = 1.2;
+
+      const rankBonus = (s.guildRank === "A" || s.guildRank === "S" || s.guildRank === "SS") ? 1.25 : 1.0;
+
+      s.exp += Math.round(expAmount * streakMult * rankBonus);
+      s.gold += Math.round(goldAmount * rankBonus);
       s.guildPoints += guildPts;
 
       let leveledUp = false;
@@ -288,6 +294,7 @@ window.Aetheria = window.Aetheria || {};
       if (lv >= 50 && unlocked.indexOf("archmage") === -1) unlocked.push("archmage");
     },
 
+    // 戰寵牧場遠征與溫室產出 (實裝 E 級以上公會特權：牧場挖礦產量 +25% 並附帶原木)
     tickPassiveProduction: function() {
       const s = this.data;
       s.expeditionCounter = (s.expeditionCounter || 0) + 1;
@@ -296,13 +303,16 @@ window.Aetheria = window.Aetheria || {};
       if (s.expeditionCounter >= 5) {
         s.expeditionCounter = 0;
         const idlePetCount = Math.max(1, s.unlockedPets.length);
-        const minedIron = idlePetCount;
+        const rankMult = (s.guildRank !== "F") ? 1.25 : 1.0;
+        const minedIron = Math.max(1, Math.ceil(idlePetCount * rankMult));
         s.inventory.iron += minedIron;
+        s.inventory.wood += 1;
+
         if (s.campBuildings.greenhouse > 0) {
           s.inventory.potionHint += 1;
-          msg = "牧場戰寵歸來：藍晶礦 +" + minedIron + "｜溫室產出：洞察藥水 +1";
+          msg = "牧場遠征：藍晶礦 +" + minedIron + "、原木 +1｜溫室：洞察藥水 +1";
         } else {
-          msg = "牧場戰寵挖礦歸來：藍晶礦 +" + minedIron;
+          msg = "牧場遠征歸來：藍晶礦 +" + minedIron + "、翠風原木 +1";
         }
         this.save();
       }
