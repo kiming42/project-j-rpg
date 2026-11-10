@@ -1,7 +1,9 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 60FPS 相機捲動、Y-Sorting 景深與全地貌渲染引擎 (camera-renderer.js - Full v2.5)
- * 新增：1.海岸/雪原/火山/天界地貌渲染 2.荒野獵人「雙戰寵同時跟隨」
- *       3.大世界野生「✨異色閃光魔物」金色粒子與Sprite 4.洞穴火盆點燃即時解除迷霧
+ * Project J：艾瑟瑞亞的破曉 — 60FPS 大世界相機捲動、Y-Sorting 與怪物追擊視覺引擎 (camera-renderer.js - v3.0)
+ * 升級：1.移除舊版戰鬥 Canvas 繪製 (戰鬥已改由純 DOM/CSS/SVG 舞台負責)
+ *       2.支援帳篷門口地毯標記 (icon: "door") 與動態河道座標 (mapObj.riverX)
+ *       3.怪物追擊狀態 (m.aggro) 頭頂繪製像素紅底 [!] 驚嘆號與踏步動畫
+ *       4.全面去除 Emoji，改用純像素文字與幾何圖標
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -10,7 +12,6 @@ window.Aetheria = window.Aetheria || {};
     tick: 0,
 
     drawTerrain(ctx, mapObj, camX, camY, viewW, viewH) {
-      // 1. 根據 6 大地貌主題鋪設基底色
       const themeColors = {
         forest:  { bg: "#a8ba59", edge: "#7a9c46", dirt: "#c88662" },
         canyon:  { bg: "#e09953", edge: "#c77432", dirt: "#f4be78" },
@@ -39,7 +40,6 @@ window.Aetheria = window.Aetheria || {};
         ctx.fill();
       });
 
-      // 2. 地面細節
       if (mapObj.groundDetails) {
         mapObj.groundDetails.forEach(g => {
           if (g.x < camX - 16 || g.x > camX + viewW + 16 || g.y < camY - 16 || g.y > camY + viewH + 16) return;
@@ -55,32 +55,46 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 3. 翡翠河流與像素木橋
+      // 繪製區域河流與木橋 (支援自訂 riverX 與 bridgeY)
       if (mapObj.hasRiver) {
+        const rx = mapObj.riverX || 555;
+        const by = mapObj.bridgeY || 250;
+
         ctx.fillStyle = "#1d5eb8";
-        ctx.fillRect(665, 0, 40, mapObj.height);
+        ctx.fillRect(rx, 0, 40, mapObj.height);
         ctx.fillStyle = "#3898ff";
-        ctx.fillRect(670, 0, 30, mapObj.height);
+        ctx.fillRect(rx + 5, 0, 30, mapObj.height);
+
         ctx.fillStyle = "#8ce0ff";
         for (let wy = 20; wy < mapObj.height - 20; wy += 42) {
-          ctx.fillRect(674 + ((this.tick + wy) % 14), wy, 10, 3);
+          ctx.fillRect(rx + 9 + ((this.tick + wy) % 14), wy, 10, 3);
         }
+
+        // 橫跨河流的像素木橋
         ctx.fillStyle = "#1c1619";
-        ctx.fillRect(658, 312, 54, 42);
+        ctx.fillRect(rx - 7, by, 54, 42);
         ctx.fillStyle = "#9c6347";
-        ctx.fillRect(660, 314, 50, 38);
-        for (let bx = 664; bx < 708; bx += 7) {
+        ctx.fillRect(rx - 5, by + 2, 50, 38);
+        for (let bx = rx - 1; bx < rx + 43; bx += 7) {
           ctx.fillStyle = "#6e4228";
-          ctx.fillRect(bx, 314, 2, 38);
+          ctx.fillRect(bx, by + 2, 2, 38);
         }
         ctx.fillStyle = "#d9a066";
-        ctx.fillRect(660, 314, 50, 4);
-        ctx.fillRect(660, 348, 50, 4);
+        ctx.fillRect(rx - 5, by + 2, 50, 4);
+        ctx.fillRect(rx - 5, by + 36, 50, 4);
       }
     },
 
     drawPortal(ctx, p) {
-      if (p.icon === "cave" || p.icon === "abyss") {
+      if (p.icon === "door") {
+        // 帳篷門口暖色迎賓踏墊與閃爍箭頭
+        ctx.fillStyle = "#1c1619";
+        ctx.fillRect(p.x - 10, p.y - 5, 20, 10);
+        ctx.fillStyle = "#e0533c";
+        ctx.fillRect(p.x - 8, p.y - 3, 16, 6);
+        ctx.fillStyle = "#fbd000";
+        ctx.fillRect(p.x - 4, p.y - 2, 8, 4);
+      } else if (p.icon === "cave" || p.icon === "abyss") {
         ctx.fillStyle = "#1c1619";
         ctx.fillRect(p.x - 14, p.y - 12, 28, 24);
         ctx.fillStyle = (p.icon === "abyss") ? "#5a189a" : "#4a4e69";
@@ -97,13 +111,15 @@ window.Aetheria = window.Aetheria || {};
           ctx.fillRect(p.x - 11, p.y + sy, 22, 2);
         }
       }
+
       ctx.font = "bold 8px 'Microsoft JhengHei', monospace";
       ctx.textAlign = "center";
-      ctx.fillStyle = "rgba(20, 16, 19, 0.85)";
+      ctx.fillStyle = "rgba(20, 16, 19, 0.88)";
       const tw = ctx.measureText(p.name).width + 8;
-      ctx.fillRect(p.x - tw / 2, p.y - 23, tw, 10);
+      const labelY = (p.icon === "door") ? (p.y + 14) : (p.y - 15);
+      ctx.fillRect(p.x - tw / 2, labelY - 8, tw, 10);
       ctx.fillStyle = "#fbd000";
-      ctx.fillText(p.name, p.x, p.y - 15);
+      ctx.fillText(p.name, p.x, labelY);
     },
 
     renderWorld() {
@@ -117,7 +133,6 @@ window.Aetheria = window.Aetheria || {};
       const Sprites = window.Aetheria.Data.Sprites;
       const ExpSys = window.Aetheria.Explore;
 
-      // 檢查該地圖的火盆是否已點燃 (若點燃則永久關閉黑霧！)
       const brazierLit = s.openedNodes && s.openedNodes[`lit_${mapObj.id}`];
       const fogEl = document.getElementById("fog-overlay");
       if (fogEl) fogEl.style.display = (mapObj.fog && !brazierLit) ? "block" : "none";
@@ -136,7 +151,7 @@ window.Aetheria = window.Aetheria || {};
 
       const renderQueue = [];
 
-      // A. 營地裝飾、釣魚點、抓鉤木樁、擋路巨石/枯木、火盆、帆船/飛空艇
+      // A. 裝飾物與工具機關
       if (mapObj.decos) {
         mapObj.decos.forEach(d => {
           if ((d.isCrackedWall || d.obstacleType) && s.openedNodes && s.openedNodes[d.id]) return;
@@ -156,12 +171,11 @@ window.Aetheria = window.Aetheria || {};
                 const sp = Sprites.get(spName);
                 if (sp) ctx.drawImage(sp, d.x, d.y, d.w || sp.width, d.h || sp.height);
 
-                // 為可互動工具機關加上提示標籤
                 if (d.isFishingSpot || d.isGrapple || d.obstacleType || d.isBrazier) {
                   ctx.font = "bold 7px 'Microsoft JhengHei', monospace";
                   ctx.textAlign = "center";
                   ctx.fillStyle = "#ffffff";
-                  const tag = d.isFishingSpot ? "🎣釣魚" : d.isGrapple ? "🪝抓鉤" : d.isBrazier ? (brazierLit ? "🔥已點亮" : "🔥點火盆") : (d.obstacleType === "boulder" ? "🪨需Lv2鎬" : "🌲需Lv2斧");
+                  const tag = d.isFishingSpot ? "[釣魚點]" : d.isGrapple ? "[抓鉤樁]" : d.isBrazier ? (brazierLit ? "[已點亮]" : "[點火盆]") : (d.obstacleType === "boulder" ? "[需Lv2鎬]" : "[需Lv2斧]");
                   ctx.fillText(tag, d.x + (d.w || 18) / 2, d.y - 2);
                 }
               }
@@ -211,7 +225,7 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // D. NPC
+      // D. 營地與室內 4 大核心 NPC
       if (mapObj.npcs) {
         mapObj.npcs.forEach(npc => {
           renderQueue.push({
@@ -220,47 +234,65 @@ window.Aetheria = window.Aetheria || {};
               const bounce = (Math.floor(this.tick / 16) % 2 === 0) ? 0 : -1;
               const sp = Sprites.get(npc.sprite);
               if (sp) ctx.drawImage(sp, npc.x, npc.y + bounce, 19, 19);
+
               ctx.font = "bold 8px 'Microsoft JhengHei', monospace";
               ctx.textAlign = "center";
-              ctx.fillStyle = "rgba(20, 16, 19, 0.88)";
-              ctx.fillRect(npc.x - 16, npc.y - 11, 50, 10);
+              const labelTxt = `${npc.badge || ""}${npc.name.split("・")[1] || npc.name}`;
+              const tw = ctx.measureText(labelTxt).width + 6;
+              ctx.fillStyle = "rgba(20, 16, 19, 0.9)";
+              ctx.fillRect(npc.x + 9 - tw / 2, npc.y - 11, tw, 10);
               ctx.fillStyle = "#ffd166";
-              ctx.fillText(`${npc.badge}${npc.name.split("・")[1] || npc.name}`, npc.x + 9, npc.y - 3);
+              ctx.fillText(labelTxt, npc.x + 9, npc.y - 3);
             }
           });
         });
       }
 
-      // E. 巡邏魔物 (支援大世界直接顯示 ✨異色閃光怪 金色外觀與標籤！)
+      // E. 巡邏與追擊魔物 (含追擊時頭頂紅底 [!] 驚嘆號標記)
       if (mapObj.monsters) {
         mapObj.monsters.forEach(m => {
           if (m.alive === false) return;
           renderQueue.push({
             y: m.y + 18,
             draw: () => {
-              const bounce = (Math.floor(this.tick / 11) % 2 === 0) ? 0 : -1;
+              const stepSpd = m.aggro ? 4 : 9;
+              const bounce = (Math.floor(this.tick / stepSpd) % 2 === 0) ? 0 : -2;
               const sz = m.isBoss ? 26 : 19;
               let spKey = (m.type === "boss") ? "mon_boss" : (m.type === "skull") ? "mon_skull" : "mon_bamboo";
               if (m.isShiny && !m.isBoss) spKey += "_shiny";
               const sp = Sprites.get(spKey) || Sprites.get("mon_bamboo");
 
+              // 頭頂紅血條
               ctx.fillStyle = "#1c1619";
-              ctx.fillRect(m.x - 1, m.y - 6, sz + 2, 4);
+              ctx.fillRect(Math.round(m.x) - 1, Math.round(m.y) - 6, sz + 2, 4);
               ctx.fillStyle = m.isShiny ? "#fbd000" : (m.isBoss ? "#ff9f1c" : "#e03c4b");
-              ctx.fillRect(m.x, m.y - 5, sz, 2);
+              ctx.fillRect(Math.round(m.x), Math.round(m.y) - 5, sz, 2);
 
-              if (m.isShiny) {
-                ctx.font = "bold 7px monospace";
+              // 若處於追擊狀態 (aggro)，頭頂繪製醒目紅底白字 [!] 驚嘆號！
+              if (m.aggro) {
+                ctx.fillStyle = "#e03c4b";
+                ctx.fillRect(Math.round(m.x) + Math.floor(sz / 2) - 5, Math.round(m.y) - 16, 10, 9);
+                ctx.strokeStyle = "#1c1619";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(Math.round(m.x) + Math.floor(sz / 2) - 5, Math.round(m.y) - 16, 10, 9);
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 8px monospace";
+                ctx.textAlign = "center";
+                ctx.fillText("!", Math.round(m.x) + Math.floor(sz / 2), Math.round(m.y) - 9);
+              } else if (m.isShiny) {
+                ctx.font = "bold 7px 'Microsoft JhengHei', monospace";
+                ctx.textAlign = "center";
                 ctx.fillStyle = "#fbd000";
-                ctx.fillText("✨閃光", m.x + 9, m.y - 8);
+                ctx.fillText("[閃光]", Math.round(m.x) + Math.floor(sz / 2), Math.round(m.y) - 8);
               }
-              if (sp) ctx.drawImage(sp, m.x, m.y + bounce, sz, sz);
+
+              if (sp) ctx.drawImage(sp, Math.round(m.x), Math.round(m.y + bounce), sz, sz);
             }
           });
         });
       }
 
-      // F. 主戰寵 + 荒野獵人職業專屬「第 2 隻副戰寵同時跟隨」！
+      // F. 同行戰寵 (含荒野獵人雙戰寵)
       const isMov = ExpSys && ExpSys.isMoving;
       const petBounce = isMov ? (Math.floor(this.tick / 4) % 2 * -2) : (Math.floor(this.tick / 14) % 2 * -1);
       const petData = window.Aetheria.Data.PETS[s.activePet] || window.Aetheria.Data.PETS.pet_slime;
@@ -274,7 +306,6 @@ window.Aetheria = window.Aetheria || {};
         }
       });
 
-      // 若為「🏹 荒野獵人」且擁有 2 隻以上戰寵，自動渲染第 2 隻副戰寵於右側跟隨！
       if (s.currentJob === "hunter" && s.unlockedPets.length >= 2) {
         const subPetId = s.unlockedPets.find(id => id !== s.activePet) || s.unlockedPets[0];
         const subPetData = window.Aetheria.Data.PETS[subPetId];
@@ -307,7 +338,7 @@ window.Aetheria = window.Aetheria || {};
 
       ctx.restore();
 
-      // 4. 螢幕級別特效：微雨 / 飄雪 + 左上角紅心列 + 左下角小地圖雷達
+      // 天氣效果
       if (mapObj.rain) {
         ctx.strokeStyle = (mapObj.theme === "snow") ? "#ffffff" : "rgba(255, 255, 255, 0.72)";
         ctx.lineWidth = (mapObj.theme === "snow") ? 2 : 1;
@@ -321,6 +352,7 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
+      // 左上角繪製 3 顆像素紅心
       const fullHearts = Math.ceil((s.hp / s.maxHp) * 3);
       const heartSp = Sprites.get("heart");
       for (let i = 0; i < 3; i++) {
@@ -334,15 +366,16 @@ window.Aetheria = window.Aetheria || {};
 
     drawMinimap(ctx, mapObj, s) {
       const mx = 6, my = 97, mw = 54, mh = 41;
-      ctx.fillStyle = "rgba(20, 16, 19, 0.82)";
+      ctx.fillStyle = "rgba(20, 16, 19, 0.84)";
       ctx.fillRect(mx - 1, my - 1, mw + 2, mh + 2);
       ctx.strokeStyle = "#d9a066";
       ctx.lineWidth = 1;
       ctx.strokeRect(mx - 1, my - 1, mw + 2, mh + 2);
 
       if (mapObj.hasRiver) {
+        const rx = mapObj.riverX || 555;
         ctx.fillStyle = "#3898ff";
-        ctx.fillRect(mx + Math.round(670 / mapObj.width * mw), my, 2, mh);
+        ctx.fillRect(mx + Math.round(rx / mapObj.width * mw), my, 2, mh);
       }
 
       ctx.fillStyle = "#4cc9f0";
@@ -350,85 +383,3 @@ window.Aetheria = window.Aetheria || {};
         mapObj.portals.forEach(p => {
           ctx.fillRect(mx + Math.round(p.x / mapObj.width * mw) - 1, my + Math.round(p.y / mapObj.height * mh) - 1, 3, 3);
         });
-      }
-
-      ctx.fillStyle = "#f5b700";
-      if (mapObj.nodes) {
-        mapObj.nodes.forEach(n => {
-          if (!n.opened && !(s.openedNodes && s.openedNodes[n.id])) {
-            ctx.fillRect(mx + Math.round(n.x / mapObj.width * mw), my + Math.round(n.y / mapObj.height * mh), 2, 2);
-          }
-        });
-      }
-
-      ctx.fillStyle = "#ff595e";
-      if (mapObj.monsters) {
-        mapObj.monsters.forEach(m => {
-          if (m.alive !== false) {
-            ctx.fillRect(mx + Math.round(m.x / mapObj.width * mw), my + Math.round(m.y / mapObj.height * mh), 2, 2);
-          }
-        });
-      }
-
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(mx + Math.round(s.heroX / mapObj.width * mw) - 1, my + Math.round(s.heroY / mapObj.height * mh) - 1, 3, 3);
-    },
-
-    renderBattleScene(enemy) {
-      const c = document.getElementById("battle-canvas");
-      if (!c) return;
-      const ctx = c.getContext("2d");
-      ctx.imageSmoothingEnabled = false;
-
-      const s = window.Aetheria.State.data;
-      const mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
-      const Sprites = window.Aetheria.Data.Sprites;
-
-      this.drawTerrain(ctx, mapObj, 0, 0, c.width, c.height);
-
-      const bounce = (Math.floor(this.tick / 10) % 2 === 0) ? 0 : -2;
-
-      const petData = window.Aetheria.Data.PETS[s.activePet] || window.Aetheria.Data.PETS.pet_slime;
-      const isShinyPet = s.shinyPets && s.shinyPets.includes(s.activePet);
-      const petSp = Sprites.get(isShinyPet ? petData.shinySpriteKey : petData.spriteKey);
-      if (petSp) ctx.drawImage(petSp, 14, 92 + bounce, 28, 28);
-
-      // 荒野獵人戰鬥中同時顯示第 2 隻副戰寵助陣
-      if (s.currentJob === "hunter" && s.unlockedPets.length >= 2) {
-        const subPetId = s.unlockedPets.find(id => id !== s.activePet) || s.unlockedPets[0];
-        const subPetData = window.Aetheria.Data.PETS[subPetId];
-        if (subPetData) {
-          const subSp = Sprites.get(subPetData.spriteKey);
-          if (subSp) ctx.drawImage(subSp, 18, 66 - bounce, 24, 24);
-        }
-      }
-
-      const heroSp = Sprites.get("hero_right_0");
-      if (heroSp) ctx.drawImage(heroSp, 48, 84 + bounce, 34, 34);
-
-      if (enemy) {
-        let spKey = enemy.spriteKey || "mon_bamboo";
-        if (enemy.isShiny && !enemy.isBoss && Sprites.get(spKey + "_shiny")) {
-          spKey += "_shiny";
-        }
-        const eSp = Sprites.get(spKey);
-        if (eSp) {
-          ctx.save();
-          const ex = enemy.isBoss ? 164 : 174;
-          const ey = enemy.isBoss ? 72 : 82;
-          const esz = enemy.isBoss ? 48 : 36;
-          if (enemy.broken) {
-            ctx.translate(ex + esz / 2, ey + esz / 2);
-            ctx.rotate(0.25);
-            ctx.drawImage(eSp, -esz / 2, -esz / 2, esz, esz);
-          } else {
-            ctx.drawImage(eSp, ex, ey + bounce, esz, esz);
-          }
-          ctx.restore();
-        }
-      }
-    }
-  };
-
-  window.Aetheria.Renderer = Renderer;
-})();
