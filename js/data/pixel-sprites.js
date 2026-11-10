@@ -1,12 +1,12 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 逐像素手繪點陣圖資烘焙庫 (pixel-sprites.js)
- * 包含：主角4方向雙幀行走、4大戰寵(含閃光版)、4大NPC、5種魔物Boss、12種營地與自然裝飾
+ * Project J：艾瑟瑞亞的破曉 — 逐像素手繪點陣圖資烘焙庫 (pixel-sprites.js - Full v2.5)
+ * 包含：主角4方向雙幀行走、4大戰寵(含閃光版)、4大NPC、魔物Boss、營地裝飾、
+ *       新增：釣魚水波紋、抓鉤木樁、擋路巨石/枯木、洞穴火盆(滅/燃)、古代帆船、天界飛空艇
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
 
 (function() {
-  // 標準 Ninja Adventure 24 色調色盤
   const PAL = {
     '.': null,
     'k': '#1c1619', // 像素純黑描邊
@@ -30,14 +30,13 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     'T': '#6e4228', // 深棕樹幹
     'y': '#f5b700', // 黃金 / 燈籠火光
     'Y': '#c98a00', // 暗金
-    'm': '#f6d799', // 麻繩米黃 / 骨骼白
+    'm': '#f6d799', // 麻繩米黃 / 帆布白
     'p': '#9d4edd', // 巫師紫 / 深淵紫晶
     'P': '#5a189a', // 深紫暗部
     'e': '#8d99ae', // 鐵砧/岩石亮灰
     'E': '#4a4e69'  // 鐵器/石材深灰
   };
 
-  // 將字元矩陣烘焙為獨立 Offscreen Canvas 貼圖
   function bake(rows, flipX = false, customPalette = null) {
     const pal = customPalette || PAL;
     const h = rows.length;
@@ -63,11 +62,11 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     return c;
   }
 
-  // 自動產生「✨異色閃光戰寵 (Shiny)」黃金色盤貼圖
   function bakeShiny(rows) {
     const shinyPal = Object.assign({}, PAL, {
       'b': '#ffd166', 'B': '#e09f3e', 'c': '#ffffff',
-      'r': '#ff9f1c', 'R': '#c97a00', 'o': '#ffe66d', 'p': '#ff70a6'
+      'r': '#ff9f1c', 'R': '#c97a00', 'o': '#ffe66d', 'p': '#ff70a6',
+      'L': '#ffd166', 'l': '#ffffff', 'e': '#ffe66d'
     });
     return bake(rows, false, shinyPal);
   }
@@ -77,8 +76,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
   function initAllSprites() {
     if (SPRITES._initialized) return SPRITES;
 
-    // ================= 1. 主角 4 方向 × 2 踏步動作幀 (共 8 張) =================
-    // 正面 (Down) - 幀 0 & 幀 1 (左右腳交替)
+    // ================= 1. 主角 4 方向 × 2 踏步動作幀 =================
     const heroDownBase = [
       ".....kkkkkk.....",
       "...kkbbbbbbkk...",
@@ -98,7 +96,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.hero_down_1 = bake([...heroDownBase, "...kBBk..kBBk...", "...kTTk..kTTk...", "...kkk....kkk..."]);
     SPRITES.hero_down   = SPRITES.hero_down_0;
 
-    // 背面 (Up) — 後腦頭巾結 + 飄動紅巾尾 + 背部斜揹忍刀鞘
     const heroUpBase = [
       ".....kkkkkk.....",
       "...kkbbbbbbkk...",
@@ -118,7 +115,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.hero_up_1 = bake([...heroUpBase, "...kBBk..kBBk...", "...kTTk..kTTk...", "...kkk....kkk..."]);
     SPRITES.hero_up   = SPRITES.hero_up_0;
 
-    // 右側面 (Right) & 左側面 (Left) — 側面單眼 + 腦後飄動紅圍巾 + 前後跨步
     const heroSideBase = [
       ".....kkkkkk.....",
       "...kkbbbbbbkk...",
@@ -143,7 +139,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.hero_left    = SPRITES.hero_left_0;
 
     // ================= 2. 四款像素戰寵 + 異色閃光版 (Shiny) =================
-    // 戰寵 1：💧 皇冠藍水滴史萊姆
     const slimeRows = [
       ".....k..k..k....",
       "....kyykyykyk...",
@@ -165,7 +160,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.pet_slime = bake(slimeRows);
     SPRITES.pet_slime_shiny = bakeShiny(slimeRows);
 
-    // 戰寵 2：🔥 赤炎小幼龍
     const dragonRows = [
       "..kk........kk..",
       ".kyyk.kkkk.kyyk.",
@@ -187,7 +181,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.pet_dragon = bake(dragonRows);
     SPRITES.pet_dragon_shiny = bakeShiny(dragonRows);
 
-    // 戰寵 3：🦊 雷光九尾小靈狐
     const foxRows = [
       ".kkk........kkk.",
       ".koyk......kyok.",
@@ -209,7 +202,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.pet_fox = bake(foxRows);
     SPRITES.pet_fox_shiny = bakeShiny(foxRows);
 
-    // 戰寵 4：❄️ 永凍冰晶幼龍
     const iceDragonRows = [
       "..kk........kk..",
       ".kcck.kkkk.kcck.",
@@ -231,8 +223,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     SPRITES.pet_icedragon = bake(iceDragonRows);
     SPRITES.pet_icedragon_shiny = bakeShiny(iceDragonRows);
 
-    // ================= 3. 營地與世界 4 大核心 NPC =================
-    // 👴 鐵匠大叔・巴爾 (紅頭巾 + 絡腮鬍 + 鐵匠圍裙 + 手持鐵鎚)
+    // ================= 3. 四大核心 NPC =================
     SPRITES.npc_blacksmith = bake([
       "....kkkkkkkk....",
       "..kkrrrrrrrrkk..",
@@ -252,7 +243,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ]);
 
-    // 🧙‍♀️ 星象少女・艾莉婭 (紫金星辰尖頂巫師帽 + 神秘法袍)
     SPRITES.npc_astrologer = bake([
       ".......kk.......",
       "......kppk......",
@@ -272,7 +262,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ]);
 
-    // 🤠 公會會長・雷恩 (黃金羽飾騎士盔 + 紅披風 + 金甲)
     SPRITES.npc_guildmaster = bake([
       "......kkkk......",
       ".....kyyyyk.....",
@@ -292,7 +281,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ]);
 
-    // 🎒 神秘行商・奇奇 (綠兜帽 + 背負超大行商木箱背囊)
     SPRITES.npc_merchant = bake([
       "...kkkkkkkkkk...",
       "..kggggggggggk..",
@@ -310,9 +298,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ]);
 
-    // ================= 4. 魔物與巨型 Boss 圖資 =================
-    // 翠風竹子妖
-    SPRITES.mon_bamboo = bake([
+    // ================= 4. 魔物與巨型 Boss (含閃光版) =================
+    const bambooRows = [
       "....kkkkkkkk....",
       "..kkllllllllkk..",
       ".kllLLLLLLLLllk.",
@@ -329,10 +316,11 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "...kkkkkkkkkk...",
       "....kkk..kkk....",
       "................"
-    ]);
+    ];
+    SPRITES.mon_bamboo = bake(bambooRows);
+    SPRITES.mon_bamboo_shiny = bakeShiny(bambooRows);
 
-    // 遺跡骷髏兵
-    SPRITES.mon_skull = bake([
+    const skullRows = [
       "....kkkkkkkk....",
       "..kkwwwwwwwwkk..",
       ".kwwwwwwwwwwwwk.",
@@ -349,9 +337,10 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".....kk..kk.....",
       "................",
       "................"
-    ]);
+    ];
+    SPRITES.mon_skull = bake(skullRows);
+    SPRITES.mon_skull_shiny = bakeShiny(skullRows);
 
-    // 深淵赤炎龍王 Boss (24x22 巨型尺寸)
     SPRITES.mon_boss = bake([
       "..kk................kk..",
       ".kyyk....kkkkkk....kyyk.",
@@ -374,8 +363,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "...kkkk..........kkkk..."
     ]);
 
-    // ================= 5. 四款精細採集素材 + 裂縫牆壁 =================
-    // 💎 藍晶秘銀礦簇
+    // ================= 5. 採集素材與寶箱 =================
     SPRITES.mat_crystal = bake([
       ".......kk.......",
       "......kcck......",
@@ -391,7 +379,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ]);
 
-    // 🍄 紅傘白點微光菇
     SPRITES.mat_mushroom = bake([
       "....kkkkkkkk....",
       "..kkrrrrrrrrkk..",
@@ -407,7 +394,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "..kkkkkkkkkkkk.."
     ]);
 
-    // 🌸 翠風太陽靈花
     SPRITES.mat_flower = bake([
       "....kkk..kkk....",
       "...kyyykkyyyk...",
@@ -423,7 +409,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "......kkkk......"
     ]);
 
-    // 📦 補給木箱 & 🎁 傳說紅金寶箱
     SPRITES.crate = bake([
       ".kkkkkkkkkkkk.",
       "kooooooooooook",
@@ -452,8 +437,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkkkkkkkkkkk."
     ]);
 
-    // ================= 6. 新增！營地與野外環境豐富化裝飾 (消滅空曠感！) =================
-    // 🪵 1. 露營原木長凳 (橫向 20x10)
+    // ================= 6. 營地與自然裝飾 =================
     SPRITES.deco_bench = bake([
       ".kkkkkkkkkkkkkkkkkk.",
       "koooooooooooooooooOk",
@@ -464,7 +448,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "..kkkk..........kkkk"
     ]);
 
-    // 🍲 2. 三腳架滾燙燉肉鍋 (16x16)
     SPRITES.deco_pot = bake([
       ".......kk.......",
       "......kwwk......",
@@ -480,7 +463,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkk..rrrr..kkk."
     ]);
 
-    // 🪧 3. 森林指路木牌 (16x16)
     SPRITES.deco_sign = bake([
       "....kkkkkkkk....",
       "..kkooooooookk..",
@@ -496,7 +478,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "....kkkkkkkk...."
     ]);
 
-    // 🏮 4. 日式青苔石燈籠 (14x18，內部發出暖黃火光)
     SPRITES.deco_lantern = bake([
       ".....kkkk.....",
       "...kkeeeeKk...",
@@ -514,7 +495,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkkkkkkkkkkkk"
     ]);
 
-    // 🪨 5. 雙層青苔景觀岩 (18x14)
     SPRITES.deco_rock = bake([
       ".....kkkkkkkk.....",
       "...kkgggggggekk...",
@@ -526,7 +506,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkkkkkkkkkkkkkkk."
     ]);
 
-    // ⚔️ 6. 營地武器木架 (18x16)
     SPRITES.deco_rack = bake([
       "..kk..........kk..",
       ".kTTk..k..k..kTTk.",
@@ -540,7 +519,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "kkkkk........kkkkk"
     ]);
 
-    // 🔨 7. 鐵匠打鐵砧 (16x12)
     SPRITES.deco_anvil = bake([
       "..kkkkkkkkkkkk..",
       "kkeeeeeeeeeeeekk",
@@ -552,7 +530,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkkkkkkkkkkkkk."
     ]);
 
-    // 🌲 8. 年輪老樹樁 (14x12)
     SPRITES.deco_stump = bake([
       "..kkkkkkkkkk..",
       ".kffffffffffk.",
@@ -565,7 +542,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "kkkkkkkkkkkkkk"
     ]);
 
-    // 🧱 9. 裂縫可炸開岩壁 (20x20 — Metroidvania 炸彈專用！)
+    // ================= 7. 新增！Metroidvania 4大工具互動與地牢機關貼圖 =================
+    // 🧱 裂縫可炸開岩壁 (需 💣炸彈)
     SPRITES.cracked_wall = bake([
       "..kkkkkkkkkkkkkkkk..",
       ".keeeeeeeeeeeeeeeek.",
@@ -581,7 +559,116 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       ".kkkkkkkkkkkkkkkkkk."
     ]);
 
-    // ================= 7. 大樹、斜頂帳篷、圓柱高台與白邊紅心 =================
+    // 🪨 擋路玄武巨石 (需 ⛏️Lv.2 秘銀重鎬敲碎！)
+    SPRITES.boulder_block = bake([
+      "....kkkkkkkkkk....",
+      "..kkeeeeeeeeeekk..",
+      ".keeeewwwwweeeeek.",
+      "keeeeeekkkeeeeeeek",
+      "keeeeekEEEkeeeeeek",
+      "keeeEEEEEEEEEEEEek",
+      "kEEEEEEEEEEEEEEEEk",
+      ".kEEEEEEEEEEEEEEk.",
+      "..kkkkkkkkkkkkkk.."
+    ]);
+
+    // 🌲 擋路巨型枯木 (需 🪓Lv.2 烈焰戰斧砍斷！)
+    SPRITES.deadtree_block = bake([
+      "..kk..........kk..",
+      ".kTTk..kkkk..kTTk.",
+      "..kTTkkTTTTkkTTk..",
+      "...kTTTTTTTTTTk...",
+      "..kkTTTTTTTTTTkk..",
+      ".kTTtTTTTTTTTtTTk.",
+      "..kkkTTTTTTTTkkk..",
+      "....kTTTTTTTTk....",
+      "...kTTTTTTTTTTk...",
+      "..kTTTTk..kTTTTk..",
+      "..kkkkk....kkkkk.."
+    ]);
+
+    // 🎣 水波紋游魚釣魚點 (可按 A 鍵用釣竿垂釣！)
+    SPRITES.fishing_spot = bake([
+      "....kkkkkkkk....",
+      "..kkcccccccckk..",
+      ".kccbbbbbbbbcck.",
+      "kccbbkBBBBkbbcck",
+      "kccbBBBBBBBBbcck",
+      "kccbbkBBBBkkbcck",
+      ".kccbbbbbbbbcck.",
+      "..kkcccccccckk..",
+      "....kkkkkkkk...."
+    ]);
+
+    // 🪝 斷崖鐵索抓鉤木樁 (需 🎣Lv.2 鐵索抓鉤飛越河流/斷崖！)
+    SPRITES.grapple_post = bake([
+      ".....kkkkkk.....",
+      "....kooooook....",
+      "...kooYYYYook...",
+      "...kmmmmmmmmk...",
+      "...kmmOmmOmmk...",
+      "...kmmmmmmmmk...",
+      "....kTTTTTTk....",
+      "....kTTTTTTk....",
+      "...kkTTTTTTkk...",
+      "...kkkkkkkkkk..."
+    ]);
+
+    // 🔥 洞穴古代火盆 (未點燃 vs 已點燃驅散迷霧)
+    SPRITES.brazier_off = bake([
+      "....kkkkkkkk....",
+      "..kkeeeeeeeeKk..",
+      ".keeEEEEEEEEeek.",
+      "..kkkkkkkkkkkk..",
+      "....kEEEEEEk....",
+      "...kkEEEEEEkk...",
+      "..kEEEEEEEEEEk..",
+      "..kkkkkkkkkkkk.."
+    ]);
+
+    SPRITES.brazier_on = bake([
+      ".......kk.......",
+      "......kyyk......",
+      ".....kywwyk.....",
+      "....krryyrrk....",
+      "...krrrrrrrrk...",
+      "..kkeeeeeeeeKk..",
+      ".keeEEEEEEEEeek.",
+      "..kkkkkkkkkkkk..",
+      "....kEEEEEEk....",
+      "...kkEEEEEEkk...",
+      "..kEEEEEEEEEEk..",
+      "..kkkkkkkkkkkk.."
+    ]);
+
+    // ⛵ 古代遠洋帆船 & 🛸 天界星辰飛空艇
+    SPRITES.ancient_ship = bake([
+      ".........kk.........",
+      "........kmmk........",
+      ".......kmmmmk.......",
+      "......kmmmmmBk......",
+      ".....kmmmmmmmBk.....",
+      "....kmmmmmmmmmBk....",
+      "...kkkkkkkkkkkkkk...",
+      ".kkooooooooooooookk.",
+      "koooTTTTTTTTTTTToook",
+      ".koooTTTTTTTTTToook.",
+      "..kkkkkkkkkkkkkkkk.."
+    ]);
+
+    SPRITES.sky_airship = bake([
+      ".....kkkkkkkkkk.....",
+      "...kkppppppppppkk...",
+      "..kppyyyyyyyyyyppk..",
+      ".kppppppppppppppppk.",
+      "..kkkkkkTTTTkkkkkk..",
+      "...koooooooooooook..",
+      "..koooccccccccoook..",
+      "...koooooooooooook..",
+      "....kkkkkkkkkkkk...."
+    ]);
+
+    // ================= 8. 大樹、斜頂帳篷、圓柱高台與紅心 =================
     SPRITES.tree = bake([
       ".......kkkkkkkkkk.......",
       ".....kkllllllllllkk.....",
