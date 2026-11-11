@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 職業、魔物意圖AI與分區合理掉落庫 (jobs-monsters.js - v5.0)
+ * Project J：艾瑟瑞亞的破曉 — 職業、魔物意圖AI與生存拓荒素材掉落庫 (jobs-monsters.js - v6.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -79,24 +79,24 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   };
 
-  // 嚴格對應所在區域的魔物掉落物 (每次擊敗固定掉落 +1 區域特產，破防擊敗額外掉落 +1 區域破防核心)
+  // 配合 Survival RPG 拓荒建造，魔物掉落區域專屬造船/建屋素材
   function resolveZoneDrops(zoneId, isBoss) {
     if (zoneId === "zone1_forest" || zoneId === "camp_hub") {
-      return { normalDrop: "vine", breakDrop: "coreBamboo" };
+      return { normalDrop: "vine", subDrop: "resin", breakDrop: "coreBamboo" };
     }
     if (zoneId === "cave1_mushroom" || zoneId === "zone2_canyon") {
-      return { normalDrop: "shell", breakDrop: "coreSkull" };
+      return { normalDrop: "shell", subDrop: "basalt", breakDrop: "coreSkull" };
     }
     if (zoneId === "zone3_coast") {
-      return { normalDrop: "coral", breakDrop: "coreSiren" };
+      return { normalDrop: "sailCloth", subDrop: "coral", breakDrop: "coreSiren" };
     }
     if (zoneId === "zone4_snow") {
-      return { normalDrop: "fur", breakDrop: "coreWolf" };
+      return { normalDrop: "fur", subDrop: "sinew", breakDrop: "coreWolf" };
     }
     if (zoneId === "zone5_volcano") {
-      return { normalDrop: "magmaScale", breakDrop: isBoss ? "coreDragon" : "coreGolem" };
+      return { normalDrop: "magmaScale", subDrop: "basalt", breakDrop: isBoss ? "coreDragon" : "coreGolem" };
     }
-    return { normalDrop: "starIron", breakDrop: "coreDragon" };
+    return { normalDrop: "starIron", subDrop: "goldLeaf", breakDrop: "coreDragon" };
   }
 
   function rollNextIntent(enemy, turnNum) {
@@ -175,6 +175,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       turnCount: 1,
       weak: tpl.weak,
       normalDrop: drops.normalDrop,
+      subDrop: drops.subDrop,
       breakDrop: drops.breakDrop,
       dropsTabletShard: Boolean(isBoss || isElite),
       tamePetId: tpl.tamePetId,
