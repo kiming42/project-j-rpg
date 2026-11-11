@@ -1,7 +1,8 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 多層次戰鬥舞台、雙掉落結算與破防核心必掉保證 (battle-break-boost.js - v6.1)
- * 修正：1.winBattle() 同時發放 normalDrop 與 subDrop，確保松脂/玄武岩/珊瑚/強韌獸筋穩定產出
- *       2.新增 e.wasBroken 標記：只要戰鬥中曾擊破過敵人護盾，即使敵人甦醒後才被擊殺，依然 100% 獲得魔物破防核心！
+ * Project J：艾瑟瑞亞的破曉 — 強制錯題溫習卡與戰鬥結算引擎 (battle-break-boost.js - v6.6)
+ * 升級：1.答錯任何題目時，強制暫停跳題並顯示【📖 錯題溫習與解析卡】(包含正確答案 + 知識解釋)
+ *       2.玩家必須親手點擊「✓ 我已溫習並記住答案」按鈕，才會執行敵方反擊或結束檢定
+ *       3.上半屏紅框提示條不再塞入超長答案文字，徹底解決文字超出螢幕被裁切問題
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -501,7 +502,8 @@ window.Aetheria = window.Aetheria || {};
           timerBadge.innerText = self.timeLeft + "s";
           if (self.timeLeft <= 0) {
             clearInterval(self.timerInterval);
-            self.resolveTurn(false, "詠唱逾時", { id: "timeout" });
+            const curQ = (window.Aetheria.QuizUI && window.Aetheria.QuizUI.currentQuestion) || { id: "timeout", answer: "逾時未答" };
+            self.resolveTurn(false, curQ.answer || "逾時未答", curQ);
           }
         }, 1000);
       } else if (timerBadge) {
@@ -518,6 +520,44 @@ window.Aetheria = window.Aetheria || {};
       });
     },
 
+    // 問題 2 核心新增：當玩家答錯時，在下半屏顯示「📖 錯題溫習與解析卡」，直至點擊「✓ 我已溫習並記住答案」才繼續！
+    showWrongAnswerReviewCard: function(correctText, qObj, onAcknowledge) {
+      const area = document.getElementById("quiz-interactive-area");
+      if (!area) {
+        if (onAcknowledge) onAcknowledge();
+        return;
+      }
+
+      const expHtml = (window.Aetheria.QuizBridge && window.Aetheria.QuizBridge.getExplanationHtml)
+        ? window.Aetheria.QuizBridge.getExplanationHtml(qObj, correctText)
+        : ("請記住正確答案：<b>" + correctText + "</b>");
+
+      area.innerHTML =
+        '<div class="review-card-box">' +
+          '<div class="review-card-header">' +
+            '<span>✗ 詠唱失誤・錯題溫習卡</span>' +
+            '<span style="font-size:11px; color:#ffd166;">已自動收入錯題本</span>' +
+          '</div>' +
+          '<div class="review-ans-block">' +
+            '✓ 正確答案：' + (correctText || (qObj && qObj.answer) || "") +
+          '</div>' +
+          '<div class="review-exp-block">' +
+            expHtml +
+          '</div>' +
+          '<button class="na-btn review-confirm-btn" id="btn-confirm-learned">' +
+            '✓ 我已溫習並記住答案，繼續 ▸' +
+          '</button>' +
+        '</div>';
+
+      const confirmBtn = document.getElementById("btn-confirm-learned");
+      if (confirmBtn) {
+        confirmBtn.onclick = function() {
+          window.Aetheria.Audio.sfxTalkBlip();
+          if (onAcknowledge) onAcknowledge();
+        };
+      }
+    },
+
     resolveTurn: function(isCorrect, correctText, qObj) {
       clearInterval(this.timerInterval);
       const s = window.Aetheria.State.data;
@@ -531,6 +571,7 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
+      // 模式 A：完美採集檢定
       if (this.mode === "harvest") {
         const node = this.harvestNodeRef || {};
         const matKey = node.giveKey || "mithril";
@@ -543,15 +584,20 @@ window.Aetheria = window.Aetheria || {};
           const goldReward = (s.monolithPts && s.monolithPts.science >= 75) ? 100 : 50;
           window.Aetheria.State.gainRewards(45, goldReward, 12);
           window.Aetheria.UI.showToast("完美共鳴採集成功！獲得【" + matObj.name + " +1】與賞金 " + goldReward + " G！");
+          this.endBattle();
         } else {
           if (this.harvestNodeRef) this.harvestNodeRef.opened = false;
           window.Aetheria.Audio.sfxWrong();
-          window.Aetheria.UI.showToast("共鳴採集失誤（正解：" + correctText + "），請再次按 A 鍵重試！");
+          window.Aetheria.UI.spawnFloatingText("採集失誤！請先溫習", "#ff595e", false);
+          this.showWrongAnswerReviewCard(correctText, qObj, function() {
+            self.endBattle();
+            window.Aetheria.UI.showToast("已溫習完畢！可再次對準礦脈按 A 鍵重試。");
+          });
         }
-        this.endBattle();
         return;
       }
 
+      // 模式 B：NPC 旅人指令檢定
       if (this.mode === "path_inquire") {
         const ref = this.pathActionRef;
         if (isCorrect && ref && ref.action) {
@@ -559,14 +605,18 @@ window.Aetheria = window.Aetheria || {};
           ref.action.onSuccess(s);
           window.Aetheria.State.save();
           window.Aetheria.UI.showToast("旅人指令成功！" + stripEmoji(ref.action.rewardSummary));
+          this.endBattle();
         } else {
           window.Aetheria.Audio.sfxWrong();
-          window.Aetheria.UI.showToast("檢定未通過！正確答案為：【" + correctText + "】");
+          window.Aetheria.UI.spawnFloatingText("檢定未通過！請先溫習", "#ff595e", false);
+          this.showWrongAnswerReviewCard(correctText, qObj, function() {
+            self.endBattle();
+          });
         }
-        this.endBattle();
         return;
       }
 
+      // 模式 C：投擲誘餌果收服戰寵
       if (this.mode === "tame_trial") {
         if (isCorrect) {
           const petId = e.tamePetId || "pet_fox";
@@ -589,6 +639,7 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
+      // 模式 D：一般戰鬥 / 首領戰
       if (isCorrect) {
         this.playAttackAnimation();
 
@@ -597,14 +648,14 @@ window.Aetheria = window.Aetheria || {};
 
         const wData = window.Aetheria.Data.WEAPONS[s.equippedWeapon] || {};
 
-        if (s.currentJob === "scholar" && (qObj.type === "matching" || qObj.type === "image_spell" || qObj.type === "image_mcq")) {
+        if (s.currentJob === "scholar" && (qObj.type === "matching" || qObj.type === "image_fill" || qObj.type === "classify")) {
           shieldDmg += 1;
         }
-        if (wData.spellBonus && (qObj.type === "tile_spell" || qObj.type === "image_spell")) {
+        if (wData.spellBonus && (qObj.type === "eng_tile_spell" || qObj.type === "fill_blank" || qObj.type === "image_fill")) {
           dmgMult *= wData.spellBonus;
         }
-        if (qObj.type === "blind_spell") {
-          dmgMult *= (s.currentJob === "archmage") ? 3.0 : 2.0;
+        if (qObj.type === "eng_tile_spell") {
+          dmgMult *= (s.currentJob === "archmage") ? 2.2 : 1.35;
           shieldDmg += 1;
         }
 
@@ -636,7 +687,7 @@ window.Aetheria = window.Aetheria || {};
           e.shield = Math.max(0, e.shield - shieldDmg);
           if (e.shield === 0) {
             e.broken = true;
-            e.wasBroken = true; // 永久標記本戰已成功破防，獲勝必掉核心！
+            e.wasBroken = true;
             e.breakTurnsLeft = 2;
             justBroken = true;
             if (!s.bountyStats) s.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
@@ -692,11 +743,14 @@ window.Aetheria = window.Aetheria || {};
           setTimeout(function() { self.executeEnemyCounterPhase(true); }, 580);
         }
       } else {
+        // 問題 2 & 3 修正：答錯時不再把長答案塞入上半屏紅框，而是打開下半屏「錯題溫習卡」，等玩家點擊確認已學習才觸發敵方反擊！
         window.Aetheria.Audio.sfxWrong();
-        window.Aetheria.UI.spawnFloatingText("詠唱失敗! 正解: " + correctText, "#ff595e", false);
-        window.Aetheria.UI.showToast("正確答案為：【" + correctText + "】");
+        this.updateBattleHUD();
+        window.Aetheria.UI.spawnFloatingText("詠唱失誤！請先溫習下方解析", "#ff595e", false);
 
-        setTimeout(function() { self.executeEnemyCounterPhase(false); }, 950);
+        this.showWrongAnswerReviewCard(correctText, qObj, function() {
+          self.executeEnemyCounterPhase(false);
+        });
       }
     },
 
@@ -775,7 +829,7 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.State.save();
       this.updateBattleHUD();
 
-      setTimeout(function() { self.nextTurnQuestion(); }, 520);
+      setTimeout(function() { self.nextTurnQuestion(); }, 420);
     },
 
     loseBattle: function() {
@@ -825,7 +879,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 同時發放主掉落物 (normalDrop) 與副掉落物 (subDrop)，確保松脂/玄武岩/珊瑚/強韌獸筋穩定取得！
       const normKey = e.normalDrop || "vine";
       s.inventory[normKey] = (s.inventory[normKey] || 0) + 1;
       let dropSummary = window.Aetheria.Data.MATERIALS[normKey].name + " +1";
@@ -835,7 +888,6 @@ window.Aetheria = window.Aetheria || {};
         dropSummary += "、" + window.Aetheria.Data.MATERIALS[e.subDrop].name + " +1";
       }
 
-      // 只要本場戰鬥曾成功擊破過護盾 (e.broken || e.wasBroken)，100% 獲得魔物破防核心！
       if ((e.broken || e.wasBroken) && e.breakDrop) {
         s.inventory[e.breakDrop] = (s.inventory[e.breakDrop] || 0) + 1;
         dropSummary += "、破防核心【" + window.Aetheria.Data.MATERIALS[e.breakDrop].name + " +1】";
