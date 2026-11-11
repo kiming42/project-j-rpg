@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v5.3)</title>
-  <link rel="stylesheet" href="css/style.css?v=5.3">
+  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v6.0)</title>
+  <link rel="stylesheet" href="css/style.css?v=6.0">
 </head>
 <body>
 
@@ -14,9 +14,9 @@
   <div id="title-screen">
     <div class="title-sky-bg">
       <div class="title-emblem-box">
-        <div class="title-sub">PROJECT J : TACTICAL PIXEL RPG</div>
+        <div class="title-sub">PROJECT J : SURVIVAL &amp; TACTICAL RPG</div>
         <h1 class="title-main">艾瑟瑞亞的破曉</h1>
-        <div class="title-ver">DAWN OF AETHERIA v5.3</div>
+        <div class="title-ver">PIONEER EDITION v6.0</div>
       </div>
       <div class="title-hero-showcase" id="title-hero-preview"></div>
     </div>
@@ -28,7 +28,7 @@
       </button>
       <button class="na-btn title-btn" onclick="Aetheria.UI.startNewGame()">
         新遊戲
-        <span class="title-save-sub">體驗完整七章古文明聖碑物語</span>
+        <span class="title-save-sub">赤手空拳拓荒求生・親手建造橋樑與木筏</span>
       </button>
     </div>
   </div>
@@ -38,7 +38,7 @@
     <div id="hud-hearts-box"></div>
     <div id="hud-overlay">
       <div class="hud-minimal-left">
-        <span class="na-badge" id="hud-lv">Lv.1 蒼藍劍士</span>
+        <span class="na-badge" id="hud-lv">Lv.1 赤手空拳</span>
         <span class="na-badge badge-meal" id="hud-meal" style="display:none;">料理生效中</span>
       </div>
       <div class="hud-minimal-right">
@@ -157,15 +157,15 @@
     <div id="panel-explore" class="sub-panel active">
       <div class="quick-nav">
         <button class="na-btn highlight" id="nav-btn-map" onclick="Aetheria.UI.openWorldMapModal()">傳送</button>
-        <button class="na-btn" id="nav-btn-guild" onclick="Aetheria.UI.openGuildModal('quest')">公會</button>
-        <button class="na-btn" id="nav-btn-forge" onclick="Aetheria.UI.openForgeModal('weapon')">鍛造</button>
+        <button class="na-btn" id="nav-btn-guild" onclick="Aetheria.UI.openGuildModal('quest')">日誌</button>
+        <button class="na-btn" id="nav-btn-forge" onclick="Aetheria.UI.openForgeModal('weapon')">工坊</button>
         <button class="na-btn" id="nav-btn-bag" onclick="Aetheria.UI.openBagModal()">背包</button>
         <button class="na-btn" id="nav-btn-job" onclick="Aetheria.UI.openJobPetModal()">職/寵</button>
         <button class="na-btn" id="nav-btn-set" onclick="Aetheria.UI.openSettingsModal()">設定</button>
       </div>
 
       <div id="explore-log">
-        <div id="hud-quest" class="log-quest-line">主線：與營地【鐵匠巴爾】對話</div>
+        <div id="hud-quest" class="log-quest-line">主線：拾取營地枯枝與燧石，修復巴爾的鍛造爐</div>
       </div>
 
       <div class="controls-pads">
@@ -184,7 +184,7 @@
         <div class="action-cluster">
           <button class="btn-action-a" onclick="Aetheria.Explore.interactNearby()">
             <span class="action-main-txt">A 鍵</span>
-            <span class="action-sub-txt" id="a-btn-hint">對話 / 採集</span>
+            <span class="action-sub-txt" id="a-btn-hint">對話 / 拾取</span>
           </button>
           <div style="display:flex; gap:6px;">
             <button class="na-btn" id="btn-use-bomb" style="padding:6px 10px;" onclick="Aetheria.Explore.useBomb()">炸彈</button>
@@ -206,7 +206,7 @@
       </div>
 
       <div class="dialogue-scroll-box" id="npc-speech-text">對話載入中...</div>
-      <div class="path-actions-title">選擇互動指令或專屬服務：</div>
+      <div class="path-actions-title">選擇任務交接、專屬回禮或服務：</div>
       <div id="npc-action-buttons" class="npc-btn-grid"></div>
     </div>
 
@@ -259,20 +259,20 @@
   </div>
 </div>
 
-<!-- 加入 ?v=5.3 強制瀏覽器重新載入最新腳本，破除舊快取 -->
-<script src="js/engine/save-state.js?v=5.3"></script>
-<script src="js/engine/audio-synth.js?v=5.3"></script>
-<script src="js/data/pixel-sprites.js?v=5.3"></script>
-<script src="js/data/world-maps.js?v=5.3"></script>
-<script src="js/data/items-crafting.js?v=5.3"></script>
-<script src="js/data/jobs-monsters.js?v=5.3"></script>
-<script src="js/data/quests-npcs.js?v=5.3"></script>
-<script src="questions/question-bridge.js?v=5.3"></script>
-<script src="js/engine/camera-renderer.js?v=5.3"></script>
-<script src="js/systems/exploration-gather.js?v=5.3"></script>
-<script src="js/systems/quiz-widgets.js?v=5.3"></script>
-<script src="js/systems/battle-break-boost.js?v=5.3"></script>
-<script src="js/systems/progression-town.js?v=5.3"></script>
+<!-- v6.0 模組載入順序 -->
+<script src="js/engine/save-state.js?v=6.0"></script>
+<script src="js/engine/audio-synth.js?v=6.0"></script>
+<script src="js/data/pixel-sprites.js?v=6.0"></script>
+<script src="js/data/world-maps.js?v=6.0"></script>
+<script src="js/data/items-crafting.js?v=6.0"></script>
+<script src="js/data/jobs-monsters.js?v=6.0"></script>
+<script src="js/data/quests-npcs.js?v=6.0"></script>
+<script src="questions/question-bridge.js?v=6.0"></script>
+<script src="js/engine/camera-renderer.js?v=6.0"></script>
+<script src="js/systems/exploration-gather.js?v=6.0"></script>
+<script src="js/systems/quiz-widgets.js?v=6.0"></script>
+<script src="js/systems/battle-break-boost.js?v=6.0"></script>
+<script src="js/systems/progression-town.js?v=6.0"></script>
 
 </body>
 </html>
