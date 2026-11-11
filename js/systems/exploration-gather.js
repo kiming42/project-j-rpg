@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 守關領主封印檢查、環境危害扣血與營地料理互動 (exploration-gather.js - v4.0)
+ * Project J：艾瑟瑞亞的破曉 — 垂釣小遊戲、+1嚴格採集、雙封印柱與跨區資源刷新 (exploration-gather.js - v5.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -9,6 +9,16 @@ window.Aetheria = window.Aetheria || {};
     moveDX: 0,
     moveDY: 0,
     hazardTimer: 0,
+
+    // 垂釣小遊戲狀態
+    fishingActive: false,
+    fishingSpotRef: null,
+    fishCursorPos: 10,
+    fishCursorDir: 1,
+    fishSpeed: 2.2,
+    fishZoneStart: 35,
+    fishZoneWidth: 24,
+    fishTimerId: null,
 
     initControls: function() {
       const self = this;
@@ -42,6 +52,15 @@ window.Aetheria = window.Aetheria || {};
         const cutEl = document.getElementById("story-cutscene-modal");
         if (cutEl && cutEl.style.display !== "none") return;
 
+        // 若正在進行釣魚小遊戲，按空白鍵或 Enter 直接收竿
+        if (self.fishingActive) {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            self.reelInFish();
+          }
+          return;
+        }
+
         if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") self.startMove(0, -1);
         if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") self.startMove(0, 1);
         if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") self.startMove(-1, 0);
@@ -58,7 +77,7 @@ window.Aetheria = window.Aetheria || {};
     },
 
     startMove: function(dx, dy) {
-      if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
+      if ((window.Aetheria.Battle && window.Aetheria.Battle.active) || this.fishingActive) return;
       this.moveDX = dx;
       this.moveDY = dy;
       this.isMoving = true;
@@ -77,29 +96,28 @@ window.Aetheria = window.Aetheria || {};
     },
 
     updateStep: function() {
+      if (this.fishingActive) return;
       const s = window.Aetheria.State.data;
       const mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
       if (!mapObj) return;
 
-      // 更新環境危害遮罩與持續傷害 (第四區極寒雪原 / 第五區熔岩火山)
       this.checkEnvironmentalHazard(mapObj, s);
-
       this.updateMonstersAI(mapObj, s);
 
       if (!this.isMoving) return;
 
-      let speed = 2.15;
-      if (s.currentJob === "thief") speed += 0.45;
-      if (s.unlockedRelics && s.unlockedRelics.indexOf("r_cloak") !== -1) speed += 0.35;
+      let speed = 2.6;
+      if (s.currentJob === "thief") speed += 0.5;
+      if (s.unlockedRelics && s.unlockedRelics.indexOf("r_cloak") !== -1) speed += 0.4;
 
-      let nx = Math.max(24, Math.min(mapObj.width - 36, s.heroX + this.moveDX * speed));
-      let ny = Math.max(24, Math.min(mapObj.height - 36, s.heroY + this.moveDY * speed));
+      let nx = Math.max(28, Math.min(mapObj.width - 42, s.heroX + this.moveDX * speed));
+      let ny = Math.max(28, Math.min(mapObj.height - 42, s.heroY + this.moveDY * speed));
 
-      // 1. 檢查樹木與石柱阻擋 (讓迷宮樹牆真正發揮阻隔作用！)
+      // 1. 檢查迷宮樹木與岩柱碰撞
       if (mapObj.trees) {
         for (let t = 0; t < mapObj.trees.length; t++) {
           const tr = mapObj.trees[t];
-          if (Math.hypot(nx - (tr.x + 8), ny - (tr.y + 12)) < 18) {
+          if (Math.hypot(nx - (tr.x + 10), ny - (tr.y + 12)) < 20) {
             nx = s.heroX;
             ny = s.heroY;
             break;
@@ -107,24 +125,26 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 2. 河流與木橋通行判定
+      // 2. 檢查河流與木橋通行
       if (mapObj.hasRiver) {
-        const rx = mapObj.riverX || 715;
-        const by = mapObj.bridgeY || 290;
-        const inRiverX = (nx > rx - 14 && nx < rx + 38);
-        const onBridgeY = (ny > by - 6 && ny < by + 38);
+        const rx = mapObj.riverX || 1030;
+        const by = mapObj.bridgeY || 455;
+        const inRiverX = (nx > rx - 16 && nx < rx + 42);
+        const onBridgeY = (ny > by - 8 && ny < by + 44);
         if (inRiverX && !onBridgeY) {
           nx = s.heroX;
         }
       }
 
-      // 3. 裂縫牆、巨石與枯木阻擋判定
+      // 3. 檢查裂縫岩壁 (永久紀錄) 與擋路巨石/枯木 (當次實例 d.cleared，跨區自動重生！)
       if (mapObj.decos) {
         for (let i = 0; i < mapObj.decos.length; i++) {
           const d = mapObj.decos[i];
-          const isCleared = s.openedNodes && s.openedNodes[d.id];
-          if (!isCleared && (d.isCrackedWall || d.obstacleType)) {
-            if (Math.hypot(nx - d.x, ny - d.y) < 22) {
+          const wallCleared = d.isCrackedWall && s.openedNodes && s.openedNodes[d.id];
+          const obsCleared = Boolean(d.cleared);
+
+          if (!wallCleared && !obsCleared && (d.isCrackedWall || d.obstacleType)) {
+            if (Math.hypot(nx - d.x, ny - d.y) < 24) {
               nx = s.heroX;
               ny = s.heroY;
               if (d.isCrackedWall) {
@@ -139,8 +159,8 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      s.petX += (s.heroX - this.moveDX * 18 - s.petX) * 0.18;
-      s.petY += (s.heroY - this.moveDY * 16 - s.petY) * 0.18;
+      s.petX += (s.heroX - this.moveDX * 20 - s.petX) * 0.2;
+      s.petY += (s.heroY - this.moveDY * 18 - s.petY) * 0.2;
       s.heroX = nx;
       s.heroY = ny;
 
@@ -148,7 +168,7 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.portals) {
         for (let j = 0; j < mapObj.portals.length; j++) {
           const p = mapObj.portals[j];
-          if (Math.hypot(s.heroX - p.x, s.heroY - p.y) < 18) {
+          if (Math.hypot(s.heroX - p.x, s.heroY - p.y) < 22) {
             this.stopMove();
             this.triggerPortal(p);
             return;
@@ -160,7 +180,6 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.UI.updateHudZoneDynamic(mapObj, s);
     },
 
-    // 極寒雪原與熔岩火山環境危害檢查
     checkEnvironmentalHazard: function(mapObj, s) {
       const hazEl = document.getElementById("hazard-overlay");
       if (!mapObj.hazard) {
@@ -204,44 +223,57 @@ window.Aetheria = window.Aetheria || {};
 
         const distToHero = Math.hypot(s.heroX - m.x, s.heroY - m.y);
 
-        if (distToHero < 16) {
+        if (distToHero < 20) {
           this.stopMove();
+          // 檢查守關領主是否受「雙符文封印柱 (reqSeals)」保護！
+          if (m.reqSeals && m.reqSeals.length > 0) {
+            const unsealedCount = m.reqSeals.filter(function(sid) {
+              return Boolean(s.unlockedSeals && s.unlockedSeals[sid]);
+            }).length;
+            if (unsealedCount < m.reqSeals.length) {
+              s.heroX = Math.max(40, s.heroX - 32);
+              window.Aetheria.Audio.sfxWrong();
+              window.Aetheria.UI.showToast("領主護體結界生效中！請先深入迷宮南北兩翼點亮【符文封印柱】(" + unsealedCount + "/" + m.reqSeals.length + ")！");
+              return;
+            }
+          }
+
           if (m.isShiny) m.forceShiny = true;
           window.Aetheria.Battle.startBattle(m);
           return;
         }
 
-        const aggroRadius = m.isBoss ? 62 : 66;
+        const aggroRadius = m.isBoss ? 68 : 76;
         if (distToHero < aggroRadius) {
           m.aggro = true;
-          const chaseSpeed = m.isBoss ? 0.95 : 1.35;
+          const chaseSpeed = m.isBoss ? 0.95 : 1.45;
           const dx = (s.heroX - m.x) / (distToHero || 1);
           const dy = (s.heroY - m.y) / (distToHero || 1);
           let nextMX = m.x + dx * chaseSpeed;
           let nextMY = m.y + dy * chaseSpeed;
 
           if (mapObj.hasRiver) {
-            const rx = mapObj.riverX || 715;
-            if (nextMX > rx - 14 && nextMX < rx + 38) nextMX = m.x;
+            const rx = mapObj.riverX || 1030;
+            if (nextMX > rx - 16 && nextMX < rx + 42) nextMX = m.x;
           }
 
-          m.x = Math.max(30, Math.min(mapObj.width - 40, nextMX));
-          m.y = Math.max(30, Math.min(mapObj.height - 40, nextMY));
+          m.x = Math.max(35, Math.min(mapObj.width - 45, nextMX));
+          m.y = Math.max(35, Math.min(mapObj.height - 45, nextMY));
         } else if (!m.isBoss) {
           m.aggro = false;
           m.patrolTimer = (m.patrolTimer || 60) - 1;
           if (m.patrolTimer <= 0) {
             m.patrolTimer = 50 + Math.floor(Math.random() * 60);
             const randAng = Math.random() * Math.PI * 2;
-            m.vx = Math.cos(randAng) * 0.45;
-            m.vy = Math.sin(randAng) * 0.45;
+            m.vx = Math.cos(randAng) * 0.55;
+            m.vy = Math.sin(randAng) * 0.55;
           }
 
           let nextMX = m.x + (m.vx || 0);
           let nextMY = m.y + (m.vy || 0);
 
           const distFromHome = Math.hypot(nextMX - (m.homeX || m.x), nextMY - (m.homeY || m.y));
-          if (distFromHome > 50) {
+          if (distFromHome > 60) {
             m.vx = ((m.homeX || m.x) - m.x) * 0.02;
             m.vy = ((m.homeY || m.y) - m.y) * 0.02;
             nextMX = m.x + m.vx;
@@ -260,7 +292,7 @@ window.Aetheria = window.Aetheria || {};
       const hintEl = document.getElementById("a-btn-hint");
       if (!hintEl) return;
 
-      if (s.currentZone === "camp_hub" && Math.hypot(s.heroX - 272, s.heroY - 195) < 32) {
+      if (s.currentZone === "camp_hub" && Math.hypot(s.heroX - 345, s.heroY - 245) < 36) {
         hintEl.innerText = "行前料理";
         return;
       }
@@ -268,7 +300,7 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.npcs) {
         for (let i = 0; i < mapObj.npcs.length; i++) {
           const npc = mapObj.npcs[i];
-          if (Math.hypot(s.heroX - npc.x, s.heroY - npc.y) < 30) {
+          if (Math.hypot(s.heroX - npc.x, s.heroY - npc.y) < 34) {
             hintEl.innerText = "對話:" + (npc.name.split("・")[1] || npc.name);
             return;
           }
@@ -277,9 +309,9 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.decos) {
         for (let j = 0; j < mapObj.decos.length; j++) {
           const d = mapObj.decos[j];
-          const isCleared = s.openedNodes && s.openedNodes[d.id];
-          if (!isCleared && Math.hypot(s.heroX - d.x, s.heroY - d.y) < 32) {
-            if (d.isFishingSpot) { hintEl.innerText = "垂釣鮮魚"; return; }
+          if (!d.cleared && Math.hypot(s.heroX - d.x, s.heroY - d.y) < 36) {
+            if (d.isSealPillar)  { hintEl.innerText = "解開封印柱"; return; }
+            if (d.isFishingSpot) { hintEl.innerText = "垂釣小遊戲"; return; }
             if (d.isGrapple)     { hintEl.innerText = "飛爪鉤"; return; }
             if (d.isBrazier)     { hintEl.innerText = "點火盆"; return; }
             if (d.obstacleType === "boulder")  { hintEl.innerText = "碎巨石"; return; }
@@ -290,7 +322,7 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.nodes) {
         for (let k = 0; k < mapObj.nodes.length; k++) {
           const n = mapObj.nodes[k];
-          if (!n.opened && !(s.openedNodes && s.openedNodes[n.id]) && Math.hypot(s.heroX - n.x, s.heroY - n.y) < 28) {
+          if (!n.opened && !(n.legendary && s.openedNodes && s.openedNodes[n.id]) && Math.hypot(s.heroX - n.x, s.heroY - n.y) < 32) {
             hintEl.innerText = "採集:" + n.name.slice(0, 4);
             return;
           }
@@ -299,20 +331,20 @@ window.Aetheria = window.Aetheria || {};
       hintEl.innerText = "對話 / 採集";
     },
 
-    // 觸發跨區傳送門：硬性檢查「守關領主封印鎖 (reqBoss)」！
+    // 跨區移動：100% 刷新所有普通與高階採集點、釣魚點、擋路巨石與枯木！
     triggerPortal: function(portal) {
       const s = window.Aetheria.State.data;
 
-      // 守關領主封印檢查：未擊敗該區守關領主前，彈開主角並顯示警告！
       if (portal.reqBoss && !(s.clearedBosses && s.clearedBosses[portal.reqBoss])) {
-        s.heroX -= 24;
+        s.heroX -= 28;
         window.Aetheria.Audio.sfxWrong();
-        window.Aetheria.UI.showToast("蝕憶結界封鎖中！必須先擊敗本區守關領主【" + (portal.reqBossName || "區域領主") + "】才可前往下一區！");
+        window.Aetheria.UI.showToast("蝕憶結界封鎖中！必須先解開雙封印柱並擊敗【" + (portal.reqBossName || "區域領主") + "】才可通行！");
         return;
       }
 
       let newlyUnlocked = false;
       window.Aetheria.Data.Maps.refreshAllResources();
+      if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
 
       if (portal.targetZone === "endless_tower_next") {
         const curMap = window.Aetheria.Data.Maps.getMap("endless_tower");
@@ -330,7 +362,7 @@ window.Aetheria = window.Aetheria || {};
         newlyUnlocked = window.Aetheria.State.unlockZone(portal.targetZone);
       }
 
-      s.petX = s.heroX - 18;
+      s.petX = s.heroX - 20;
       s.petY = s.heroY + 6;
       window.Aetheria.State.save();
 
@@ -338,7 +370,6 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.Audio.playBgm(newMap.bgm || "forest");
       window.Aetheria.UI.updateAllHud();
 
-      // 首次踏入該區域時，自動播放區域過場劇情對話！
       const cutKey = "enter_" + s.currentZone;
       if (window.Aetheria.Data.STORY_CUTSCENES[cutKey] && !(s.seenCutscenes && s.seenCutscenes[cutKey])) {
         s.seenCutscenes[cutKey] = true;
@@ -346,19 +377,19 @@ window.Aetheria = window.Aetheria || {};
         window.Aetheria.UI.playCutscene(cutKey);
       } else if (newlyUnlocked) {
         window.Aetheria.Audio.sfxLevelUp();
-        window.Aetheria.UI.showToast("已步行抵達並解鎖【" + newMap.name + "】傳送石碑！");
+        window.Aetheria.UI.showToast("已抵達並解鎖【" + newMap.name + "】傳送石碑！");
       } else {
-        window.Aetheria.UI.showToast("進入【" + newMap.name + "】");
+        window.Aetheria.UI.showToast("進入【" + newMap.name + "】（全地圖資源已刷新）");
       }
     },
 
     interactNearby: function() {
-      if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
+      if ((window.Aetheria.Battle && window.Aetheria.Battle.active) || this.fishingActive) return;
       const s = window.Aetheria.State.data;
       const mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
 
-      // 1. 營地燉肉鍋：開啟「行前料理 & 免費回血」選單
-      if (s.currentZone === "camp_hub" && Math.hypot(s.heroX - 272, s.heroY - 195) < 32) {
+      // 1. 營地燉肉鍋
+      if (s.currentZone === "camp_hub" && Math.hypot(s.heroX - 345, s.heroY - 245) < 36) {
         window.Aetheria.Audio.sfxTalkBlip();
         window.Aetheria.UI.openCookingModal();
         return;
@@ -368,7 +399,7 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.npcs) {
         for (let i = 0; i < mapObj.npcs.length; i++) {
           const npc = mapObj.npcs[i];
-          if (Math.hypot(s.heroX - npc.x, s.heroY - npc.y) < 32) {
+          if (Math.hypot(s.heroX - npc.x, s.heroY - npc.y) < 36) {
             window.Aetheria.Audio.sfxTalkBlip();
             window.Aetheria.UI.openNpcDialogue(npc.id);
             return;
@@ -376,16 +407,31 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 3. 工具互動機關
+      // 3. 互動機關 (雙符文封印柱 / 釣魚小遊戲 / 抓鉤 / 火盆 / 擋路巨石 / 擋路枯木)
       if (mapObj.decos) {
         for (let j = 0; j < mapObj.decos.length; j++) {
           const d = mapObj.decos[j];
-          const isCleared = s.openedNodes && s.openedNodes[d.id];
-          if (!isCleared && Math.hypot(s.heroX - d.x, s.heroY - d.y) < 34) {
-            if (d.isFishingSpot) {
-              this.triggerFishing(d);
+          if (!d.cleared && Math.hypot(s.heroX - d.x, s.heroY - d.y) < 38) {
+            // A. 點亮迷宮「符文封印石柱」
+            if (d.isSealPillar) {
+              if (!s.unlockedSeals) s.unlockedSeals = {};
+              if (s.unlockedSeals[d.id]) {
+                window.Aetheria.UI.showToast("此座【" + (d.name || "符文封印柱") + "】已經解封點亮了！");
+                return;
+              }
+              s.unlockedSeals[d.id] = true;
+              window.Aetheria.Audio.sfxLevelUp();
+              window.Aetheria.State.save();
+              window.Aetheria.UI.updateAllHud();
+              window.Aetheria.UI.showToast("成功點亮【" + (d.name || "符文封印柱") + "】！守關領主的結界已削弱！");
               return;
             }
+            // B. 啟動「海濱垂釣小遊戲」
+            if (d.isFishingSpot) {
+              this.startFishingMinigame(d);
+              return;
+            }
+            // C. 飛爪鉤木樁
             if (d.isGrapple) {
               if ((s.tools.hook || 1) < 2) {
                 window.Aetheria.UI.showToast("需要【Lv.2 鐵索飛爪鉤】才可飛越！請至鐵匠鋪升級工具。");
@@ -394,12 +440,13 @@ window.Aetheria = window.Aetheria || {};
               window.Aetheria.Audio.sfxAttackHit();
               s.heroX = d.targetX;
               s.heroY = d.targetY;
-              s.petX = s.heroX - 16;
+              s.petX = s.heroX - 18;
               s.petY = s.heroY + 4;
               window.Aetheria.State.save();
               window.Aetheria.UI.showToast("發射鐵索飛爪鉤，成功飛越對岸！");
               return;
             }
+            // D. 古代火盆
             if (d.isBrazier) {
               const litKey = "lit_" + mapObj.id;
               s.openedNodes[litKey] = true;
@@ -409,29 +456,34 @@ window.Aetheria = window.Aetheria || {};
               window.Aetheria.UI.showToast("已點燃古代火盆！聖火永久驅散了洞窟的黑霧！");
               return;
             }
+            // E. 擋路巨石 (僅標記 d.cleared = true，跨區必刷新，且每次嚴格 +1 藍晶鐵礦)
             if (d.obstacleType === "boulder") {
               if ((s.tools.pickaxe || 1) < 2) {
+                window.Aetheria.Audio.sfxWrong();
                 window.Aetheria.UI.showToast("岩石堅硬！請先到鐵匠鋪升級【Lv.2 秘銀重鎬】！");
                 return;
               }
-              s.openedNodes[d.id] = true;
-              s.inventory.iron += 3;
+              d.cleared = true;
+              s.inventory.iron = (s.inventory.iron || 0) + 1;
               window.Aetheria.Audio.sfxBreakShield();
               window.Aetheria.State.save();
-              window.Aetheria.UI.showToast("使用秘銀重鎬擊碎擋路巨石，獲得【藍晶鐵礦 +3】！");
+              window.Aetheria.UI.updateAllHud();
+              window.Aetheria.UI.showToast("使用秘銀重鎬擊碎擋路巨石，獲得【藍晶鐵礦 +1】！");
               return;
             }
+            // F. 擋路枯木 (僅標記 d.cleared = true，跨區必刷新，且每次嚴格 +1 翠風原木)
             if (d.obstacleType === "deadtree") {
               if ((s.tools.axe || 1) < 2) {
+                window.Aetheria.Audio.sfxWrong();
                 window.Aetheria.UI.showToast("枯木粗壯！請先到鐵匠鋪升級【Lv.2 烈焰戰斧】！");
                 return;
               }
-              s.openedNodes[d.id] = true;
-              s.inventory.wood += 4;
-              s.inventory.vine += 2;
+              d.cleared = true;
+              s.inventory.wood = (s.inventory.wood || 0) + 1;
               window.Aetheria.Audio.sfxBreakShield();
               window.Aetheria.State.save();
-              window.Aetheria.UI.showToast("揮動烈焰戰斧劈開巨型枯木，獲得【翠風原木 +4、堅韌藤蔓 +2】！");
+              window.Aetheria.UI.updateAllHud();
+              window.Aetheria.UI.showToast("揮動烈焰戰斧劈開巨型枯木，獲得【翠風原木 +1】！");
               return;
             }
           }
@@ -442,134 +494,190 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.nodes) {
         for (let k = 0; k < mapObj.nodes.length; k++) {
           const n = mapObj.nodes[k];
-          if (!n.opened && !(s.openedNodes && s.openedNodes[n.id]) && Math.hypot(s.heroX - n.x, s.heroY - n.y) < 30) {
+          if (!n.opened && !(n.legendary && s.openedNodes && s.openedNodes[n.id]) && Math.hypot(s.heroX - n.x, s.heroY - n.y) < 34) {
             this.harvestNode(n);
             return;
           }
         }
       }
 
-      window.Aetheria.UI.showToast("請走近 NPC、燉肉鍋、礦脈、老樹樁或寶箱再按 A 鍵！");
+      window.Aetheria.UI.showToast("請走近 NPC、封印柱、釣魚點、礦脈或樹樁再按 A 鍵！");
     },
 
-    triggerFishing: function(spot) {
+    // ================= 互動式「海濱垂釣小遊戲」引擎 =================
+    startFishingMinigame: function(spot) {
       const s = window.Aetheria.State.data;
-      spot.isFishingSpot = false;
-      spot.sprite = "deco_rock";
+      this.stopMove();
+      this.fishingActive = true;
+      this.fishingSpotRef = spot;
+      this.fishCursorPos = 6;
+      this.fishCursorDir = 1;
 
-      window.Aetheria.Audio.sfxGather();
-      const hookLv = s.tools.hook || 1;
-      const luckyMult = (s.unlockedRelics && s.unlockedRelics.indexOf("r_charm") !== -1 && Math.random() < 0.5) ? 2 : 1;
+      const hookLv = (s.tools && s.tools.hook) || 1;
+      // 釣竿等級越高，綠色命中區越寬，游標速度越穩定
+      this.fishZoneWidth = (hookLv >= 3) ? 40 : (hookLv === 2) ? 30 : 22;
+      this.fishZoneStart = 22 + Math.floor(Math.random() * (68 - this.fishZoneWidth));
+      this.fishSpeed = (hookLv >= 3) ? 1.85 : 2.25;
 
-      if (hookLv >= 3) {
-        s.inventory.fish += 2 * luckyMult;
-        s.inventory.coral += 2 * luckyMult;
-        s.inventory.tameFruit += 1;
-        window.Aetheria.UI.showToast("深海黃金鉤大豐收！獲得【銀鱗鮮魚 +" + (2 * luckyMult) + "、深海珊瑚 +" + (2 * luckyMult) + "、誘餌果 +1】！");
-      } else {
-        s.inventory.fish += 1 * luckyMult;
-        s.inventory.mithril += 1;
-        window.Aetheria.UI.showToast("垂釣成功！釣起【銀鱗鮮魚 +" + luckyMult + "、流沙秘銀 +1】！（可回營地鍋爐烹調破盾魚排）");
+      const modal = document.getElementById("fishing-minigame-modal");
+      const targetEl = document.getElementById("fishing-target-zone");
+      const cursorEl = document.getElementById("fishing-cursor");
+
+      if (targetEl) {
+        targetEl.style.left = this.fishZoneStart + "%";
+        targetEl.style.width = this.fishZoneWidth + "%";
       }
-      window.Aetheria.State.save();
-      window.Aetheria.UI.updateAllHud();
+      if (cursorEl) {
+        cursorEl.style.left = this.fishCursorPos + "%";
+      }
+      if (modal) modal.style.display = "flex";
+
+      const self = this;
+      clearInterval(this.fishTimerId);
+      this.fishTimerId = setInterval(function() {
+        self.fishCursorPos += self.fishCursorDir * self.fishSpeed;
+        if (self.fishCursorPos >= 94) {
+          self.fishCursorPos = 94;
+          self.fishCursorDir = -1;
+        } else if (self.fishCursorPos <= 2) {
+          self.fishCursorPos = 2;
+          self.fishCursorDir = 1;
+        }
+        if (cursorEl) cursorEl.style.left = self.fishCursorPos + "%";
+      }, 16);
     },
 
+    reelInFish: function() {
+      if (!this.fishingActive) return;
+      clearInterval(this.fishTimerId);
+
+      const s = window.Aetheria.State.data;
+      const hookLv = (s.tools && s.tools.hook) || 1;
+      const centerPos = this.fishCursorPos + 2;
+      const zoneStart = this.fishZoneStart;
+      const zoneEnd = this.fishZoneStart + this.fishZoneWidth;
+
+      const perfStart = zoneStart + this.fishZoneWidth * 0.32;
+      const perfEnd = zoneEnd - this.fishZoneWidth * 0.32;
+
+      if (centerPos >= zoneStart && centerPos <= zoneEnd) {
+        const isPerfect = (centerPos >= perfStart && centerPos <= perfEnd);
+        if (this.fishingSpotRef) this.fishingSpotRef.cleared = true;
+
+        s.inventory.fish = (s.inventory.fish || 0) + 1;
+        s.questProgress.fishedOnce = true;
+
+        let msg = "垂釣成功！獲得【銀鱗鮮魚 +1】！";
+        if (isPerfect) {
+          const goldBonus = (s.monolithPts && s.monolithPts.science >= 75) ? 60 : 30;
+          s.gold += goldBonus;
+          if (hookLv >= 3) {
+            s.inventory.coral = (s.inventory.coral || 0) + 1;
+            msg = "金色紅心完美收竿！獲得【銀鱗鮮魚 +1】、【深海珊瑚 +1】與 " + goldBonus + " G！";
+          } else {
+            msg = "金色紅心完美收竿！獲得【銀鱗鮮魚 +1】與賞金 " + goldBonus + " G！";
+          }
+          window.Aetheria.Audio.sfxLevelUp();
+        } else {
+          window.Aetheria.Audio.sfxGather();
+        }
+
+        window.Aetheria.State.save();
+        window.Aetheria.UI.updateAllHud();
+        window.Aetheria.UI.showToast(msg);
+      } else {
+        window.Aetheria.Audio.sfxWrong();
+        window.Aetheria.UI.showToast("收竿時機偏差，魚兒掙脫逃走了！可再次按 A 鍵重試。");
+      }
+
+      this.closeFishingMinigame();
+    },
+
+    closeFishingMinigame: function() {
+      clearInterval(this.fishTimerId);
+      this.fishingActive = false;
+      this.fishingSpotRef = null;
+      const modal = document.getElementById("fishing-minigame-modal");
+      if (modal) modal.style.display = "none";
+    },
+
+    // ================= 嚴格 +1 採集與工具等級檢定 =================
     harvestNode: function(node) {
       const s = window.Aetheria.State.data;
-      node.opened = true;
-      if (node.legendary) {
-        s.openedNodes[node.id] = true;
+
+      // 1. 傳說寶箱處理
+      if (node.type === "chest") {
+        node.opened = true;
+        if (node.legendary) s.openedNodes[node.id] = true;
+        window.Aetheria.Audio.sfxLevelUp();
+
+        if (s.currentZone === "camp_hub" || s.currentZone === "tent_guild" || s.currentZone === "zone1_forest" || s.currentZone === "cave1_mushroom") {
+          s.inventory.iron += 1;
+          s.inventory.wood += 1;
+          s.inventory.potionHeal += 1;
+          window.Aetheria.UI.showToast("開啟秘寶箱：獲得【藍晶鐵礦 +1、翠風原木 +1、生命藥水 +1】！");
+        } else if (s.currentZone === "zone2_canyon" || s.currentZone === "zone3_coast") {
+          s.inventory.mithril += 1;
+          s.inventory.coral += 1;
+          s.inventory.bombItem += 1;
+          window.Aetheria.UI.showToast("開啟秘寶箱：獲得【流沙秘銀礦 +1、深海珊瑚 +1、爆破炸彈 +1】！");
+        } else if (s.currentZone === "zone4_snow" || s.currentZone === "zone5_volcano") {
+          s.inventory.obsidian += 1;
+          s.inventory.iceLotus += 1;
+          s.inventory.tameFruit += 1;
+          window.Aetheria.UI.showToast("開啟秘寶箱：獲得【熔岩黑曜石 +1、雪山冰蓮 +1、靈獸誘餌果 +1】！");
+        } else {
+          s.inventory.starIron += 1;
+          s.inventory.goldLeaf += 1;
+          s.inventory.tabletShard += 1;
+          window.Aetheria.UI.showToast("開啟至高秘寶箱：獲得【深淵星隕鐵 +1、世界樹金葉 +1、聖碑殘片 +1】！");
+        }
+        window.Aetheria.State.save();
+        window.Aetheria.UI.updateAllHud();
+        return;
       }
+
+      // 2. 檢查工具種類與所需工具等級 (Lv.1 / Lv.2 / Lv.3)
+      const reqTool = node.reqTool || (node.type === "crystal" ? "pickaxe" : "axe");
+      const reqLv = node.reqToolLv || 1;
+      const curToolLv = (s.tools && s.tools[reqTool]) || 1;
+
+      if (curToolLv < reqLv) {
+        const toolName = (reqTool === "pickaxe") ? "十字鎬" : "伐木斧";
+        window.Aetheria.Audio.sfxWrong();
+        window.Aetheria.UI.showToast("工具等級不足！採集【" + node.name + "】需要升級至 Lv." + reqLv + " " + toolName + "！");
+        return;
+      }
+
+      // 標記當次地圖實例已採集 (不寫入 s.openedNodes，確保跨區返回時高階資源 100% 重新刷新！)
+      node.opened = true;
 
       if (node.perfect) {
         window.Aetheria.Battle.startHarvestChallenge(node);
         return;
       }
 
+      // 3. 每次採集嚴格固定獲得 +1 個對應素材！
       window.Aetheria.Audio.sfxGather();
-      const pickBonus = (s.tools.pickaxe >= 3) ? 2 : (s.tools.pickaxe === 2) ? 1 : 0;
-      const axeBonus  = (s.tools.axe >= 2) ? 1 : 0;
-      // 📗 煉金真理聖碑 (科學科) 75點神恩：野外採集產量永久 +1
-      const sciBonus  = (s.monolithPts && s.monolithPts.science >= 75) ? 1 : 0;
-      const luckyMult = (s.unlockedRelics && s.unlockedRelics.indexOf("r_charm") !== -1 && Math.random() < 0.5) ? 2 : 1;
+      const matKey = node.giveKey || (node.type === "crystal" ? "iron" : node.type === "wood" ? "wood" : node.type === "mushroom" ? "herb" : "flower");
+      s.inventory[matKey] = (s.inventory[matKey] || 0) + 1;
 
-      if (node.obsidianNode) {
-        const amt = (1 + pickBonus + sciBonus) * luckyMult;
-        s.inventory.obsidian += amt;
-        window.Aetheria.UI.showToast("挖掘成功：獲得【熔岩黑曜石 +" + amt + "】！");
-      } else if (node.snowLotus) {
-        const amt = (1 + axeBonus + sciBonus) * luckyMult;
-        s.inventory.iceLotus += amt;
-        s.inventory.fur += 1;
-        window.Aetheria.UI.showToast("採集成功：獲得【雪山冰蓮 +" + amt + "、霜狼毛皮 +1】！");
-      } else if (node.goldLeafNode) {
-        const amt = (1 + axeBonus + sciBonus) * luckyMult;
-        s.inventory.goldLeaf += amt;
-        window.Aetheria.UI.showToast("採集成功：獲得【世界樹金葉 +" + amt + "】！");
-      } else if (node.type === "wood") {
-        const amt = (2 + axeBonus + sciBonus) * luckyMult;
-        s.inventory.wood += amt;
-        s.inventory.vine += 1;
-        window.Aetheria.UI.showToast("伐木成功：獲得【翠風原木 +" + amt + "、堅韌藤蔓 +1】！");
-      } else if (node.type === "crystal") {
-        const amt = (2 + pickBonus + sciBonus) * luckyMult;
-        s.inventory.iron += amt;
-        window.Aetheria.UI.showToast("挖掘成功：獲得【藍晶鐵礦 +" + amt + "】！");
-      } else if (node.type === "mushroom") {
-        const amt = (1 + axeBonus + sciBonus) * luckyMult;
-        s.inventory.herb += amt;
-        s.inventory.wood += 1;
-        window.Aetheria.UI.showToast("採集成功：獲得【紅傘微光菇 +" + amt + "、翠風原木 +1】！");
-      } else if (node.type === "flower") {
-        const amt = (1 + axeBonus + sciBonus) * luckyMult;
-        s.inventory.flower += amt;
-        s.inventory.vine += 1;
-        window.Aetheria.UI.showToast("採集成功：獲得【翠風太陽花 +" + amt + "、堅韌藤蔓 +1】！");
-      } else if (node.type === "chest") {
-        if (node.legendary) {
-          window.Aetheria.Audio.sfxLevelUp();
-          if (s.currentZone === "camp_hub" || s.currentZone === "tent_guild" || s.currentZone === "zone1_forest" || s.currentZone === "cave1_mushroom") {
-            s.inventory.iron += 5;
-            s.inventory.wood += 4;
-            s.inventory.vine += 3;
-            s.inventory.mithril += 3;
-            window.Aetheria.UI.showToast("開啟秘寶箱：藍晶礦 +5、原木 +4、藤蔓 +3、流沙秘銀 +3！");
-          } else if (s.currentZone === "zone2_canyon" || s.currentZone === "zone3_coast") {
-            s.inventory.mithril += 6;
-            s.inventory.coral += 4;
-            s.inventory.shell += 4;
-            window.Aetheria.UI.showToast("開啟秘寶箱：流沙秘銀 +6、深海珊瑚 +4、洞窟硬甲殼 +4！");
-          } else if (s.currentZone === "zone4_snow" || s.currentZone === "zone5_volcano") {
-            s.inventory.obsidian += 6;
-            s.inventory.iceLotus += 4;
-            s.inventory.magmaScale += 4;
-            window.Aetheria.UI.showToast("開啟秘寶箱：熔岩黑曜石 +6、雪山冰蓮 +4、熔岩龍鱗 +4！");
-          } else {
-            s.inventory.starIron += 5;
-            s.inventory.goldLeaf += 4;
-            s.inventory.tabletShard += 1;
-            window.Aetheria.UI.showToast("開啟至高秘寶箱：深淵星隕鐵 +5、世界樹金葉 +4、聖碑殘片 +1！");
-          }
-        } else {
-          s.inventory.iron += 3;
-          s.inventory.wood += 2;
-          s.inventory.potionHeal += 1;
-          window.Aetheria.UI.showToast("開啟寶箱：藍晶鐵礦 +3、翠風原木 +2、生命藥水 +1！");
-        }
-      } else {
-        s.inventory.wood += 3;
-        s.inventory.iron += 2;
-        s.inventory.vine += 1;
-        window.Aetheria.UI.showToast("搜括補給木箱：獲得【翠風原木 +3、藍晶鐵礦 +2、堅韌藤蔓 +1】！");
+      const matObj = window.Aetheria.Data.MATERIALS[matKey] || { name: matKey };
+      let msg = "採集成功：獲得【" + matObj.name + " +1】！";
+
+      // Lv.3 雷鳴神斧特殊天賦：25% 機率額外發現 1 顆靈獸誘餌果
+      if (reqTool === "axe" && curToolLv >= 3 && Math.random() < 0.25) {
+        s.inventory.tameFruit = (s.inventory.tameFruit || 0) + 1;
+        msg += "（神斧觸發：額外發現靈獸誘餌果 +1！）";
       }
 
       window.Aetheria.State.save();
       window.Aetheria.UI.updateAllHud();
+      window.Aetheria.UI.showToast(msg);
     },
 
     useBomb: function() {
-      if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
+      if ((window.Aetheria.Battle && window.Aetheria.Battle.active) || this.fishingActive) return;
       const s = window.Aetheria.State.data;
       if ((s.inventory.bombItem || 0) <= 0) {
         window.Aetheria.UI.showToast("爆破炸彈不足！可在鐵匠鋪煉金或金幣商店購買。");
@@ -580,7 +688,7 @@ window.Aetheria = window.Aetheria || {};
       if (mapObj.decos) {
         for (let i = 0; i < mapObj.decos.length; i++) {
           const d = mapObj.decos[i];
-          if (d.isCrackedWall && !(s.openedNodes && s.openedNodes[d.id]) && Math.hypot(s.heroX - d.x, s.heroY - d.y) < 42) {
+          if (d.isCrackedWall && !(s.openedNodes && s.openedNodes[d.id]) && Math.hypot(s.heroX - d.x, s.heroY - d.y) < 44) {
             s.inventory.bombItem--;
             s.openedNodes[d.id] = true;
             window.Aetheria.Audio.sfxBomb();
@@ -594,20 +702,22 @@ window.Aetheria = window.Aetheria || {};
     },
 
     warpToCamp: function() {
-      if (window.Aetheria.Battle && window.Aetheria.Battle.active) return;
+      if ((window.Aetheria.Battle && window.Aetheria.Battle.active) || this.fishingActive) return;
       const s = window.Aetheria.State.data;
       window.Aetheria.Data.Maps.refreshAllResources();
+      if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
+
       s.currentZone = "camp_hub";
-      s.heroX = 250;
-      s.heroY = 220;
-      s.petX = 228;
-      s.petY = 224;
+      s.heroX = 320;
+      s.heroY = 260;
+      s.petX = 296;
+      s.petY = 264;
       s.facing = "down";
       window.Aetheria.State.save();
       window.Aetheria.Audio.playBgm("forest");
       window.Aetheria.UI.closePanelToExplore();
       window.Aetheria.UI.updateAllHud();
-      window.Aetheria.UI.showToast("已返回【0. 曙光露營基地】！");
+      window.Aetheria.UI.showToast("已返回【0. 曙光露營基地】（全大陸礦脈與高階資源已刷新）！");
     }
   };
 
