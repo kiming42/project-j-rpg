@@ -1,32 +1,51 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 全域狀態、公會特權加成與存檔中心 (save-state.js - v3.5)
+ * Project J：艾瑟瑞亞的破曉 — 全域狀態、防具/符文鑲嵌/行前料理/四大聖碑中心 (save-state.js - v4.0)
+ * 新增：1.防具系統 (equippedArmor / unlockedArmors) 與總防禦 getTotalDef()、環境抗性 hasHazardImmunity()
+ *       2.魔物核心符文鑲嵌槽 (socketedRunes: { weapon, armor })
+ *       3.營地行前料理 Buff (activeMeal: { id, battlesLeft })
+ *       4.四大古文明聖碑共鳴點數 (monolithPts: { chinese, english, science, humanities }) 與永久神恩加成
+ *       5.區域守關領主擊破紀錄 (clearedBosses) 與防刷懸賞冷卻 (bountyCooldowns / wrongBountyKills)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
 (function() {
-  const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V3";
+  const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V4";
 
   const DEFAULT_STATE = {
-    version: "3.5",
+    version: "4.0",
     lv: 1,
     exp: 0,
     hp: 100,
     maxHp: 100,
-    baseAtk: 25,
-    baseDef: 8,
+    baseAtk: 22,
+    baseDef: 6,
     bp: 1,
     maxBp: 5,
     streak: 0,
     maxStreak: 0,
     gold: 0,
 
-    // 職業與裝備
+    // 職業、武器、防具與聖物飾品
     currentJob: "swordsman",
     unlockedJobs: ["swordsman"],
     equippedWeapon: "w_starter",
     unlockedWeapons: ["w_starter"],
+    equippedArmor: "a_cloth",
+    unlockedArmors: ["a_cloth"],
     unlockedRelics: [],
     pinnedRecipe: "w_tide",
+
+    // 魔物核心符文鑲嵌槽 (武器 1 孔 + 防具 1 孔，可自由鑲嵌/拆下)
+    socketedRunes: {
+      weapon: null,
+      armor: null
+    },
+
+    // 營地燉肉鍋行前料理 Buff (持續 3 場戰鬥)
+    activeMeal: {
+      id: null,
+      battlesLeft: 0
+    },
 
     // 四大探索工具階級 (Lv.1 ~ Lv.3)
     tools: {
@@ -42,7 +61,7 @@ window.Aetheria = window.Aetheria || {};
     shinyPets: [],
     expeditionCounter: 0,
 
-    // 新遊戲時：背包初始完全為 0
+    // 擴充版背包素材、6 大魔物破防核心與聖碑殘片 (新遊戲零素材開局)
     inventory: {
       iron: 0,
       mithril: 0,
@@ -53,13 +72,31 @@ window.Aetheria = window.Aetheria || {};
       iceLotus: 0,
       goldLeaf: 0,
       wood: 0,
+      vine: 0,
+      shell: 0,
+      coral: 0,
+      fur: 0,
+      magmaScale: 0,
+      fish: 0,
+      tabletShard: 0,
       coreBamboo: 0,
       coreSkull: 0,
+      coreSiren: 0,
+      coreWolf: 0,
+      coreGolem: 0,
       coreDragon: 0,
       potionHeal: 0,
       potionHint: 0,
       bombItem: 0,
       tameFruit: 0
+    },
+
+    // 四大古文明聖碑共鳴進度 (每答對該科題目 +2，獻上聖碑殘片 +20，滿 100 點解鎖終極神恩)
+    monolithPts: {
+      chinese: 0,
+      english: 0,
+      science: 0,
+      humanities: 0
     },
 
     // 星象儀溫習科目與錯題記錄
@@ -72,19 +109,22 @@ window.Aetheria = window.Aetheria || {};
     questionMastery: {},
     wrongBook: [],
 
-    // 公會階級、單次俸祿紀錄、已接委託 (上限 3 張)
+    // 公會階級、單次俸祿紀錄、防刷冷卻與錯題討伐計數
     guildPoints: 0,
     guildRank: "F",
     claimedRankSupplies: [],
     activeBounties: [],
-    completedBounties: [],
-    activeMainQuest: "mq_01",
+    bountyCooldowns: {},  // 紀錄剛交付過的委託，需經過戰鬥才會刷新，杜絕原地無限刷
+    wrongBountyKills: 0,  // 接取錯題懸賞後，實際擊敗暗影幻象的次數 (需滿 2 隻才可交付)
+
+    // 21 個主線進度、守關領主擊破紀錄與過場劇情觀看紀錄
     questProgress: {
       mq_01_talked: false,
-      mq_02_crafted: false,
-      mq_03_boss: false,
       bountiesCleared: 0
     },
+    clearedBosses: {},    // 例如 { boss_z1: true, boss_cave1: true, boss_z2: true ... }
+    seenCutscenes: {},    // 例如 { intro: true, enter_z1: true ... }
+
     campBuildings: {
       greenhouse: 0,
       pasture: 1
@@ -156,21 +196,22 @@ window.Aetheria = window.Aetheria || {};
           if (!Array.isArray(this.data.unlockedZones) || this.data.unlockedZones.length === 0) {
             this.data.unlockedZones = ["camp_hub"];
           }
-          if (!Array.isArray(this.data.activeBounties)) {
-            this.data.activeBounties = [];
-          }
-          if (!Array.isArray(this.data.claimedRankSupplies)) {
-            this.data.claimedRankSupplies = [];
+          if (!Array.isArray(this.data.activeBounties)) this.data.activeBounties = [];
+          if (!Array.isArray(this.data.claimedRankSupplies)) this.data.claimedRankSupplies = [];
+          if (!Array.isArray(this.data.unlockedArmors) || this.data.unlockedArmors.length === 0) {
+            this.data.unlockedArmors = ["a_cloth"];
           }
         }
       } catch (e) {
         console.warn("讀取存檔失敗，使用預設進度:", e);
       }
+      this.recalcMaxHp();
       return this.data;
     },
 
     startFreshNewGame: function() {
       this.data = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      this.recalcMaxHp();
       this.save();
       return this.data;
     },
@@ -208,6 +249,7 @@ window.Aetheria = window.Aetheria || {};
       try {
         const parsed = JSON.parse(jsonStr);
         this.data = deepMerge(DEFAULT_STATE, parsed);
+        this.recalcMaxHp();
         this.save();
         return true;
       } catch (e) {
@@ -220,7 +262,26 @@ window.Aetheria = window.Aetheria || {};
       return Math.floor(35 * Math.pow(lv, 1.35));
     },
 
-    // 計算總攻擊力 (含武器、職業、閃光戰寵 +20%、以及 SS 級公會階級 +30% 加成)
+    // 動態計算主角最大生命值 (基礎 + 等級 + 防具加成 + 旅人披風 + 料理 Buff + 紀元聖碑神恩)
+    recalcMaxHp: function() {
+      const s = this.data;
+      const armors = (window.Aetheria.Data && window.Aetheria.Data.ARMORS) || {};
+      const aObj = armors[s.equippedArmor] || { hpBonus: 0 };
+
+      let totalMax = 80 + (s.lv * 20) + (aObj.hpBonus || 0);
+      if (s.unlockedRelics && s.unlockedRelics.indexOf("r_cloak") !== -1) totalMax += 50;
+      if (s.activeMeal && s.activeMeal.battlesLeft > 0 && s.activeMeal.id === "meal_soup") totalMax += 80;
+
+      // 📙 紀元編年聖碑 (人文科) 共鳴達 50 點：最大生命與防禦永久 +25%
+      const humPts = (s.monolithPts && s.monolithPts.humanities) || 0;
+      if (humPts >= 50) totalMax = Math.round(totalMax * 1.25);
+
+      s.maxHp = totalMax;
+      if (s.hp > s.maxHp) s.hp = s.maxHp;
+      return s.maxHp;
+    },
+
+    // 計算總攻擊力 (含武器、職業、閃光寵、SS級公會、料理Buff、以及📘龍語聖碑神恩)
     getTotalAtk: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
@@ -229,42 +290,90 @@ window.Aetheria = window.Aetheria || {};
       const jMult = jobs[s.currentJob] ? jobs[s.currentJob].atkMult : 1.0;
       const shinyBonus = (s.shinyPets && s.shinyPets.indexOf(s.activePet) !== -1) ? 1.2 : 1.0;
       const ssBonus = (s.guildRank === "SS") ? 1.3 : 1.0;
-      return Math.round((s.baseAtk + wBonus) * jMult * shinyBonus * ssBonus);
+
+      // 📘 龍語聖碑 (中文科) 神恩：25點 +15% ATK，75點 +30% ATK
+      const chiPts = (s.monolithPts && s.monolithPts.chinese) || 0;
+      const monoMult = (chiPts >= 75) ? 1.3 : (chiPts >= 25) ? 1.15 : 1.0;
+
+      // 鑲嵌炎魔熔核符文 (+25 ATK)
+      const hasGolemRune = (s.socketedRunes && (s.socketedRunes.weapon === "coreGolem" || s.socketedRunes.armor === "coreGolem")) ? 25 : 0;
+
+      return Math.round((s.baseAtk + wBonus + hasGolemRune) * jMult * shinyBonus * ssBonus * monoMult);
     },
 
+    // 計算總防禦力 (抵銷敵人每回合反擊傷害：基礎防禦 + 防具 DEF + 紀元聖碑神恩)
+    getTotalDef: function() {
+      const s = this.data;
+      const armors = (window.Aetheria.Data && window.Aetheria.Data.ARMORS) || {};
+      const aDef = armors[s.equippedArmor] ? armors[s.equippedArmor].def : 5;
+      let total = s.baseDef + aDef;
+
+      const humPts = (s.monolithPts && s.monolithPts.humanities) || 0;
+      if (humPts >= 50) total = Math.round(total * 1.25);
+
+      return total;
+    },
+
+    // 檢查是否具備極端環境抗性 ("cold" 雪原抗寒 | "heat" 火山抗熱)
+    hasHazardImmunity: function(hazardType) {
+      const s = this.data;
+      const armors = (window.Aetheria.Data && window.Aetheria.Data.ARMORS) || {};
+      const aObj = armors[s.equippedArmor] || {};
+
+      if (hazardType === "cold") {
+        if (aObj.resistCold || aObj.resistAll) return true;
+        if (s.activeMeal && s.activeMeal.battlesLeft > 0 && s.activeMeal.id === "meal_hotpot") return true;
+      }
+      if (hazardType === "heat") {
+        if (aObj.resistHeat || aObj.resistAll) return true;
+        if (s.activeMeal && s.activeMeal.battlesLeft > 0 && s.activeMeal.id === "meal_hotpot") return true;
+      }
+      return false;
+    },
+
+    // 計算額外破盾數 (含武器特效、職業、香煎秘銀魚排料理 Buff)
     getBonusShieldBreak: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
       let bonus = weapons[s.equippedWeapon] ? (weapons[s.equippedWeapon].shieldBreak || 0) : 0;
       if (s.currentJob === "swordsman" && Math.random() < 0.25) bonus += 1;
       if (s.currentJob === "archmage") bonus += 1;
+      if (s.activeMeal && s.activeMeal.battlesLeft > 0 && s.activeMeal.id === "meal_fish") bonus += 1;
       return bonus;
     },
 
-    // 獲得經驗、金幣與聲望 (實裝 A/S/SS 級公會特權：經驗與金幣 +25%)
+    // 检查是否擁有 특정 符文核心鑲嵌
+    hasRune: function(coreKey) {
+      const r = this.data.socketedRunes;
+      if (!r) return false;
+      return r.weapon === coreKey || r.armor === coreKey;
+    },
+
     gainRewards: function(expAmount, goldAmount, guildPts) {
       goldAmount = goldAmount || 0;
       guildPts = guildPts || 5;
       const s = this.data;
 
+      // 📕 阿爾比恩聖碑 (英文科) 75點神恩：連勝倍率上限提升至 2.0x
+      const engPts = (s.monolithPts && s.monolithPts.english) || 0;
       let streakMult = 1.0;
-      if (s.streak >= 5) streakMult = 1.5;
-      else if (s.streak >= 3) streakMult = 1.2;
+      if (s.streak >= 5) streakMult = (engPts >= 75) ? 2.0 : 1.5;
+      else if (s.streak >= 3) streakMult = 1.25;
 
       const rankBonus = (s.guildRank === "A" || s.guildRank === "S" || s.guildRank === "SS") ? 1.25 : 1.0;
 
       s.exp += Math.round(expAmount * streakMult * rankBonus);
-      s.gold += Math.round(goldAmount * rankBonus);
+      s.gold += Math.round(goldAmount * streakMult * rankBonus);
       s.guildPoints += guildPts;
 
       let leveledUp = false;
       while (s.exp >= this.getExpRequired(s.lv) && s.lv < 100) {
         s.exp -= this.getExpRequired(s.lv);
         s.lv++;
-        s.maxHp += 20;
-        s.hp = s.maxHp;
         s.baseAtk += 5;
-        s.baseDef += 2;
+        s.baseDef += 3;
+        this.recalcMaxHp();
+        s.hp = s.maxHp;
         leveledUp = true;
       }
 
@@ -294,7 +403,6 @@ window.Aetheria = window.Aetheria || {};
       if (lv >= 50 && unlocked.indexOf("archmage") === -1) unlocked.push("archmage");
     },
 
-    // 戰寵牧場遠征與溫室產出 (實裝 E 級以上公會特權：牧場挖礦產量 +25% 並附帶原木)
     tickPassiveProduction: function() {
       const s = this.data;
       s.expeditionCounter = (s.expeditionCounter || 0) + 1;
