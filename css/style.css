@@ -105,17 +105,252 @@ body, html {
 .title-btn.disabled { opacity: 0.4; pointer-events: none; }
 .title-save-sub { font-size: 13px; font-weight: normal; opacity: 0.95; }
 
-/* ================= 上半屏：大世界舞台 (45%) ================= */
+/* ================= 上半屏：純 DOM 開源像素世界視窗 (45%) ================= */
 #upper-screen {
   width: 100%;
   height: 45%;
   position: relative;
-  background: #a8ba59;
+  background: #2b3a26;
   overflow: hidden;
   border-bottom: 4px solid var(--na-outline);
 }
 
-#world-canvas { width: 100%; height: 100%; display: block; }
+#world-viewport {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+#world-map-layer {
+  position: absolute;
+  top: 0; left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* 區域像素地磚紋理主題 */
+.map-theme-forest {
+  background-color: #5b8c3e;
+  background-image:
+    radial-gradient(#47722f 15%, transparent 16%),
+    radial-gradient(#6da34d 15%, transparent 16%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+.map-theme-canyon {
+  background-color: #c77d42;
+  background-image:
+    radial-gradient(#a6612a 15%, transparent 16%),
+    radial-gradient(#dca56a 15%, transparent 16%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+.map-theme-cave {
+  background-color: #241d30;
+  background-image:
+    radial-gradient(#171120 18%, transparent 19%),
+    radial-gradient(#382c4a 15%, transparent 16%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+.map-theme-coast {
+  background-color: #e6c88c;
+  background-image:
+    radial-gradient(#cfa968 16%, transparent 17%),
+    radial-gradient(#f5deb3 15%, transparent 16%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+.map-theme-snow {
+  background-color: #d8ecf8;
+  background-image:
+    radial-gradient(#b3d6ec 16%, transparent 17%),
+    radial-gradient(#ffffff 15%, transparent 16%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+.map-theme-volcano {
+  background-color: #3b1719;
+  background-image:
+    radial-gradient(#592023 18%, transparent 19%),
+    radial-gradient(#240d0e 16%, transparent 17%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+.map-theme-sky {
+  background-color: #5bc0be;
+  background-image:
+    radial-gradient(#fff3b0 14%, transparent 15%),
+    radial-gradient(#3a86ff 14%, transparent 15%);
+  background-size: 36px 36px;
+  background-position: 0 0, 18px 18px;
+}
+
+/* 純 DOM 地面步道、河流與木橋 */
+.dom-dirt-blob {
+  position: absolute;
+  border-radius: 36px;
+  background: rgba(212, 163, 115, 0.55);
+  border: 3px dashed rgba(143, 86, 59, 0.45);
+  pointer-events: none;
+}
+.dom-river {
+  position: absolute;
+  top: 0;
+  width: 52px;
+  background: linear-gradient(90deg, #1d5eb8 0%, #3898ff 50%, #1d5eb8 100%);
+  border-left: 3px solid #8ce0ff;
+  border-right: 3px solid #8ce0ff;
+  pointer-events: none;
+}
+.dom-bridge {
+  position: absolute;
+  width: 68px;
+  height: 54px;
+  background: repeating-linear-gradient(90deg, #9c6347 0px, #9c6347 8px, #5c3824 8px, #5c3824 11px);
+  border: 3px solid #1c1619;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.45);
+  pointer-events: none;
+}
+
+/* 純 DOM 實體物件與清晰文字標籤 */
+.dom-entity {
+  position: absolute;
+  transform-origin: center bottom;
+  pointer-events: none;
+}
+.dom-entity img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.55));
+}
+.dom-label {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(18, 14, 18, 0.92);
+  color: #ffd166;
+  border: 1.5px solid #d9a066;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+  box-shadow: 0 2px 3px rgba(0,0,0,0.8);
+  margin-bottom: 2px;
+  z-index: 5;
+}
+.dom-label.portal-lbl { color: #8ce0ff; border-color: #3898ff; }
+.dom-label.aggro-lbl  { background: #e03c4b; color: #fff; border-color: #fff; font-size: 12px; }
+.dom-label.lock-lbl   { color: #ff758f; border-color: #e03c4b; }
+
+.dom-hp-mini {
+  position: absolute;
+  top: -6px;
+  left: 10%;
+  width: 80%;
+  height: 4px;
+  background: #1c1619;
+  border: 1px solid #000;
+}
+.dom-hp-mini-fill {
+  height: 100%;
+  background: #e03c4b;
+  width: 100%;
+}
+
+/* 左上角紅心與左下角 DOM 小地圖雷達 */
+#hud-hearts-box {
+  position: absolute;
+  top: 6px; left: 8px;
+  display: flex;
+  gap: 3px;
+  z-index: 22;
+  pointer-events: none;
+}
+#hud-hearts-box img { width: 16px; height: 16px; }
+
+#dom-minimap {
+  position: absolute;
+  bottom: 6px; left: 6px;
+  width: 76px; height: 54px;
+  background: rgba(16, 12, 18, 0.86);
+  border: 2px solid var(--na-wood-light);
+  border-radius: 4px;
+  z-index: 22;
+  pointer-events: none;
+  overflow: hidden;
+}
+.mm-dot {
+  position: absolute;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* ================= 釣魚小遊戲互動視窗 ================= */
+#fishing-minigame-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  background: rgba(10, 16, 28, 0.88);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px;
+}
+.fishing-box {
+  width: 100%;
+  background: var(--na-scroll);
+  color: var(--na-outline);
+  border: 4px solid var(--na-outline);
+  outline: 2px solid #3898ff;
+  border-radius: 8px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.fishing-title { font-size: 17px; font-weight: 900; color: #1d5eb8; }
+.fishing-sub { font-size: 13px; font-weight: bold; text-align: center; color: #5c3824; }
+.fishing-bar-track {
+  width: 100%;
+  height: 32px;
+  background: linear-gradient(90deg, #1d3557 0%, #1d5eb8 50%, #1d3557 100%);
+  border: 3px solid #1c1619;
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.fishing-target-zone {
+  position: absolute;
+  top: 0; bottom: 0;
+  background: rgba(90, 197, 79, 0.82);
+  border-left: 2px solid #fff;
+  border-right: 2px solid #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.fishing-perfect-zone {
+  width: 36%;
+  height: 100%;
+  background: rgba(245, 183, 0, 0.92);
+}
+.fishing-cursor {
+  position: absolute;
+  top: 2px; bottom: 2px;
+  width: 12px;
+  background: #ffffff;
+  border: 2px solid #e03c4b;
+  border-radius: 6px;
+  box-shadow: 0 0 8px #fff;
+}
 
 #fog-overlay {
   position: absolute;
@@ -133,18 +368,12 @@ body, html {
   z-index: 15;
   display: none;
 }
-#hazard-overlay.cold {
-  display: block;
-  box-shadow: inset 0 0 28px rgba(56, 182, 255, 0.75);
-}
-#hazard-overlay.heat {
-  display: block;
-  box-shadow: inset 0 0 28px rgba(224, 60, 75, 0.8);
-}
+#hazard-overlay.cold { display: block; box-shadow: inset 0 0 28px rgba(56, 182, 255, 0.75); }
+#hazard-overlay.heat { display: block; box-shadow: inset 0 0 28px rgba(224, 60, 75, 0.8); }
 
 #hud-overlay {
   position: absolute;
-  top: 6px; left: 60px; right: 8px;
+  top: 6px; left: 64px; right: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -169,7 +398,7 @@ body, html {
 .danger-warn { color: #ffd166; border-color: #f4be78; }
 .danger-deadly { color: #ff758f; border-color: #ff595e; }
 
-/* ================= 劇情過場演出視窗 (Story Cutscene Overlay) ================= */
+/* ================= 劇情過場演出視窗 ================= */
 #story-cutscene-modal {
   position: absolute;
   inset: 0;
@@ -331,7 +560,6 @@ body, html {
   border: 1px solid #000;
 }
 
-/* 敵方下回合意圖預告橫幅 */
 .bt-intent-banner {
   background: #2b2327;
   color: #ffd166;
@@ -711,11 +939,12 @@ body, html {
   margin-bottom: 8px;
 }
 
-#npc-portrait-canvas {
-  width: 40px; height: 40px;
+.npc-portrait-box {
+  width: 42px; height: 42px;
   background: #2b2327;
   border: 2px solid var(--na-wood-light);
   border-radius: 4px;
+  padding: 2px;
 }
 
 .dialogue-scroll-box {
