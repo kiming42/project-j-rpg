@@ -1,8 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 職業、真實敵方攻擊力、意圖預告AI與區域守關領主庫 (jobs-monsters.js - v4.0)
- * 新增：1.所有魔物擁有真實攻擊力 (atk)，每回合未破防時必定反擊主角（越級直衝會被秒殺！）
- *       2.敵方下回合意圖預告系統 (attack 普通襲擊 / fortify 護盾重組 / heavy 2.4倍蓄力必殺)
- *       3.按所在區域智能分配魔物掉落物 (藤蔓/甲殼/珊瑚/毛皮/龍鱗 與 6 大魔物破防核心)
+ * Project J：艾瑟瑞亞的破曉 — 職業、魔物意圖AI與分區合理掉落庫 (jobs-monsters.js - v5.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -23,7 +20,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     },
     thief: {
       id: "thief", name: "暗影盜賊", unlockLv: 20, atkMult: 1.4, title: "秘境疾風",
-      passiveDesc: "大世界移動速度 +20%，每次答對攻擊有 35% 機率直接從魔物身上偷走素材！"
+      passiveDesc: "大世界移動速度 +20%，每次答對攻擊有 35% 機率直接從魔物身上偷走 1 個礦石！"
     },
     alchemist: {
       id: "alchemist", name: "煉金藥師", unlockLv: 30, atkMult: 1.5, title: "真理調合師",
@@ -58,52 +55,50 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   };
 
-  // 魔物基礎成長模板 (含真實攻擊力 baseAtk + atkPerLv，越級挑戰未穿防具會被重創！)
   const MONSTER_TEMPLATES = {
     bamboo: {
       type: "bamboo", spriteKey: "mon_bamboo",
       baseHp: 65, hpPerLv: 22,
       baseAtk: 14, atkPerLv: 5.5,
       baseShield: 2, weak: "忍刀 / 火遁",
-      tamePetId: "pet_fox", expBase: 26, goldBase: 22
+      tamePetId: "pet_fox", expBase: 28, goldBase: 24
     },
     skull: {
       type: "skull", spriteKey: "mon_skull",
       baseHp: 95, hpPerLv: 28,
       baseAtk: 20, atkPerLv: 6.5,
       baseShield: 3, weak: "水遁 / 雷鳴",
-      tamePetId: "pet_dragon", expBase: 40, goldBase: 36
+      tamePetId: "pet_dragon", expBase: 42, goldBase: 38
     },
     boss: {
       type: "boss", spriteKey: "mon_boss",
       baseHp: 240, hpPerLv: 38,
       baseAtk: 28, atkPerLv: 8.0,
       baseShield: 4, weak: "破盾神兵 / Boost連擊",
-      tamePetId: "pet_icedragon", expBase: 140, goldBase: 160
+      tamePetId: "pet_icedragon", expBase: 150, goldBase: 170
     }
   };
 
-  // 根據當前區域與是否為 Boss/賞金首，決定專屬掉落素材與破防核心
-  function resolveZoneDrops(zoneId, isBoss, isElite) {
+  // 嚴格對應所在區域的魔物掉落物 (每次擊敗固定掉落 +1 區域特產，破防擊敗額外掉落 +1 區域破防核心)
+  function resolveZoneDrops(zoneId, isBoss) {
     if (zoneId === "zone1_forest" || zoneId === "camp_hub") {
-      return { normalDrop: "vine", subDrop: "iron", breakDrop: "coreBamboo" };
+      return { normalDrop: "vine", breakDrop: "coreBamboo" };
     }
     if (zoneId === "cave1_mushroom" || zoneId === "zone2_canyon") {
-      return { normalDrop: "shell", subDrop: "mithril", breakDrop: "coreSkull" };
+      return { normalDrop: "shell", breakDrop: "coreSkull" };
     }
     if (zoneId === "zone3_coast") {
-      return { normalDrop: "coral", subDrop: "mithril", breakDrop: "coreSiren" };
+      return { normalDrop: "coral", breakDrop: "coreSiren" };
     }
     if (zoneId === "zone4_snow") {
-      return { normalDrop: "fur", subDrop: "iceLotus", breakDrop: "coreWolf" };
+      return { normalDrop: "fur", breakDrop: "coreWolf" };
     }
     if (zoneId === "zone5_volcano") {
-      return { normalDrop: "magmaScale", subDrop: "obsidian", breakDrop: isBoss ? "coreDragon" : "coreGolem" };
+      return { normalDrop: "magmaScale", breakDrop: isBoss ? "coreDragon" : "coreGolem" };
     }
-    return { normalDrop: "starIron", subDrop: "goldLeaf", breakDrop: "coreDragon" };
+    return { normalDrop: "starIron", breakDrop: "coreDragon" };
   }
 
-  // 敵方下回合意圖生成器
   function rollNextIntent(enemy, turnNum) {
     if (enemy.broken) {
       return {
@@ -113,7 +108,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
         isUlt: false
       };
     }
-    // Boss 或精英怪每逢第 2、5、8 回合，或 35% 機率發動【蓄力必殺】
     if ((turnNum % 3 === 2) || (enemy.isBoss && Math.random() < 0.4)) {
       return {
         type: "heavy",
@@ -122,7 +116,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
         isUlt: true
       };
     }
-    // 當護盾受損時，25% 機率發動【護盾重組】
     if (enemy.shield < enemy.maxShield && Math.random() < 0.25) {
       return {
         type: "fortify",
@@ -158,11 +151,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     const atk = Math.round((tpl.baseAtk + lv * tpl.atkPerLv) * (isBoss ? 1.25 : isElite ? 1.15 : 1.0));
     const maxShield = isBoss ? Math.min(8, tpl.baseShield + Math.floor(lv / 7)) : isElite ? (tpl.baseShield + 2) : (tpl.baseShield + (lv >= 12 ? 1 : 0));
 
-    const drops = resolveZoneDrops(zoneId, isBoss, isElite);
+    const drops = resolveZoneDrops(zoneId, isBoss);
 
     const enemyObj = {
       id: mapMonsterNode ? mapMonsterNode.id : "wild_mon",
       bossId: mapMonsterNode ? (mapMonsterNode.bossId || null) : null,
+      reqSeals: mapMonsterNode ? (mapMonsterNode.reqSeals || null) : null,
       type: mType,
       name: (mapMonsterNode ? mapMonsterNode.name : "翠風竹子妖") + " Lv." + lv,
       lv: lv,
@@ -181,7 +175,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       turnCount: 1,
       weak: tpl.weak,
       normalDrop: drops.normalDrop,
-      subDrop: drops.subDrop,
       breakDrop: drops.breakDrop,
       dropsTabletShard: Boolean(isBoss || isElite),
       tamePetId: tpl.tamePetId,
