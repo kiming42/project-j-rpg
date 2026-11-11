@@ -1,7 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 純 DOM 硬體加速相機與開源像素圖資渲染器 (camera-renderer.js - v5.0)
- * 升級：100% 移除 Canvas 2D 繪圖，改用 #world-viewport 與純 DOM <img> 節點池渲染，
- *       文字標籤永遠保持瀏覽器最高解析度，零模糊、零鋸齒！
+ * Project J：艾瑟瑞亞的破曉 — 純 DOM 硬體加速相機與防切邊標籤渲染器 (camera-renderer.js - v5.1)
+ * 升級：1.支援 labelBottom 與邊界標籤自動偏移，防止貼近畫面頂部或左右邊緣的標籤被切邊
+ *       2.追蹤 _refreshToken，確保跨區與傳送刷新後 100% 重建所有高階礦石與巨石節點
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -15,12 +15,11 @@ window.Aetheria = window.Aetheria || {};
       subPet: null,
       decos: {},
       nodes: {},
-       monsters: {}
+      monsters: {}
     },
     lastHeartsState: "",
 
-    // 當切換區域或刷新地圖時，一次性建構靜態地形與動態實體 DOM 節點池
-    buildSceneDOM: function(mapObj, s) {
+    buildSceneDOM: function(mapObj) {
       const mapLayer = document.getElementById("world-map-layer");
       const terrainLayer = document.getElementById("world-terrain-layer");
       const entityLayer = document.getElementById("world-entity-layer");
@@ -36,7 +35,7 @@ window.Aetheria = window.Aetheria || {};
       entityLayer.innerHTML = "";
       this.domPool = { hero: null, pet: null, subPet: null, decos: {}, nodes: {}, monsters: {} };
 
-      // 1. 鋪設地面泥土步道
+      // 1. 地面泥土步道
       (mapObj.dirtBlobs || []).forEach(function(b) {
         const d = document.createElement("div");
         d.className = "dom-dirt-blob";
@@ -54,7 +53,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(d);
       });
 
-      // 2. 鋪設河流與木橋
+      // 2. 河流與木橋
       if (mapObj.hasRiver) {
         const rx = mapObj.riverX || 1030;
         const by = mapObj.bridgeY || 455;
@@ -71,7 +70,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(bridge);
       }
 
-      // 3. 鋪設傳送門與帳篷入口
+      // 3. 傳送門與帳篷入口 (支援 labelBottom 避免頂部裁切)
       (mapObj.portals || []).forEach(function(p) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -81,13 +80,14 @@ window.Aetheria = window.Aetheria || {};
         el.style.height = "26px";
         el.style.zIndex = Math.round(p.y);
         const spKey = (p.icon === "cave" || p.icon === "abyss") ? "cracked_wall" : "crate";
+        const lblClass = "dom-label portal-lbl" + (p.labelBottom ? " lbl-bottom" : "");
         el.innerHTML =
-          '<div class="dom-label portal-lbl">' + p.name + '</div>' +
+          '<div class="' + lblClass + '">' + p.name + '</div>' +
           '<img src="' + Sprites.getDataURL(spKey) + '" alt="">';
         terrainLayer.appendChild(el);
       });
 
-      // 4. 鋪設迷宮樹木與岩柱
+      // 4. 迷宮樹木與岩柱
       (mapObj.trees || []).forEach(function(t) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -101,7 +101,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(el);
       });
 
-      // 5. 建立裝飾物與互動機關 (火盆、雙符文封印柱、釣魚點、抓鉤樁、擋路巨石/枯木)
+      // 5. 裝飾物與互動機關
       const self = this;
       (mapObj.decos || []).forEach(function(d, idx) {
         const key = d.id || ("deco_" + idx);
@@ -109,9 +109,9 @@ window.Aetheria = window.Aetheria || {};
         el.className = "dom-entity";
         el.style.left = d.x + "px";
         el.style.top = d.y + "px";
-        el.style.width = (d.w || 24) + "px";
-        el.style.height = (d.h || 24) + "px";
-        el.style.zIndex = Math.round(d.y + (d.h || 24));
+        el.style.width = (d.w || 26) + "px";
+        el.style.height = (d.h || 26) + "px";
+        el.style.zIndex = Math.round(d.y + (d.h || 26));
 
         const lbl = document.createElement("div");
         lbl.className = "dom-label";
@@ -126,15 +126,15 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.decos[key] = { el: el, img: img, lbl: lbl, data: d };
       });
 
-      // 6. 建立採集資源點
+      // 6. 採集資源點
       (mapObj.nodes || []).forEach(function(n) {
         const el = document.createElement("div");
         el.className = "dom-entity";
         el.style.left = n.x + "px";
         el.style.top = n.y + "px";
-        el.style.width = "24px";
-        el.style.height = "24px";
-        el.style.zIndex = Math.round(n.y + 20);
+        el.style.width = "26px";
+        el.style.height = "26px";
+        el.style.zIndex = Math.round(n.y + 22);
 
         let spKey = "crate";
         if (n.type === "crystal")  spKey = "mat_crystal";
@@ -150,15 +150,15 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.nodes[n.id] = { el: el, data: n };
       });
 
-      // 7. 建立營地與室內 NPC
+      // 7. 營地與室內 NPC
       (mapObj.npcs || []).forEach(function(npc) {
         const el = document.createElement("div");
         el.className = "dom-entity";
         el.style.left = npc.x + "px";
         el.style.top = npc.y + "px";
-        el.style.width = "26px";
-        el.style.height = "26px";
-        el.style.zIndex = Math.round(npc.y + 24);
+        el.style.width = "28px";
+        el.style.height = "28px";
+        el.style.zIndex = Math.round(npc.y + 26);
         const shortName = (npc.badge || "") + (npc.name.split("・")[1] || npc.name);
         el.innerHTML =
           '<div class="dom-label">' + shortName + '</div>' +
@@ -166,9 +166,9 @@ window.Aetheria = window.Aetheria || {};
         entityLayer.appendChild(el);
       });
 
-      // 8. 建立野外巡邏魔物、賞金首與守關領主
+      // 8. 野外魔物、賞金首與守關領主
       (mapObj.monsters || []).forEach(function(m) {
-        const sz = m.isBoss ? 36 : (m.isElite ? 30 : 25);
+        const sz = m.isBoss ? 38 : (m.isElite ? 32 : 26);
         const el = document.createElement("div");
         el.className = "dom-entity";
         el.style.width = sz + "px";
@@ -193,7 +193,7 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.monsters[m.id] = { el: el, lbl: lbl, img: img, data: m, sz: sz };
       });
 
-      // 9. 建立同行戰寵與荒野獵人副戰寵
+      // 9. 同行戰寵與副戰寵
       const petEl = document.createElement("div");
       petEl.className = "dom-entity";
       petEl.style.width = "24px";
@@ -212,11 +212,11 @@ window.Aetheria = window.Aetheria || {};
       entityLayer.appendChild(subPetEl);
       this.domPool.subPet = { el: subPetEl, img: subPetImg };
 
-      // 10. 建立主角
+      // 10. 主角
       const heroEl = document.createElement("div");
       heroEl.className = "dom-entity";
-      heroEl.style.width = "26px";
-      heroEl.style.height = "26px";
+      heroEl.style.width = "28px";
+      heroEl.style.height = "28px";
       const heroImg = document.createElement("img");
       heroImg.src = Sprites.getDataURL("hero_down_0");
       heroEl.appendChild(heroImg);
@@ -246,23 +246,21 @@ window.Aetheria = window.Aetheria || {};
 
         const expectedKey = mapObj.id + "_" + (mapObj.floorNum || 0) + "_" + (mapObj._refreshToken || 0);
         if (this.builtZoneKey !== expectedKey) {
-          this.buildSceneDOM(mapObj, s);
+          this.buildSceneDOM(mapObj);
         }
 
         const Sprites = window.Aetheria.Data.Sprites;
         const ExpSys = window.Aetheria.Explore;
 
-        // 洞穴黑霧遮罩
         const brazierLit = s.openedNodes && s.openedNodes["lit_" + mapObj.id];
         const fogEl = document.getElementById("fog-overlay");
         if (fogEl) fogEl.style.display = (mapObj.fog && !brazierLit) ? "block" : "none";
 
-        // 1. 更新互動機關狀態 (火盆、雙符文封印柱、巨石、枯木、釣魚點)
+        // 1. 更新互動機關狀態
         Object.keys(this.domPool.decos).forEach(function(k) {
           const item = this.domPool.decos[k];
           const d = item.data;
 
-          // 裂縫牆永久記錄於 openedNodes；而巨石與枯木只看當前地圖實例 d.cleared (跨區自動重生！)
           if ((d.isCrackedWall && s.openedNodes && s.openedNodes[d.id]) || d.cleared) {
             item.el.style.display = "none";
             return;
@@ -340,7 +338,7 @@ window.Aetheria = window.Aetheria || {};
         if (this.domPool.hero) {
           this.domPool.hero.el.style.left = Math.round(s.heroX) + "px";
           this.domPool.hero.el.style.top = Math.round(s.heroY) + "px";
-          this.domPool.hero.el.style.zIndex = Math.round(s.heroY + 26);
+          this.domPool.hero.el.style.zIndex = Math.round(s.heroY + 28);
           const heroKey = "hero_" + dir + "_" + stepFrame;
           this.domPool.hero.img.src = Sprites.getDataURL(heroKey);
         }
@@ -372,11 +370,10 @@ window.Aetheria = window.Aetheria || {};
         // 5. 計算純 DOM 相機平滑跟隨位移
         const vw = viewport.clientWidth || 460;
         const vh = viewport.clientHeight || 340;
-        const camX = Math.max(0, Math.min(mapObj.width - vw, Math.round(s.heroX + 13 - vw / 2)));
-        const camY = Math.max(0, Math.min(mapObj.height - vh, Math.round(s.heroY + 13 - vh / 2)));
+        const camX = Math.max(0, Math.min(mapObj.width - vw, Math.round(s.heroX + 14 - vw / 2)));
+        const camY = Math.max(0, Math.min(mapObj.height - vh, Math.round(s.heroY + 14 - vh / 2)));
         mapLayer.style.transform = "translate3d(" + (-camX) + "px, " + (-camY) + "px, 0)";
 
-        // 6. 更新左上角像素紅心與左下角 DOM 小地圖雷達
         this.updateHeartsDOM(s, Sprites);
         this.updateMinimapDOM(mapObj, s);
       } catch (err) {
@@ -406,13 +403,11 @@ window.Aetheria = window.Aetheria || {};
       if (!mm) return;
 
       let html = "";
-      // 傳送點 (藍點)
       (mapObj.portals || []).forEach(function(p) {
         const lx = Math.round((p.x / mapObj.width) * 100);
         const ly = Math.round((p.y / mapObj.height) * 100);
         html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;background:#4cc9f0;"></div>';
       });
-      // 符文封印柱 (紫點/綠點)
       (mapObj.decos || []).forEach(function(d) {
         if (d.isSealPillar) {
           const unsealed = s.unlockedSeals && s.unlockedSeals[d.id];
@@ -421,7 +416,6 @@ window.Aetheria = window.Aetheria || {};
           html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;width:5px;height:5px;background:' + (unsealed ? '#5ac54f' : '#e0aaff') + ';"></div>';
         }
       });
-      // 尚未採集的資源點 (黃點)
       (mapObj.nodes || []).forEach(function(n) {
         if (!n.opened && !(n.legendary && s.openedNodes && s.openedNodes[n.id])) {
           const lx = Math.round((n.x / mapObj.width) * 100);
@@ -429,7 +423,6 @@ window.Aetheria = window.Aetheria || {};
           html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;width:3px;height:3px;background:#f5b700;"></div>';
         }
       });
-      // 存活魔物 (紅點)
       (mapObj.monsters || []).forEach(function(m) {
         if (m.alive !== false) {
           const lx = Math.round((m.x / mapObj.width) * 100);
@@ -437,7 +430,6 @@ window.Aetheria = window.Aetheria || {};
           html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;background:#ff595e;"></div>';
         }
       });
-      // 主角位置 (白點)
       const hx = Math.round((s.heroX / mapObj.width) * 100);
       const hy = Math.round((s.heroY / mapObj.height) * 100);
       html += '<div class="mm-dot" style="left:' + hx + '%;top:' + hy + '%;width:5px;height:5px;background:#ffffff;border:1px solid #000;"></div>';
