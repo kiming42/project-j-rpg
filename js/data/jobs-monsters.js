@@ -1,6 +1,8 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 六大職業、戰寵收服與魔物生態資料庫 (jobs-monsters.js - v3.5)
- * 升級：實裝公會 S 級 / SS 級特權「異色閃光魔物 (Shiny) 出現率翻倍 (16%)」！
+ * Project J：艾瑟瑞亞的破曉 — 職業、真實敵方攻擊力、意圖預告AI與區域守關領主庫 (jobs-monsters.js - v4.0)
+ * 新增：1.所有魔物擁有真實攻擊力 (atk)，每回合未破防時必定反擊主角（越級直衝會被秒殺！）
+ *       2.敵方下回合意圖預告系統 (attack 普通襲擊 / fortify 護盾重組 / heavy 2.4倍蓄力必殺)
+ *       3.按所在區域智能分配魔物掉落物 (藤蔓/甲殼/珊瑚/毛皮/龍鱗 與 6 大魔物破防核心)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -8,162 +10,165 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 (function() {
   const JOBS = {
     swordsman: {
-      id: "swordsman",
-      name: "蒼藍劍士",
-      unlockLv: 1,
-      atkMult: 1.15,
-      title: "破陣先鋒",
+      id: "swordsman", name: "蒼藍劍士", unlockLv: 1, atkMult: 1.15, title: "破陣先鋒",
       passiveDesc: "基礎攻擊力 +15%，每次答對有 25% 機率額外多削減 1 點護盾。"
     },
     scholar: {
-      id: "scholar",
-      name: "符文學者",
-      unlockLv: 5,
-      atkMult: 1.25,
-      title: "古語解讀者",
+      id: "scholar", name: "符文學者", unlockLv: 5, atkMult: 1.25, title: "古語解讀者",
       passiveDesc: "法術與攻擊 +25%，遇到「看圖題」與「多重配對題」時破盾數直接 +1！"
     },
     hunter: {
-      id: "hunter",
-      name: "荒野獵人",
-      unlockLv: 12,
-      atkMult: 1.3,
-      title: "靈獸馴師",
+      id: "hunter", name: "荒野獵人", unlockLv: 12, atkMult: 1.3, title: "靈獸馴師",
       passiveDesc: "可同時攜帶 2 隻戰寵雙重助戰（觸發雙寵技能），戰寵協同傷害翻倍！"
     },
     thief: {
-      id: "thief",
-      name: "暗影盜賊",
-      unlockLv: 20,
-      atkMult: 1.4,
-      title: "秘境疾風",
-      passiveDesc: "大世界移動速度 +20%，每次答對攻擊有 35% 機率直接從魔物身上偷走礦石！"
+      id: "thief", name: "暗影盜賊", unlockLv: 20, atkMult: 1.4, title: "秘境疾風",
+      passiveDesc: "大世界移動速度 +20%，每次答對攻擊有 35% 機率直接從魔物身上偷走素材！"
     },
     alchemist: {
-      id: "alchemist",
-      name: "煉金藥師",
-      unlockLv: 30,
-      atkMult: 1.5,
-      title: "真理調合師",
+      id: "alchemist", name: "煉金藥師", unlockLv: 30, atkMult: 1.5, title: "真理調合師",
       passiveDesc: "每回合答對自動回復 15% 最大生命，且四選一題目自動排除 1 個錯誤選項！"
     },
     archmage: {
-      id: "archmage",
-      name: "星界魔導",
-      unlockLv: 50,
-      atkMult: 1.8,
-      title: "破曉大宗師",
+      id: "archmage", name: "星界魔導", unlockLv: 50, atkMult: 1.8, title: "破曉大宗師",
       passiveDesc: "全屬性額外削盾 +1，進場自帶 3 顆 BP 增幅珠，英文盲串暴擊 x3 倍！"
     }
   };
 
   const PETS = {
     pet_slime: {
-      id: "pet_slime",
-      name: "藍水滴史萊姆",
-      spriteKey: "pet_slime",
-      shinySpriteKey: "pet_slime_shiny",
-      skillName: "水滴治癒",
-      skillDesc: "每回合答對後，自動回復 12 點生命值並追加 20% 水滴連擊。",
-      healPerTurn: 12,
-      bonusDmgRatio: 0.2
+      id: "pet_slime", name: "藍水滴史萊姆", spriteKey: "pet_slime", shinySpriteKey: "pet_slime_shiny",
+      skillName: "水滴治癒", skillDesc: "每回合答對後，自動回復 14 點生命值並追加 20% 水滴連擊。",
+      healPerTurn: 14, bonusDmgRatio: 0.2
     },
     pet_dragon: {
-      id: "pet_dragon",
-      name: "赤炎小幼龍",
-      spriteKey: "pet_dragon",
-      shinySpriteKey: "pet_dragon_shiny",
-      skillName: "龍炎吐息",
-      skillDesc: "每回合答對後，噴射龍炎追加 45% 額外暴擊傷害！",
-      healPerTurn: 0,
-      bonusDmgRatio: 0.45
+      id: "pet_dragon", name: "赤炎小幼龍", spriteKey: "pet_dragon", shinySpriteKey: "pet_dragon_shiny",
+      skillName: "龍炎吐息", skillDesc: "每回合答對後，噴射龍炎追加 45% 額外暴擊傷害！",
+      healPerTurn: 0, bonusDmgRatio: 0.45
     },
     pet_fox: {
-      id: "pet_fox",
-      name: "雷光九尾靈狐",
-      spriteKey: "pet_fox",
-      shinySpriteKey: "pet_fox_shiny",
-      skillName: "雷鳴共鳴",
-      skillDesc: "每回合答對後追加 30% 雷擊傷害，並有 30% 機率額外充能 1 顆 BP！",
-      healPerTurn: 5,
-      bonusDmgRatio: 0.3,
-      bpChance: 0.3
+      id: "pet_fox", name: "雷光九尾靈狐", spriteKey: "pet_fox", shinySpriteKey: "pet_fox_shiny",
+      skillName: "雷鳴共鳴", skillDesc: "每回合答對後追加 30% 雷擊傷害，並有 35% 機率額外充能 1 顆 BP！",
+      healPerTurn: 6, bonusDmgRatio: 0.3, bpChance: 0.35
     },
     pet_icedragon: {
-      id: "pet_icedragon",
-      name: "永凍冰晶幼龍",
-      spriteKey: "pet_icedragon",
-      shinySpriteKey: "pet_icedragon_shiny",
-      skillName: "絕對零度",
-      skillDesc: "每回合追加 50% 冰霜傷害、回復 10 點生命，且開局自動削減敵人 1 點護盾！",
-      healPerTurn: 10,
-      bonusDmgRatio: 0.5,
-      openingShieldBreak: 1
+      id: "pet_icedragon", name: "永凍冰晶幼龍", spriteKey: "pet_icedragon", shinySpriteKey: "pet_icedragon_shiny",
+      skillName: "絕對零度", skillDesc: "每回合追加 50% 冰霜傷害、回復 12 點生命，且開局自動削減敵人 1 點護盾！",
+      healPerTurn: 12, bonusDmgRatio: 0.5, openingShieldBreak: 1
     }
   };
 
+  // 魔物基礎成長模板 (含真實攻擊力 baseAtk + atkPerLv，越級挑戰未穿防具會被重創！)
   const MONSTER_TEMPLATES = {
     bamboo: {
-      type: "bamboo",
-      spriteKey: "mon_bamboo",
-      baseHp: 55,
-      hpPerLv: 16,
-      baseShield: 2,
-      weak: "忍刀 / 火遁",
-      normalDrop: "iron",
-      breakDrop: "coreBamboo",
-      tamePetId: "pet_fox",
-      expBase: 24,
-      goldBase: 20
+      type: "bamboo", spriteKey: "mon_bamboo",
+      baseHp: 65, hpPerLv: 22,
+      baseAtk: 14, atkPerLv: 5.5,
+      baseShield: 2, weak: "忍刀 / 火遁",
+      tamePetId: "pet_fox", expBase: 26, goldBase: 22
     },
     skull: {
-      type: "skull",
-      spriteKey: "mon_skull",
-      baseHp: 85,
-      hpPerLv: 22,
-      baseShield: 3,
-      weak: "水遁 / 雷鳴",
-      normalDrop: "mithril",
-      breakDrop: "coreSkull",
-      tamePetId: "pet_dragon",
-      expBase: 38,
-      goldBase: 35
+      type: "skull", spriteKey: "mon_skull",
+      baseHp: 95, hpPerLv: 28,
+      baseAtk: 20, atkPerLv: 6.5,
+      baseShield: 3, weak: "水遁 / 雷鳴",
+      tamePetId: "pet_dragon", expBase: 40, goldBase: 36
     },
     boss: {
-      type: "boss",
-      spriteKey: "mon_boss",
-      baseHp: 220,
-      hpPerLv: 30,
-      baseShield: 5,
-      weak: "冰晶 / 星隕",
-      normalDrop: "obsidian",
-      breakDrop: "coreDragon",
-      tamePetId: "pet_icedragon",
-      expBase: 120,
-      goldBase: 150
+      type: "boss", spriteKey: "mon_boss",
+      baseHp: 240, hpPerLv: 38,
+      baseAtk: 28, atkPerLv: 8.0,
+      baseShield: 4, weak: "破盾神兵 / Boost連擊",
+      tamePetId: "pet_icedragon", expBase: 140, goldBase: 160
     }
   };
 
+  // 根據當前區域與是否為 Boss/賞金首，決定專屬掉落素材與破防核心
+  function resolveZoneDrops(zoneId, isBoss, isElite) {
+    if (zoneId === "zone1_forest" || zoneId === "camp_hub") {
+      return { normalDrop: "vine", subDrop: "iron", breakDrop: "coreBamboo" };
+    }
+    if (zoneId === "cave1_mushroom" || zoneId === "zone2_canyon") {
+      return { normalDrop: "shell", subDrop: "mithril", breakDrop: "coreSkull" };
+    }
+    if (zoneId === "zone3_coast") {
+      return { normalDrop: "coral", subDrop: "mithril", breakDrop: "coreSiren" };
+    }
+    if (zoneId === "zone4_snow") {
+      return { normalDrop: "fur", subDrop: "iceLotus", breakDrop: "coreWolf" };
+    }
+    if (zoneId === "zone5_volcano") {
+      return { normalDrop: "magmaScale", subDrop: "obsidian", breakDrop: isBoss ? "coreDragon" : "coreGolem" };
+    }
+    return { normalDrop: "starIron", subDrop: "goldLeaf", breakDrop: "coreDragon" };
+  }
+
+  // 敵方下回合意圖生成器
+  function rollNextIntent(enemy, turnNum) {
+    if (enemy.broken) {
+      return {
+        type: "stunned",
+        label: "狀態：BREAK 破防暈眩中 (無法行動！)",
+        mult: 0,
+        isUlt: false
+      };
+    }
+    // Boss 或精英怪每逢第 2、5、8 回合，或 35% 機率發動【蓄力必殺】
+    if ((turnNum % 3 === 2) || (enemy.isBoss && Math.random() < 0.4)) {
+      return {
+        type: "heavy",
+        label: "預警：下回合【蓄力必殺】(2.4倍傷害！請舉盾或破防斷招)",
+        mult: 2.4,
+        isUlt: true
+      };
+    }
+    // 當護盾受損時，25% 機率發動【護盾重組】
+    if (enemy.shield < enemy.maxShield && Math.random() < 0.25) {
+      return {
+        type: "fortify",
+        label: "意圖：護盾重組 (恢復 1 點護盾並發動輕擊)",
+        mult: 0.85,
+        shieldHeal: 1,
+        isUlt: false
+      };
+    }
+    return {
+      type: "attack",
+      label: "意圖：普通襲擊 (預計傷害 " + enemy.atk + ")",
+      mult: 1.0,
+      isUlt: false
+    };
+  }
+
   function createBattleEnemy(mapMonsterNode) {
+    const state = (window.Aetheria.State && window.Aetheria.State.data) || {};
+    const zoneId = state.currentZone || "zone1_forest";
+
     const mType = mapMonsterNode ? (mapMonsterNode.type || "bamboo") : "bamboo";
     const tpl = MONSTER_TEMPLATES[mType] || MONSTER_TEMPLATES.bamboo;
     const lv = mapMonsterNode ? (mapMonsterNode.lv || 2) : 2;
     const isBoss = Boolean(mapMonsterNode && mapMonsterNode.isBoss);
+    const isElite = Boolean(mapMonsterNode && mapMonsterNode.isElite);
 
-    // 公會 S 級 / SS 級特權：異色閃光怪出現機率翻倍 (8% -> 16%)
-    const state = (window.Aetheria.State && window.Aetheria.State.data) || {};
     const shinyRate = (state.guildRank === "S" || state.guildRank === "SS") ? 0.16 : 0.08;
     const isShiny = Boolean(mapMonsterNode && (mapMonsterNode.forceShiny || mapMonsterNode.isShiny)) || (Math.random() < shinyRate);
 
-    const maxHp = Math.round((tpl.baseHp + lv * tpl.hpPerLv) * (isBoss ? 1.6 : 1.0));
-    const maxShield = isBoss ? Math.max(4, tpl.baseShield + Math.floor(lv / 6)) : tpl.baseShield + (lv >= 10 ? 1 : 0);
+    const hpMult = isBoss ? 1.65 : isElite ? 1.35 : 1.0;
+    const maxHp = Math.round((tpl.baseHp + lv * tpl.hpPerLv) * hpMult);
+    const atk = Math.round((tpl.baseAtk + lv * tpl.atkPerLv) * (isBoss ? 1.25 : isElite ? 1.15 : 1.0));
+    const maxShield = isBoss ? Math.min(8, tpl.baseShield + Math.floor(lv / 7)) : isElite ? (tpl.baseShield + 2) : (tpl.baseShield + (lv >= 12 ? 1 : 0));
 
-    return {
+    const drops = resolveZoneDrops(zoneId, isBoss, isElite);
+
+    const enemyObj = {
       id: mapMonsterNode ? mapMonsterNode.id : "wild_mon",
+      bossId: mapMonsterNode ? (mapMonsterNode.bossId || null) : null,
       type: mType,
       name: (mapMonsterNode ? mapMonsterNode.name : "翠風竹子妖") + " Lv." + lv,
       lv: lv,
+      atk: atk,
       isBoss: isBoss,
+      isElite: isElite,
       isShiny: isShiny,
       spriteKey: tpl.spriteKey,
       hp: maxHp,
@@ -171,17 +176,26 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       shield: maxShield,
       maxShield: maxShield,
       broken: false,
+      breakTurnsLeft: 0,
+      frozenTurns: 0,
+      turnCount: 1,
       weak: tpl.weak,
-      normalDrop: tpl.normalDrop,
-      breakDrop: tpl.breakDrop,
+      normalDrop: drops.normalDrop,
+      subDrop: drops.subDrop,
+      breakDrop: drops.breakDrop,
+      dropsTabletShard: Boolean(isBoss || isElite),
       tamePetId: tpl.tamePetId,
-      expReward: Math.round(tpl.expBase * lv * (isShiny ? 2.0 : 1.0)),
-      goldReward: Math.round(tpl.goldBase * lv * (isShiny ? 2.0 : 1.0))
+      expReward: Math.round(tpl.expBase * lv * (isShiny ? 2.0 : isElite ? 1.6 : 1.0)),
+      goldReward: Math.round(tpl.goldBase * lv * (isShiny ? 2.0 : isElite ? 1.6 : 1.0))
     };
+
+    enemyObj.intent = rollNextIntent(enemyObj, 1);
+    return enemyObj;
   }
 
   window.Aetheria.Data.JOBS = JOBS;
   window.Aetheria.Data.PETS = PETS;
   window.Aetheria.Data.MONSTER_TEMPLATES = MONSTER_TEMPLATES;
+  window.Aetheria.Data.rollNextIntent = rollNextIntent;
   window.Aetheria.Data.createBattleEnemy = createBattleEnemy;
 })();
