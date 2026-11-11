@@ -1,7 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 四科17課(456題)與29幅教科書插畫總橋接器 (question-bridge.js - v6.5)
- * 修正：1.英文填充題 (eng_fill) 移除句尾的中文解釋，純考英文句子語境
- *       2.英文串字題 (eng_spell) 題目框移除底線與字數提示，只保留簡潔中文題意
+ * Project J：艾瑟瑞亞的破曉 — 四科17課(456題)與詳盡錯題解析總橋接器 (question-bridge.js - v6.6)
+ * 升級：1.為中文、英文、人文、科學全部 456 道題目自動生成詳盡 explanation (知識解釋與完整句子對照)
+ *       2.新增 getExplanationHtml(q, correctText) 供答錯時的「錯題溫習卡」顯示完整教學解釋
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -72,14 +72,26 @@ window.Aetheria = window.Aetheria || {};
     return allOpts.slice(shift).concat(allOpts.slice(0, shift));
   }
 
+  // 將填充題中的底線替換為高亮正確答案，生成完整句子解釋
+  function buildFilledSentenceExplanation(promptText, blanksArr) {
+    let idx = 0;
+    const raw = String(promptText || "").replace(/^【[^】]+】/, "");
+    return raw.replace(/_{2,}/g, function() {
+      const ans = (blanksArr && blanksArr[idx] !== undefined) ? blanksArr[idx] : (blanksArr && blanksArr[0]) || "";
+      idx++;
+      return "「" + ans + "」";
+    });
+  }
+
   const ALL_QUESTIONS = [];
 
-  // (A) 中文科：30 成語 + 32 字詞 -> 124 題
+  // (A) 中文科：30 成語 + 32 字詞 -> 124 題 (附詞義與完整例句解釋)
   const allChiItems = (ChiBank.IDIOMS || []).concat(ChiBank.WORDS || []);
   allChiItems.forEach(function(item, idx) {
     const uName = item.unitName || unitNameLookup[item.unitKey] || "中文";
     const opts1 = item.options || buildAutoOptions(item, allChiItems, idx + 1);
     const opts2 = item.options || buildAutoOptions(item, allChiItems, idx + 3);
+    const fullEx1 = String(item.s1 || "").replace(/_{2,}/g, item.word);
 
     if (item.meaning) {
       ALL_QUESTIONS.push({
@@ -94,7 +106,8 @@ window.Aetheria = window.Aetheria || {};
         typeLabel: "字詞解釋",
         prompt: "【字詞解釋】「" + item.meaning + "」是哪一個詞語／成語的意思？",
         options: opts1,
-        answer: item.word
+        answer: item.word,
+        explanation: "【詞語】" + item.word + "<br>【解釋】" + item.meaning + (fullEx1 ? "<br>【例句】" + fullEx1 : "")
       });
     }
 
@@ -113,17 +126,20 @@ window.Aetheria = window.Aetheria || {};
         prompt: "【填充題】" + firstSent,
         s1: item.s1 || firstSent,
         s2: item.s2 || firstSent,
+        meaning: item.meaning || "",
         options: opts2,
-        answer: item.word
+        answer: item.word,
+        explanation: "【詞義解釋】" + (item.meaning || "") + "<br>【完整句子】" + String(firstSent).replace(/_{2,}/g, "「" + item.word + "」")
       });
     }
   });
 
-  // (B) 英文科：46 Vocab -> 92 題 (問題 2 & 3 修正：串字題刪題目底線與字數；填充題刪中文解釋！)
+  // (B) 英文科：46 Vocab -> 92 題 (附中文詞義與完整英文例句解釋)
   const allEngItems = EngBank.VOCAB || [];
   allEngItems.forEach(function(item, idx) {
     const uName = item.unitName || unitNameLookup[item.unitKey] || "English";
     const fillOpts = (item.options && item.options.length >= 2) ? item.options : buildAutoOptions(item, allEngItems, idx + 2);
+    const fullEngSent = String(item.sentence || "").replace(/_{2,}/g, "[" + item.word + "]");
 
     ALL_QUESTIONS.push({
       id: item.id + "_s",
@@ -137,7 +153,8 @@ window.Aetheria = window.Aetheria || {};
       typeLabel: "字塊串字",
       prompt: "【英文串字】" + item.meaning,
       meaning: item.meaning,
-      answer: item.word
+      answer: item.word,
+      explanation: "【英文詞彙】" + item.word + "<br>【中文解釋】" + item.meaning + (fullEngSent ? "<br>【英文例句】" + fullEngSent : "")
     });
 
     if (item.sentence) {
@@ -152,11 +169,39 @@ window.Aetheria = window.Aetheria || {};
         type: "mcq",
         typeLabel: "句子填充題",
         prompt: "【填充題】" + item.sentence,
+        meaning: item.meaning,
         options: fillOpts,
-        answer: item.word
+        answer: item.word,
+        explanation: "【詞彙解釋】" + item.word + " ＝ " + item.meaning + "<br>【完整句子】" + fullEngSent
       });
     }
   });
+
+  // 輔助函式：為人文科與科學科題目建立詳盡解釋
+  function buildHumSciExplanation(q) {
+    if (q.explanation) return q.explanation;
+    if (q.type === "fill_blank" || q.type === "image_fill") {
+      return "【完整概念】" + buildFilledSentenceExplanation(q.prompt, q.blanks || [q.answer]);
+    }
+    if (q.type === "classify" && q.items) {
+      const grouped = {};
+      (q.baskets || []).forEach(function(b) { grouped[b] = []; });
+      q.items.forEach(function(it) {
+        if (!grouped[it.basket]) grouped[it.basket] = [];
+        grouped[it.basket].push(it.label);
+      });
+      return Object.keys(grouped).map(function(b) {
+        return "<b>【" + b + "】</b>：" + grouped[b].join("、");
+      }).join("<br>");
+    }
+    if (q.type === "multi_mcq" && q.answers) {
+      return "【正確選項】" + q.answers.join("；") + "<br>（請留意題目要求選出所有正確的做法或特徵）";
+    }
+    if (q.type === "short_qa") {
+      return "【課本重點解析】" + (q.answer || "");
+    }
+    return "【課本知識點】題目問及「" + String(q.prompt || "").replace(/^【[^】]+】/, "") + "」，正確答案為：<b>" + (q.answer || "") + "</b>。";
+  }
 
   // (C) 人文科：4 課 -> 120 題
   (HumBank.QUESTIONS || []).forEach(function(q) {
@@ -170,6 +215,7 @@ window.Aetheria = window.Aetheria || {};
     if (copy.blanks && !copy.answer) {
       copy.answer = copy.blanks.join("、");
     }
+    copy.explanation = buildHumSciExplanation(copy);
     ALL_QUESTIONS.push(copy);
   });
 
@@ -185,6 +231,7 @@ window.Aetheria = window.Aetheria || {};
     if (copy.blanks && !copy.answer) {
       copy.answer = copy.blanks.join("、");
     }
+    copy.explanation = buildHumSciExplanation(copy);
     ALL_QUESTIONS.push(copy);
   });
 
@@ -239,6 +286,12 @@ window.Aetheria = window.Aetheria || {};
       return ALL_QUESTIONS;
     },
 
+    getExplanationHtml: function(q, correctText) {
+      if (!q) return "請記住正確答案：<b>" + (correctText || "") + "</b>";
+      if (q.explanation) return q.explanation;
+      return buildHumSciExplanation(q);
+    },
+
     pickQuestion: function(opts) {
       opts = opts || {};
       const s = (window.Aetheria.State && window.Aetheria.State.data) || {};
@@ -280,6 +333,7 @@ window.Aetheria = window.Aetheria || {};
       if (copy.qCategory === "chi_fill" && copy.s1 && copy.s2) {
         const chosenSent = (Math.random() < 0.5) ? copy.s1 : copy.s2;
         copy.prompt = "【填充題】" + chosenSent;
+        copy.explanation = "【詞義解釋】" + (copy.meaning || "") + "<br>【完整句子】" + String(chosenSent).replace(/_{2,}/g, "「" + copy.answer + "」");
       }
       if (copy.svgKey && ALL_DIAGRAMS[copy.svgKey]) {
         copy.svgDiagram = ALL_DIAGRAMS[copy.svgKey];
