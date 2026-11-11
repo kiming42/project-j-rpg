@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v5.0)</title>
+  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v5.1)</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
       <div class="title-emblem-box">
         <div class="title-sub">PROJECT J : TACTICAL PIXEL RPG</div>
         <h1 class="title-main">艾瑟瑞亞的破曉</h1>
-        <div class="title-ver">DAWN OF AETHERIA v5.0</div>
+        <div class="title-ver">DAWN OF AETHERIA v5.1</div>
       </div>
       <div class="title-hero-showcase" id="title-hero-preview"></div>
     </div>
@@ -29,7 +29,7 @@
       <button class="na-btn title-btn" onclick="Aetheria.UI.startNewGame()">
         新遊戲
         <span class="title-save-sub">體驗完整七章古文明聖碑物語</span>
-      </div>
+      </button>
     </div>
   </div>
 
@@ -52,10 +52,9 @@
       <span id="hud-pet"></span>
       <span id="hud-guild"></span>
       <button id="btn-bgm-toggle"></button>
-      <canvas id="world-canvas" width="256" height="144"></canvas>
     </div>
 
-    <!-- 純 DOM 2D 捲動地圖視窗 (取代 Canvas 繪圖，100% 使用開源像素貼圖與銳利 DOM 文字) -->
+    <!-- 純 DOM 2D 捲動地圖視窗 -->
     <div id="world-viewport">
       <div id="world-map-layer">
         <div id="world-terrain-layer"></div>
@@ -72,7 +71,7 @@
     <!-- 環境危害閃爍遮罩 (極寒凍傷 / 熔岩灼傷) -->
     <div id="hazard-overlay"></div>
 
-    <!-- ================= 釣魚小遊戲互動視窗 (Fishing Mini-Game Overlay) ================= -->
+    <!-- ================= 釣魚小遊戲互動視窗 ================= -->
     <div id="fishing-minigame-modal" style="display:none;">
       <div class="fishing-box">
         <div class="fishing-title" id="fishing-title-txt">海濱垂釣小遊戲</div>
@@ -102,7 +101,7 @@
             <div class="hp-bar-inner hero-hp-fill" id="hero-hp-bar"></div>
           </div>
           <div class="bp-orbs" id="hero-bp-orbs"></div>
-          <div class="bt-streak-pill" id="battle-streak-tag">連勝 x0｜DEF 8</div>
+          <div class="bt-streak-pill" id="battle-streak-tag">連勝 x0｜DEF 12</div>
         </div>
 
         <div class="bt-enemy-status-card">
@@ -199,7 +198,7 @@
       </div>
     </div>
 
-    <!-- 【面板 2】NPC 互動對話面板 (改用純 <img> 像素頭像，零 Canvas) -->
+    <!-- 【面板 2】NPC 互動對話面板 -->
     <div id="panel-dialogue" class="sub-panel">
       <div class="dialogue-header">
         <img id="npc-portrait-img" src="" alt="NPC" class="npc-portrait-box">
