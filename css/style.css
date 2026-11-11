@@ -95,67 +95,15 @@ body, html {
   box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
 }
 
-.title-sub {
-  font-size: 13px;
-  letter-spacing: 2px;
-  color: #8ce0ff;
-  font-weight: 900;
-  margin-bottom: 8px;
-}
-
-.title-main {
-  font-size: 32px;
-  color: var(--na-gold);
-  text-shadow: 3px 3px 0 #1c1619, -2px -2px 0 #5c3824;
-  letter-spacing: 2px;
-  margin-bottom: 8px;
-}
-
-.title-ver {
-  font-size: 13px;
-  color: var(--na-scroll);
-  background: rgba(28, 22, 25, 0.85);
-  border: 1px solid var(--na-wood-light);
-  padding: 3px 12px;
-  border-radius: 12px;
-}
-
-.title-hero-showcase {
-  margin-top: 24px;
-  display: flex;
-  gap: 16px;
-  align-items: flex-end;
-  justify-content: center;
-}
-.title-hero-showcase img {
-  width: 60px;
-  height: 60px;
-  filter: drop-shadow(0 4px 0 #000);
-}
-
-.title-menu-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.title-btn {
-  padding: 14px 16px !important;
-  font-size: 18px !important;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-.title-btn.disabled {
-  opacity: 0.4;
-  pointer-events: none;
-}
-.title-save-sub {
-  font-size: 13px;
-  font-weight: normal;
-  opacity: 0.95;
-}
+.title-sub { font-size: 13px; letter-spacing: 2px; color: #8ce0ff; font-weight: 900; margin-bottom: 8px; }
+.title-main { font-size: 32px; color: var(--na-gold); text-shadow: 3px 3px 0 #1c1619, -2px -2px 0 #5c3824; letter-spacing: 2px; margin-bottom: 8px; }
+.title-ver { font-size: 13px; color: var(--na-scroll); background: rgba(28, 22, 25, 0.85); border: 1px solid var(--na-wood-light); padding: 3px 12px; border-radius: 12px; }
+.title-hero-showcase { margin-top: 24px; display: flex; gap: 16px; align-items: flex-end; justify-content: center; }
+.title-hero-showcase img { width: 60px; height: 60px; filter: drop-shadow(0 4px 0 #000); }
+.title-menu-panel { display: flex; flex-direction: column; gap: 12px; }
+.title-btn { padding: 14px 16px !important; font-size: 18px !important; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.title-btn.disabled { opacity: 0.4; pointer-events: none; }
+.title-save-sub { font-size: 13px; font-weight: normal; opacity: 0.95; }
 
 /* ================= 上半屏：大世界舞台 (45%) ================= */
 #upper-screen {
@@ -167,11 +115,7 @@ body, html {
   border-bottom: 4px solid var(--na-outline);
 }
 
-#world-canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
+#world-canvas { width: 100%; height: 100%; display: block; }
 
 #fog-overlay {
   position: absolute;
@@ -180,6 +124,22 @@ body, html {
   z-index: 12;
   display: none;
   background: radial-gradient(circle 95px at 50% 50%, rgba(0,0,0,0) 0%, rgba(16,12,24,0.78) 65%, rgba(6,4,10,0.96) 100%);
+}
+
+#hazard-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 15;
+  display: none;
+}
+#hazard-overlay.cold {
+  display: block;
+  box-shadow: inset 0 0 28px rgba(56, 182, 255, 0.75);
+}
+#hazard-overlay.heat {
+  display: block;
+  box-shadow: inset 0 0 28px rgba(224, 60, 75, 0.8);
 }
 
 #hud-overlay {
@@ -192,6 +152,8 @@ body, html {
   z-index: 20;
 }
 
+.hud-minimal-left { display: flex; gap: 4px; align-items: center; }
+
 .na-badge {
   background: rgba(20, 16, 19, 0.88);
   border: 2px solid var(--na-wood-light);
@@ -202,12 +164,70 @@ body, html {
   font-weight: 900;
   box-shadow: 0 2px 0 #000;
 }
-
+.badge-meal { background: #1e3a2f; border-color: #5ac54f; color: #b7e4c7; font-size: 11px; }
 .danger-safe { color: #b7e4c7; border-color: #6ab04c; }
 .danger-warn { color: #ffd166; border-color: #f4be78; }
 .danger-deadly { color: #ff758f; border-color: #ff595e; }
 
-/* ================= 戰鬥舞台 ================= */
+/* ================= 劇情過場演出視窗 (Story Cutscene Overlay) ================= */
+#story-cutscene-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 75;
+  background: rgba(10, 8, 14, 0.88);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px;
+}
+
+.story-box {
+  width: 100%;
+  background: var(--na-scroll);
+  color: var(--na-outline);
+  border: 4px solid var(--na-outline);
+  outline: 2px solid var(--na-gold);
+  border-radius: 8px;
+  padding: 12px 14px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.story-chapter-tag {
+  background: #141013;
+  color: var(--na-gold);
+  font-size: 12px;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.story-speaker {
+  font-size: 16px;
+  font-weight: 900;
+  color: #7f2b1d;
+  border-bottom: 2px solid var(--na-scroll-dark);
+  padding-bottom: 3px;
+}
+
+.story-text {
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.5;
+  min-height: 68px;
+  color: #1c1619;
+}
+
+.story-next-btn {
+  align-self: flex-end;
+  padding: 6px 16px !important;
+  font-size: 14px !important;
+}
+
+/* ================= 戰術意圖與攻防戰鬥舞台 ================= */
 #battle-stage {
   position: absolute;
   inset: 0;
@@ -221,31 +241,53 @@ body, html {
 
 .bt-top-hud {
   width: 100%;
-  height: 38%;
-  background: linear-gradient(180deg, rgba(16,12,18,0.95) 0%, rgba(28,22,25,0.85) 100%);
+  height: 42%;
+  background: linear-gradient(180deg, rgba(16,12,18,0.96) 0%, rgba(28,22,25,0.88) 100%);
   border-bottom: 3px solid var(--na-wood-mid);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  padding: 5px 8px;
   z-index: 5;
+  gap: 6px;
 }
 
 .bt-hero-status-card {
   background: #141013;
   border: 2px solid var(--na-wood-light);
   border-radius: 6px;
-  padding: 5px 10px;
+  padding: 5px 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 122px;
+  gap: 3px;
+  min-width: 138px;
 }
 
-.bt-card-label { font-size: 11px; color: var(--na-wood-light); font-weight: 900; }
-.bp-orbs { display: flex; gap: 6px; padding: 2px 0; }
+.bt-hero-hp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  color: #b7e4c7;
+}
+
+.bt-guard-badge {
+  background: #1d5eb8;
+  color: #fff;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid #8ce0ff;
+}
+
+.hero-hp-fill {
+  background: linear-gradient(90deg, #2d6a4f 0%, #5ac54f 100%) !important;
+}
+
+.bp-orbs { display: flex; gap: 5px; padding: 2px 0; }
 .bp-orb {
-  width: 12px; height: 12px;
+  width: 11px; height: 11px;
   border-radius: 2px;
   transform: rotate(45deg);
   background: #2b2327;
@@ -257,7 +299,7 @@ body, html {
   box-shadow: 0 0 6px #f5b700;
 }
 
-.bt-streak-pill { font-size: 12px; font-weight: 900; color: var(--na-gold); }
+.bt-streak-pill { font-size: 11px; font-weight: 900; color: var(--na-gold); }
 
 .bt-enemy-status-card {
   background: var(--na-scroll);
@@ -265,12 +307,13 @@ body, html {
   border: 3px solid var(--na-outline);
   box-shadow: 0 3px 0 rgba(0,0,0,0.6);
   border-radius: 6px;
-  padding: 5px 10px;
-  min-width: 195px;
+  padding: 4px 8px;
+  flex: 1;
+  max-width: 225px;
 }
 
 .bt-enemy-header {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   display: flex;
   justify-content: space-between;
@@ -282,46 +325,69 @@ body, html {
 .bt-shiny-pill {
   background: var(--na-gold);
   color: #000;
-  font-size: 11px;
-  padding: 1px 5px;
+  font-size: 10px;
+  padding: 1px 4px;
   border-radius: 3px;
   border: 1px solid #000;
+}
+
+/* 敵方下回合意圖預告橫幅 */
+.bt-intent-banner {
+  background: #2b2327;
+  color: #ffd166;
+  font-size: 11px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-top: 3px;
+  text-align: center;
+  border: 1px solid #1c1619;
+}
+.bt-intent-banner.intent-ult {
+  background: #a32c24;
+  color: #ffffff;
+  border-color: #ffd166;
+  animation: pulseUlt 0.8s infinite;
+}
+@keyframes pulseUlt {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); background: #e03c4b; }
 }
 
 .bt-shield-weak-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 6px;
-  margin: 4px 0;
+  gap: 4px;
+  margin: 3px 0;
 }
 
 .bt-shield-box {
   background: #1d3557;
   color: #fff;
   border: 2px solid var(--na-outline);
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 4px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 .bt-shield-box.broken { background: #a32c24; color: #ffd166; }
 
 .css-diamond-shield {
   display: inline-block;
-  width: 9px; height: 9px;
+  width: 8px; height: 8px;
   background: #38b6ff;
   border: 1px solid #fff;
   transform: rotate(45deg);
 }
 
-.bt-weak-pills { font-size: 12px; font-weight: 900; color: var(--na-wood-dark); }
+.bt-weak-pills { font-size: 11px; font-weight: 900; color: var(--na-wood-dark); }
 
 .hp-bar-outer {
-  width: 100%; height: 9px;
+  width: 100%; height: 8px;
   background: #2b2327;
   border: 2px solid var(--na-outline);
   border-radius: 3px;
@@ -335,13 +401,13 @@ body, html {
 }
 
 .bt-arena-field {
-  width: 100%; height: 62%;
+  width: 100%; height: 58%;
   position: relative;
   background: linear-gradient(180deg, #4b8b3b 0%, #6ab04c 52%, #a8ba59 100%);
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 0 26px 14px;
+  padding: 0 26px 12px;
   overflow: hidden;
 }
 
@@ -354,7 +420,7 @@ body, html {
 
 .bt-scenery-horizon {
   position: absolute;
-  top: 0; left: 0; right: 0; height: 22px;
+  top: 0; left: 0; right: 0; height: 20px;
   background: repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 18px, transparent 18px, transparent 36px);
   border-bottom: 3px solid rgba(28, 22, 25, 0.25);
   pointer-events: none;
@@ -372,7 +438,7 @@ body, html {
   content: "";
   position: absolute;
   bottom: 0;
-  width: 126px; height: 22px;
+  width: 126px; height: 20px;
   background: #c88662;
   border: 3px solid #1c1619;
   box-shadow: inset 0 -4px 0 #8f563b, 0 4px 0 rgba(0,0,0,0.35);
@@ -380,10 +446,10 @@ body, html {
   z-index: -1;
 }
 
-.bt-hero-slot img  { width: 56px; height: 56px; display: block; animation: btIdleBob 1.1s infinite ease-in-out; }
-.bt-pet-slot img   { width: 40px; height: 40px; display: block; margin-right: 4px; animation: btIdleBob 0.9s infinite ease-in-out reverse; }
-.bt-enemy-slot img { width: 62px; height: 62px; display: block; animation: btIdleBob 1.2s infinite ease-in-out; }
-.bt-enemy-slot.boss img { width: 78px; height: 78px; }
+.bt-hero-slot img  { width: 52px; height: 52px; display: block; animation: btIdleBob 1.1s infinite ease-in-out; }
+.bt-pet-slot img   { width: 38px; height: 38px; display: block; margin-right: 4px; animation: btIdleBob 0.9s infinite ease-in-out reverse; }
+.bt-enemy-slot img { width: 58px; height: 58px; display: block; animation: btIdleBob 1.2s infinite ease-in-out; }
+.bt-enemy-slot.boss img { width: 74px; height: 74px; }
 .bt-enemy-slot.broken img { transform: rotate(16deg) scale(0.92); filter: sepia(0.6) hue-rotate(-30deg); animation: none; }
 
 @keyframes btIdleBob {
@@ -395,6 +461,13 @@ body, html {
 @keyframes lungeRight {
   0% { transform: translateX(0); }
   45% { transform: translateX(28px) scale(1.1); }
+  100% { transform: translateX(0); }
+}
+
+.bt-lunge-left { animation: lungeLeft 0.28s ease-out !important; }
+@keyframes lungeLeft {
+  0% { transform: translateX(0); }
+  45% { transform: translateX(-28px) scale(1.12); }
   100% { transform: translateX(0); }
 }
 
@@ -410,7 +483,7 @@ body, html {
 .floating-text {
   position: absolute;
   font-weight: 900;
-  font-size: 20px;
+  font-size: 19px;
   text-shadow: 2px 2px 0 #141013, -2px -2px 0 #141013, 2px -2px 0 #141013, -2px 2px 0 #141013;
   pointer-events: none;
   z-index: 60;
@@ -443,7 +516,7 @@ body, html {
   border-radius: 6px;
   font-size: 13px;
   font-weight: 900;
-  z-index: 55;
+  z-index: 65;
   display: none;
   white-space: nowrap;
 }
@@ -470,7 +543,6 @@ body, html {
 }
 .sub-panel.active { display: flex; }
 
-/* 改善排位：改為 3 欄 x 2 列寬敞木牌，圖標與文字單行水平居中，絕不斷行！ */
 .quick-nav {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -511,7 +583,13 @@ body, html {
 .tab-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.tab-bar-5 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
   margin-bottom: 8px;
 }
 
@@ -662,11 +740,11 @@ body, html {
   justify-content: space-between;
   align-items: center;
   background: #141013;
-  padding: 5px 10px;
+  padding: 5px 8px;
   border-radius: 5px;
   border: 2px solid var(--na-wood-mid);
   margin-bottom: 6px;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 #timer-badge {
@@ -676,7 +754,7 @@ body, html {
   padding: 2px 6px;
   border-radius: 4px;
   font-weight: 900;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .quiz-scroll-box {
