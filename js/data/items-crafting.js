@@ -1,15 +1,14 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 40種素材、零衝突建材配方與7大拓荒工程藍圖 (items-crafting.js - v6.1)
- * 修正：1.微光蘑菇濃湯改用原木，避免開局誤耗散落枯枝導致無法修復熔爐
- *       2.強化麻繩索支援「藤蔓+枯枝」或煉金台「荒野亞麻直接轉化」，消除跨區素材斷層
- *       3.補齊完整煉金轉化鏈 (紅傘菇->太陽花->冰蓮->金葉) 與金幣商店基礎建材
+ * Project J：艾瑟瑞亞的破曉 — 40種素材、零衝突建材配方與禁買素材商店 (items-crafting.js - v6.6)
+ * 修正：1.GOLD_SHOP (金幣商店) 移除所有採集素材 (枯枝/燧石/黏土/松脂/原木/藤蔓/鐵礦)，
+ *         杜絕玩家用金幣偷雞買素材交任務！所有素材必須親手去地圖採集或戰鬥獲得！
+ *       2.金幣只限購買 4 種冒險消耗品 (生命藥水、洞察藥水、爆破炸彈、靈獸誘餌果)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
 
 (function() {
   const MATERIALS = {
-    // 徒手與天然生存原材 (8)
     branch:      { id: "branch",      name: "散落枯枝",     tier: 1, desc: "【營地/森林｜徒手拾取】無需工具即可拾取的乾枯樹枝，生火與造繩材料。" },
     flint:       { id: "flint",       name: "尖銳燧石",     tier: 1, desc: "【營地/森林｜徒手拾取】鋒利的打火石片，修復鍛造熔爐與點火必備。" },
     clay:        { id: "clay",        name: "河床黏土",     tier: 1, desc: "【營地池畔/河岸｜徒手拾取】濕潤的耐火陶土，用於修築熔爐、燈塔與耐火磚。" },
@@ -19,7 +18,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     sailCloth:   { id: "sailCloth",   name: "幽靈古帆布",   tier: 2, desc: "【第3區海岸】拾取沉船帆布或擊敗幽靈海盜掉落，縫製遠航風帆的關鍵布料。" },
     sinew:       { id: "sinew",       name: "強韌獸筋",     tier: 3, desc: "【第4區雪原】獵場拾取或擊敗雪原魔物掉落，綁紮極地防風毛皮屋與高階防具。" },
 
-    // 工坊加工建材組件 (6)
     plank:       { id: "plank",       name: "加工厚木板",   tier: 2, desc: "【工坊建材】由翠風原木x2 + 琥珀松脂x1 加工而成，建造吊橋、木梯與木筏龍骨。" },
     rope:        { id: "rope",        name: "強化麻繩索",   tier: 2, desc: "【工坊建材】由堅韌藤蔓x2 + 散落枯枝x1 編織而成，承受吊橋與絞盤拉力。" },
     nails:       { id: "nails",       name: "鍛造鐵釘",     tier: 2, desc: "【工坊建材】由藍晶鐵礦x2 鍛打而成，固定大型木造工程結構。" },
@@ -27,13 +25,11 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     heavySail:   { id: "heavySail",   name: "遠航風帆",     tier: 3, desc: "【工坊建材】由幽靈古帆布x2 + 荒野亞麻x1 + 強化麻繩索x1 縫製的破浪大帆。" },
     firebrick:   { id: "firebrick",   name: "黑曜耐火磚",   tier: 3, desc: "【工坊建材】由河床黏土x1 + 玄武岩塊x1 + 熔岩黑曜石x1 燒製，可抵禦火山熔岩。" },
 
-    // 礦石類 (4)
     iron:        { id: "iron",        name: "藍晶鐵礦",     tier: 1, desc: "【第1區森林｜需Lv.1鐵鎬】基礎鍛造礦石，每次採集 +1。" },
     mithril:     { id: "mithril",     name: "流沙秘銀礦",   tier: 2, desc: "【第1-B洞窟 & 第2區峽谷｜需Lv.2重鎬】蘊含魔力的銀白礦石。" },
     obsidian:    { id: "obsidian",    name: "熔岩黑曜石",   tier: 3, desc: "【第4區雪原 & 第5區火山｜需Lv.3鑽頭】高溫凝結的黑曜晶礦。" },
     starIron:    { id: "starIron",    name: "深淵星隕鐵",   tier: 4, desc: "【第6區天界｜需Lv.3鑽頭】自星界墜落的神話金屬。" },
 
-    // 木材與靈植類 (6)
     wood:        { id: "wood",        name: "翠風原木",     tier: 1, desc: "【第1區森林｜需Lv.1手斧】砍伐老樹樁獲得，加工木板與鍛造必備。" },
     herb:        { id: "herb",        name: "紅傘微光菇",   tier: 1, desc: "【第1區森林 & 洞窟｜需Lv.1手斧】微光蘑菇，用於鍛造與煲湯。" },
     vine:        { id: "vine",        name: "堅韌藤蔓",     tier: 1, desc: "【第1區森林｜需Lv.1手斧】採集藤蔓叢或擊敗竹妖獲得。" },
@@ -41,7 +37,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     iceLotus:    { id: "iceLotus",    name: "雪山冰蓮",     tier: 3, desc: "【第4區雪原｜需Lv.2戰斧】極寒雪原永不凋謝的冰蓮。" },
     goldLeaf:    { id: "goldLeaf",    name: "世界樹金葉",   tier: 4, desc: "【第6區天界｜需Lv.3神斧】浮空聖殿飄落的神聖金葉。" },
 
-    // 各區生態素材與漁獲 (6)
     shell:       { id: "shell",       name: "洞窟硬甲殼",   tier: 2, desc: "【第1-B洞窟 & 第2區峽谷】擊敗骷髏衛兵掉落，打造鎖甲與絞盤齒輪。" },
     coral:       { id: "coral",       name: "深海珊瑚",     tier: 2, desc: "【第3區海岸｜需Lv.2重鎬】採集珊瑚礁或擊敗海盜獲得。" },
     fur:         { id: "fur",         name: "霜狼禦寒毛皮", tier: 3, desc: "【第4區雪原】擊敗雪原魔物掉落，縫製毛皮甲與極地防風屋。" },
@@ -49,7 +44,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     fish:        { id: "fish",        name: "銀鱗鮮魚",     tier: 2, desc: "【水波釣魚點】完成垂釣小遊戲獲得（需先向老漁夫阿海領取釣竿）。" },
     tabletShard: { id: "tabletShard", name: "古文明聖碑殘片", tier: 4, desc: "【領主/賞金首掉落】於星象師艾莉婭處修復四大聖碑。" },
 
-    // 6 大魔物破防核心
     coreBamboo:  { id: "coreBamboo",  name: "竹精木心",     tier: 1, desc: "【竹子妖 BREAK 破防掉落】可鍛造、建橋或鑲嵌：每回回血 +20。" },
     coreSkull:   { id: "coreSkull",   name: "骷髏魂火",     tier: 2, desc: "【骷髏怪 BREAK 破防掉落】可鍛造或鑲嵌：20% 攻擊吸血。" },
     coreSiren:   { id: "coreSiren",   name: "海妖水核",     tier: 2, desc: "【海岸魔物 BREAK 破防掉落】可造船或鑲嵌：舉盾反彈 100% 傷害。" },
@@ -57,9 +51,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     coreGolem:   { id: "coreGolem",   name: "炎魔熔核",     tier: 3, desc: "【火山魔物 BREAK 破防掉落】可造橋或鑲嵌：攻擊+25、護盾穿透。" },
     coreDragon:  { id: "coreDragon",  name: "龍王逆鱗",     tier: 4, desc: "【守關領主 BREAK 破防掉落】可鍛造或鑲嵌：破防暴擊傷害 +50%。" },
 
-    // 消耗品 (4)
     potionHeal:  { id: "potionHeal",  name: "生命藥水",     tier: 1, desc: "飲用後回復 70 點生命值（科學聖碑神恩翻倍至 140 點）。" },
-    potionHint:  { id: "potionHint",  name: "洞察藥水",     tier: 2, desc: "英文全盲串字時，顯示首尾字母與字數提示。" },
+    potionHint:  { id: "potionHint",  name: "洞察藥水",     tier: 2, desc: "英文串字時自動填入每個單詞的首字母。" },
     bombItem:    { id: "bombItem",    name: "爆破炸彈",     tier: 2, desc: "炸開洞穴「裂縫岩壁」（需先救出見習礦工石頭取得火藥袋）。" },
     tameFruit:   { id: "tameFruit",   name: "靈獸誘餌果",   tier: 2, desc: "在魔物破防殘血時投擲，答對題目即可收服。" }
   };
@@ -95,7 +88,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     proj_camp_forge: {
       id: "proj_camp_forge",
       name: "修復巴爾的鍛造熔爐",
-      zoneId: "camp_hub",
+      zoneId: "tent_forge",
       desc: "在營地徒手拾取枯枝、燧石與池畔黏土修復熄滅的熔爐。完成後鐵匠巴爾將授予你【新手蒼藍忍刀】、【Lv.1 石製手斧】與【Lv.1 新手鐵鎬】！",
       cost: { branch: 3, flint: 3, clay: 2 },
       rewardText: "獲得【新手蒼藍忍刀】、【Lv.1 石製手斧】、【Lv.1 新手鐵鎬】！",
@@ -105,7 +98,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
         s.tools.axe = Math.max(1, s.tools.axe || 0);
         s.tools.pickaxe = Math.max(1, s.tools.pickaxe || 0);
         s.questProgress.mq_01_talked = true;
-        // 額外贈予枯枝x2與藤蔓x1，確保玩家可直接找老漁夫阿海修補魚簍領取釣竿！
         s.inventory.branch = (s.inventory.branch || 0) + 2;
         s.inventory.vine = (s.inventory.vine || 0) + 1;
         window.Aetheria.State.gainRewards(50, 80, 20);
@@ -276,7 +268,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     coreDragon: { id: "coreDragon", name: "龍王逆鱗符文", title: "破曉處決", desc: "對 BREAK 破防暈眩敵人造成的暴擊傷害 +50%！" }
   };
 
-  // 微光蘑菇濃湯改用 wood: 1，避免開局誤耗散落枯枝
   const CAMP_MEALS = {
     meal_soup: {
       id: "meal_soup", name: "微光蘑菇濃湯", battles: 3,
@@ -376,18 +367,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     { id: "conv_fruit",     name: "調配【靈獸誘餌果 x1】", fromKey: "herb",     fromCount: 3, toKey: "tameFruit",  toCount: 1 }
   ];
 
+  // 問題 1 修正：金幣商店移除所有採集素材！防止用金幣偷雞買材料交任務，只售賣 4 種冒險消耗品！
   const GOLD_SHOP = [
-    { id: "shop_branch", name: "購買【散落枯枝 x1】",   goldCost: 15, toKey: "branch",     toCount: 1 },
-    { id: "shop_flint",  name: "購買【尖銳燧石 x1】",   goldCost: 15, toKey: "flint",      toCount: 1 },
-    { id: "shop_clay",   name: "購買【河床黏土 x1】",   goldCost: 20, toKey: "clay",       toCount: 1 },
-    { id: "shop_resin",  name: "購買【琥珀松脂 x1】",   goldCost: 25, toKey: "resin",      toCount: 1 },
-    { id: "shop_wood",   name: "購買【翠風原木 x1】",   goldCost: 25, toKey: "wood",       toCount: 1 },
-    { id: "shop_vine",   name: "購買【堅韌藤蔓 x1】",   goldCost: 25, toKey: "vine",       toCount: 1 },
-    { id: "shop_iron",   name: "購買【藍晶鐵礦 x1】",   goldCost: 30, toKey: "iron",       toCount: 1 },
-    { id: "shop_heal",   name: "購買【生命藥水 x1】",   goldCost: 35, toKey: "potionHeal", toCount: 1 },
-    { id: "shop_hint",   name: "購買【洞察藥水 x1】",   goldCost: 50, toKey: "potionHint", toCount: 1 },
-    { id: "shop_bomb",   name: "購買【爆破炸彈 x1】",   goldCost: 60, toKey: "bombItem",   toCount: 1 },
-    { id: "shop_fruit",  name: "購買【靈獸誘餌果 x1】", goldCost: 80, toKey: "tameFruit",  toCount: 1 }
+    { id: "shop_heal",  name: "購買【生命藥水 x1】",   goldCost: 45,  toKey: "potionHeal", toCount: 1 },
+    { id: "shop_hint",  name: "購買【洞察藥水 x1】",   goldCost: 65,  toKey: "potionHint", toCount: 1 },
+    { id: "shop_bomb",  name: "購買【爆破炸彈 x1】",   goldCost: 80,  toKey: "bombItem",   toCount: 1 },
+    { id: "shop_fruit", name: "購買【靈獸誘餌果 x1】", goldCost: 100, toKey: "tameFruit",  toCount: 1 }
   ];
 
   function canAfford(inventory, costObj) {
