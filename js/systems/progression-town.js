@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 實地工程藍圖、村民親身交接任務、零劇透日誌與營地工坊總管 (progression-town.js - v6.0)
+ * Project J：艾瑟瑞亞的破曉 — 實地工程藍圖、工坊建材加工、聖物飾品與村民交接總管 (progression-town.js - v6.1)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -33,7 +33,6 @@ window.Aetheria = window.Aetheria || {};
     return parts.join("") || "初始裝備";
   }
 
-  // 檢查玩家是否身處曙光營地或鐵匠帳篷 (限定只有喺營地先可以開爐鍛造同加工建材！)
   function isInCampForgeZone(state) {
     return state.currentZone === "camp_hub" || state.currentZone === "tent_forge";
   }
@@ -291,7 +290,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // ================= 0-A. 新增！7 大實地拓荒工程藍圖視窗 (支援分批投入建材與一鍵完工) =================
+    // ================= 0-A. 實地拓荒工程藍圖視窗 =================
     openProjectModal: function(projectId) {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -366,11 +365,7 @@ window.Aetheria = window.Aetheria || {};
       const rem = reqTotal - putCount;
       const inBag = s.inventory[matKey] || 0;
 
-      if (rem <= 0) return;
-      if (inBag <= 0) {
-        this.showToast("背包中沒有此項建材！請先採集或回營地【工坊 ➔ 建材加工】合成。");
-        return;
-      }
+      if (rem <= 0 || inBag <= 0) return;
 
       const giveAmt = Math.min(rem, inBag);
       s.inventory[matKey] -= giveAmt;
@@ -378,7 +373,6 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.Audio.sfxGather();
       window.Aetheria.State.save();
 
-      // 檢查是否全部建材均已到位
       const isAllDone = Object.entries(proj.cost).every(function(entry) {
         return (contrib[entry[0]] || 0) >= entry[1];
       });
@@ -485,7 +479,7 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("享用【" + meal.name + "】！獲得 3 場戰鬥強化 Buff！");
     },
 
-    // ================= 1. NPC 實地對話、主線/村民任務親身交接與回禮 =================
+    // ================= 1. NPC 實地對話與任務交接 =================
     openNpcDialogue: function(npcId) {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -503,7 +497,6 @@ window.Aetheria = window.Aetheria || {};
       const btnGrid = document.getElementById("npc-action-buttons");
       btnGrid.innerHTML = "";
 
-      // A. 檢查當前主線任務是否由此 NPC 負責交接！
       const mq = window.Aetheria.Data.getCurrentMainQuest(s);
       if (mq && mq.giverNpcId === npcId) {
         const mqDone = mq.checkComplete(s);
@@ -525,7 +518,6 @@ window.Aetheria = window.Aetheria || {};
         btnGrid.appendChild(mqBtn);
       }
 
-      // B. 渲染此村民的專屬支線委託 (villagerQuests — 親身接取 [!] 與親身交付 [✓])
       if (npc.villagerQuests && npc.villagerQuests.length > 0) {
         let allVQsDone = true;
         npc.villagerQuests.forEach(function(vq) {
@@ -539,7 +531,6 @@ window.Aetheria = window.Aetheria || {};
           vBtn.style.padding = "8px 10px";
 
           if (!rec) {
-            // 尚未接取
             vBtn.classList.add("highlight");
             vBtn.innerHTML =
               '<div style="font-size:13px;"><b>[! 接受村民委託] ' + vq.title + '</b></div>' +
@@ -568,12 +559,11 @@ window.Aetheria = window.Aetheria || {};
           } else {
             vBtn.style.opacity = "0.5";
             vBtn.style.pointerEvents = "none";
-            vBtn.innerHTML = '<div>[✓ 已完成] ' + vq.title + '</div>';
+            vBtn.innerHTML = '<div style="font-size:13px;">[✓ 已完成] ' + vq.title + '</div>';
           }
           btnGrid.appendChild(vBtn);
         });
 
-        // 若已完成該村民的委託，解鎖「村民拓荒回禮」按鈕！
         if (allVQsDone && npc.perkLabel) {
           const perkCooling = s.bountyCooldowns && s.bountyCooldowns["perk_" + npcId];
           const pBtn = document.createElement("button");
@@ -581,8 +571,8 @@ window.Aetheria = window.Aetheria || {};
           pBtn.style.gridColumn = "span 2";
           pBtn.style.padding = "8px";
           pBtn.innerHTML = perkCooling
-            ? '<span style="color:#8d99ae;">' + npc.perkLabel + ' (戰鬥 1 場後可再次領取)</span>'
-            : '<b>' + S.iconHtml("heart") + npc.perkLabel + '</b>';
+            ? '<span style="color:#8d99ae; font-size:12px;">' + npc.perkLabel + ' (戰鬥 1 場後可再次領取)</span>'
+            : '<b style="font-size:13px;">' + S.iconHtml("heart") + npc.perkLabel + '</b>';
           pBtn.onclick = function() {
             if (perkCooling) {
               self.showToast("請先進行 1 場野外戰鬥後再來領取村民回禮！");
@@ -601,7 +591,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // C. 專屬功能服務按鈕 (若為鐵匠巴爾且尚未修好熔爐，點擊直接打開修復熔爐藍圖！)
       if (npc.serviceLabel) {
         const srvBtn = document.createElement("button");
         srvBtn.className = "na-btn highlight";
@@ -621,7 +610,6 @@ window.Aetheria = window.Aetheria || {};
         btnGrid.appendChild(srvBtn);
       }
 
-      // D. 旅人指令 (探查 / 切磋)
       (npc.pathActions || []).forEach(function(pa) {
         const alreadyDone = Boolean(pa.onceKey && s.questProgress && s.questProgress[pa.onceKey]);
         const btn = document.createElement("button");
@@ -687,7 +675,7 @@ window.Aetheria = window.Aetheria || {};
       const npc = window.Aetheria.Data.NPCS_DB[npcId];
       const vq = (npc && npc.villagerQuests || []).find(function(q) { return q.id === vqId; });
       if (!vq || !window.Aetheria.Data.isVillagerQuestReady(s, vq)) {
-        this.showToast("委託條件尚未達成！備齊物資或達成目標後再回來找 " + (npc ? npc.name : "村民") + "。");
+        this.showToast("委託條件尚未達成！");
         return;
       }
 
@@ -767,7 +755,7 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("已傳送至【" + mapObj.name + "】（資源已刷新）！");
     },
 
-    // ================= 3. 拓荒日誌 & 聖碑 (零劇透單一主線 + 村民委託追蹤 + 須親身找 NPC 交付) =================
+    // ================= 3. 拓荒日誌 (零劇透單一主線 + 村民委託) =================
     openGuildModal: function(activeTab) {
       activeTab = activeTab || "quest";
       window.Aetheria.State.updateGuildRank();
@@ -805,7 +793,6 @@ window.Aetheria = window.Aetheria || {};
       });
       body.appendChild(tabBar);
 
-      // 分頁 1：零劇透！只顯示「當前單一主線」與負責交接的 NPC 位置
       if (activeTab === "quest") {
         const mq = window.Aetheria.Data.getCurrentMainQuest(s);
         if (mq) {
@@ -831,7 +818,6 @@ window.Aetheria = window.Aetheria || {};
           body.appendChild(allClearCard);
         }
 
-        // 顯示 7 大實地拓荒工程進度一覽
         const projHeader = document.createElement("div");
         projHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px; font-size:13px;";
         projHeader.innerText = "【大陸實地拓荒工程進度】";
@@ -850,7 +836,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 2：村民支線進度與公會挑戰
       else if (activeTab === "bounty") {
         const vHeader = document.createElement("div");
         vHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin-bottom:4px; font-size:13px;";
@@ -881,11 +866,10 @@ window.Aetheria = window.Aetheria || {};
         if (!hasAnyVillagerQuest) {
           const tipBox = document.createElement("div");
           tipBox.className = "sys-card";
-          tipBox.innerHTML = "尚未接取村民委託！請在營地或野外尋找頭頂有黃色 <b>[!有委託]</b> 的村民（如老漁夫阿海、草藥婆婆梅姑、斥候里奧、礦工石頭）按 A 鍵接取任務！";
+          tipBox.innerHTML = "尚未接取村民委託！請在營地或野外尋找頭頂有黃色 <b>[!有委託]</b> 的村民按 A 鍵接取任務！";
           body.appendChild(tipBox);
         }
 
-        // 公會長雷恩的隨機試煉板
         const gHeader = document.createElement("div");
         gHeader.style.cssText = "display:flex; justify-content:space-between; align-items:center; margin:8px 0 4px;";
         gHeader.innerHTML =
@@ -950,7 +934,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 3：古文明聖碑
       else if (activeTab === "monolith") {
         const shardCount = s.inventory.tabletShard || 0;
         const infoBox = document.createElement("div");
@@ -1093,7 +1076,7 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // ================= 4. 鐵匠與木工工坊：5 分頁 (武器 / 防具 / 建材加工 / 符文 / 工具與店) =================
+    // ================= 4. 鐵匠與木工工坊 (5分頁) =================
     openForgeModal: function(activeTab) {
       activeTab = activeTab || "weapon";
       const s = window.Aetheria.State.data;
@@ -1102,7 +1085,6 @@ window.Aetheria = window.Aetheria || {};
       const Helper = window.Aetheria.Data.CraftingHelper;
       const self = this;
 
-      // 若尚未修復巴爾熔爐，先引導去修復熔爐
       if (!(s.projectsBuilt && s.projectsBuilt.proj_camp_forge)) {
         this.openProjectModal("proj_camp_forge");
         return;
@@ -1134,7 +1116,6 @@ window.Aetheria = window.Aetheria || {};
       });
       body.appendChild(tabBar);
 
-      // 分頁 1：武器鍛造
       if (activeTab === "weapon") {
         const weaponList = Object.values(window.Aetheria.Data.WEAPONS).sort(function(a, b) { return a.tier - b.tier; });
         let highestOwnedTier = 1;
@@ -1174,7 +1155,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 2：防具鍛造
       else if (activeTab === "armor") {
         const armorList = Object.values(window.Aetheria.Data.ARMORS).sort(function(a, b) { return a.tier - b.tier; });
         let highestArmorTier = 1;
@@ -1212,9 +1192,24 @@ window.Aetheria = window.Aetheria || {};
             body.appendChild(card);
           }
         });
+
+        // 完整補回 3 大聖物飾品 (RELICS) 鍛造卡片
+        Object.values(window.Aetheria.Data.RELICS).forEach(function(rel) {
+          const owned = s.unlockedRelics && s.unlockedRelics.indexOf(rel.id) !== -1;
+          const canCraft = inCamp && (s.lv >= (rel.reqLv || 1)) && Helper.canAfford(inv, rel.cost);
+          const rCard = document.createElement("div");
+          rCard.className = owned ? "sys-card-scroll" : "sys-card";
+          rCard.innerHTML =
+            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+              '<b>[聖物] ' + rel.name + '</b>' +
+              (owned ? '<span style="color:#1d5eb8;font-weight:bold;">已生效</span>' : '<button class="na-btn ' + (canCraft ? 'highlight' : '') + '" style="padding:3px 8px;" onclick="Aetheria.UI.craftRelic(\'' + rel.id + '\')">' + (inCamp ? '鍛造' : '回營地造') + '</button>') +
+            '</div>' +
+            '<div style="font-size:12px; margin-top:2px;">' + rel.desc + '</div>' +
+            (!owned ? '<div style="font-size:12px; margin-top:2px;"><span class="stat-pill">需Lv.' + rel.reqLv + '</span>' + formatIconCost(inv, rel.cost) + '</div>' : '');
+          body.appendChild(rCard);
+        });
       }
 
-      // 分頁 3：新增！6 大工坊工程建材合成 (厚木板 / 麻繩 / 鐵釘 / 防水膠 / 風帆 / 耐火磚)
       else if (activeTab === "workshop") {
         const wkHeader = document.createElement("div");
         wkHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin-bottom:5px; font-size:13px;";
@@ -1237,7 +1232,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 4：符文鑲嵌
       else if (activeTab === "rune") {
         if (!s.socketedRunes) s.socketedRunes = { weapon: null, armor: null };
         const wRune = s.socketedRunes.weapon ? window.Aetheria.Data.RUNES[s.socketedRunes.weapon] : null;
@@ -1273,8 +1267,7 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 5：工具升級與商店
-      else if (activeTab === "tool" || activeTab === "alchemy") {
+      else if (activeTab === "tool") {
         Object.entries(window.Aetheria.Data.TOOLS_UPGRADE).forEach(function(entry) {
           const tKey = entry[0];
           const tDef = entry[1];
@@ -1286,7 +1279,6 @@ window.Aetheria = window.Aetheria || {};
           let actionBtnHtml = "";
 
           if (curLv === 0) {
-            // Lv.0 未持有：必須找對應 NPC 完成委託獲得！
             condHtml = '<div style="font-size:12px; color:#ffd166; margin-top:3px;">取得方式：' + tDef.npcHint + '</div>';
             actionBtnHtml = '<span class="stat-pill" style="color:#ff758f;">找NPC領取</span>';
           } else if (nextData) {
@@ -1296,7 +1288,7 @@ window.Aetheria = window.Aetheria || {};
             condHtml =
               '<div style="font-size:12px; color:var(--na-gold); margin-top:2px;">升 Lv.' + nextLv + '：' + cleanText(nextData.desc) + '</div>' +
               '<div style="font-size:12px; margin-top:2px;"><span class="stat-pill" style="color:' + (lvOk ? '#5ac54f' : '#ff758f') + ';">需Lv.' + reqLv + '</span>' + formatIconCost(inv, nextData.cost) + '</div>';
-            actionBtnHtml = '<button class="na-btn ' + (canUp ? 'highlight' : '') + '" style="padding:3px 8px;" onclick="Aetheria.UI.upgradeTool(\'' + tKey + '\')">升級</button>';
+            actionBtnHtml = '<button class="na-btn ' + (canUp ? 'highlight' : '') + '" style="padding:3px 8px;" onclick="Aetheria.UI.upgradeTool(\'' + tKey + '\')">' + (inCamp ? '升級' : '需回營地') + '</button>';
           } else {
             actionBtnHtml = '<span style="color:#5ac54f; font-weight:bold;">滿階</span>';
           }
@@ -1350,7 +1342,7 @@ window.Aetheria = window.Aetheria || {};
     craftWorkshopMat: function(wkId) {
       const s = window.Aetheria.State.data;
       if (!isInCampForgeZone(s)) {
-        this.showToast("需返回【0.曙光露營基地】找鐵匠巴爾才可加工工程建材！");
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可加工工程建材！");
         return;
       }
       const wk = (window.Aetheria.Data.WORKSHOP_RECIPES || []).find(function(r) { return r.id === wkId; });
@@ -1401,7 +1393,7 @@ window.Aetheria = window.Aetheria || {};
     craftArmor: function(aId) {
       const s = window.Aetheria.State.data;
       if (!isInCampForgeZone(s)) {
-        this.showToast("需返回【0.曙光露營基地】找鐵匠巴爾才可鍛造防具！");
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可鍛造防具！");
         return;
       }
       const a = window.Aetheria.Data.ARMORS[aId];
@@ -1454,7 +1446,7 @@ window.Aetheria = window.Aetheria || {};
     craftWeapon: function(wId) {
       const s = window.Aetheria.State.data;
       if (!isInCampForgeZone(s)) {
-        this.showToast("需返回【0.曙光露營基地】找鐵匠巴爾才可鍛造新武器！");
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可鍛造新武器！");
         return;
       }
       const w = window.Aetheria.Data.WEAPONS[wId];
@@ -1476,6 +1468,28 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
+    craftRelic: function(rId) {
+      const s = window.Aetheria.State.data;
+      if (!isInCampForgeZone(s)) {
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可鍛造聖物！");
+        return;
+      }
+      const rel = window.Aetheria.Data.RELICS[rId];
+      const Helper = window.Aetheria.Data.CraftingHelper;
+      if (!rel || s.lv < (rel.reqLv || 1) || !Helper.payCost(s.inventory, rel.cost)) {
+        this.showToast("等級或素材不足！");
+        return;
+      }
+      if (!s.unlockedRelics) s.unlockedRelics = [];
+      s.unlockedRelics.push(rId);
+      if (rel.onCraft) rel.onCraft(s);
+      window.Aetheria.Audio.sfxLevelUp();
+      window.Aetheria.State.save();
+      this.openForgeModal("armor");
+      this.updateAllHud();
+      this.showToast("聖物鍛造成功：【" + rel.name + "】永久生效！");
+    },
+
     equipWeapon: function(wId) {
       const s = window.Aetheria.State.data;
       if (s.unlockedWeapons.indexOf(wId) !== -1) {
@@ -1489,7 +1503,7 @@ window.Aetheria = window.Aetheria || {};
     upgradeTool: function(toolKey) {
       const s = window.Aetheria.State.data;
       if (!isInCampForgeZone(s)) {
-        this.showToast("需返回【0.曙光露營基地】找鐵匠巴爾才可升級工具！");
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可升級工具！");
         return;
       }
       const curLv = (s.tools && s.tools[toolKey]) || 0;
@@ -1526,7 +1540,7 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
     },
 
-    // ================= 5. 背包頁面 (全 40 種獨立素材圖) =================
+    // ================= 5. 背包頁面 =================
     openBagModal: function(selectedKey) {
       selectedKey = selectedKey || "branch";
       const s = window.Aetheria.State.data;
@@ -1815,6 +1829,24 @@ window.Aetheria = window.Aetheria || {};
     try {
       window.Aetheria.State.init();
       sanitizePlayerPosition();
+    } catch (e) {}
+
+    try {
+      if (window.Aetheria.Explore && window.Aetheria.Explore.reelInFish && !window.Aetheria.Explore._fishHooked) {
+        const origReel = window.Aetheria.Explore.reelInFish;
+        window.Aetheria.Explore.reelInFish = function() {
+          const s = window.Aetheria.State.data;
+          const beforeFish = (s.inventory && s.inventory.fish) || 0;
+          origReel.apply(this, arguments);
+          const afterFish = (s.inventory && s.inventory.fish) || 0;
+          if (afterFish > beforeFish) {
+            if (!s.bountyStats) s.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
+            s.bountyStats.fishes = (s.bountyStats.fishes || 0) + 1;
+            window.Aetheria.State.save();
+          }
+        };
+        window.Aetheria.Explore._fishHooked = true;
+      }
     } catch (e) {}
 
     try { window.Aetheria.UI.decorateNavIcons(); } catch (e) {}
