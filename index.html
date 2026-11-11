@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v5.1)</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v5.3)</title>
+  <link rel="stylesheet" href="css/style.css?v=5.3">
 </head>
 <body>
 
@@ -16,7 +16,7 @@
       <div class="title-emblem-box">
         <div class="title-sub">PROJECT J : TACTICAL PIXEL RPG</div>
         <h1 class="title-main">艾瑟瑞亞的破曉</h1>
-        <div class="title-ver">DAWN OF AETHERIA v5.1</div>
+        <div class="title-ver">DAWN OF AETHERIA v5.3</div>
       </div>
       <div class="title-hero-showcase" id="title-hero-preview"></div>
     </div>
@@ -35,7 +35,6 @@
 
   <!-- ================= 上半屏：純 DOM 開源像素地圖視窗 & 戰鬥舞台 (45%) ================= -->
   <div id="upper-screen">
-    <!-- 頂部生命紅心與極簡狀態列 -->
     <div id="hud-hearts-box"></div>
     <div id="hud-overlay">
       <div class="hud-minimal-left">
@@ -47,7 +46,6 @@
       </div>
     </div>
 
-    <!-- 隱藏相容節點 -->
     <div style="display:none;">
       <span id="hud-pet"></span>
       <span id="hud-guild"></span>
@@ -68,7 +66,7 @@
     <!-- 洞穴火把視野遮罩 -->
     <div id="fog-overlay"></div>
 
-    <!-- 環境危害閃爍遮罩 (極寒凍傷 / 熔岩灼傷) -->
+    <!-- 環境危害閃爍遮罩 -->
     <div id="hazard-overlay"></div>
 
     <!-- ================= 釣魚小遊戲互動視窗 ================= -->
@@ -89,7 +87,7 @@
       </div>
     </div>
 
-    <!-- ================= 戰術意圖與硬核攻防戰鬥舞台 ================= -->
+    <!-- ================= 多層次像素戰鬥舞台 ================= -->
     <div id="battle-stage">
       <div class="bt-top-hud">
         <div class="bt-hero-status-card">
@@ -139,7 +137,7 @@
       </div>
     </div>
 
-    <!-- ================= 劇情過場與 Boss 登場演出視窗 ================= -->
+    <!-- ================= 劇情過場視窗 ================= -->
     <div id="story-cutscene-modal" style="display:none;">
       <div class="story-box">
         <div class="story-chapter-tag" id="story-tag">序幕・失落符文與靜默災厄</div>
@@ -149,7 +147,6 @@
       </div>
     </div>
 
-    <!-- 浮動通知橫幅 -->
     <div id="toast-banner">系統提示</div>
   </div>
 
@@ -168,8 +165,7 @@
       </div>
 
       <div id="explore-log">
-        <div id="hud-quest" class="log-quest-line">主線：找營地鐵匠大叔・巴爾對話</div>
-        <div id="pinned-recipe" class="log-pin-line">目標：翠風荊棘短刃</div>
+        <div id="hud-quest" class="log-quest-line">主線：與營地【鐵匠巴爾】對話</div>
       </div>
 
       <div class="controls-pads">
@@ -263,20 +259,20 @@
   </div>
 </div>
 
-<!-- 5 層解耦模組載入順序 -->
-<script src="js/engine/save-state.js"></script>
-<script src="js/engine/audio-synth.js"></script>
-<script src="js/data/pixel-sprites.js"></script>
-<script src="js/data/world-maps.js"></script>
-<script src="js/data/items-crafting.js"></script>
-<script src="js/data/jobs-monsters.js"></script>
-<script src="js/data/quests-npcs.js"></script>
-<script src="questions/question-bridge.js"></script>
-<script src="js/engine/camera-renderer.js"></script>
-<script src="js/systems/exploration-gather.js"></script>
-<script src="js/systems/quiz-widgets.js"></script>
-<script src="js/systems/battle-break-boost.js"></script>
-<script src="js/systems/progression-town.js"></script>
+<!-- 加入 ?v=5.3 強制瀏覽器重新載入最新腳本，破除舊快取 -->
+<script src="js/engine/save-state.js?v=5.3"></script>
+<script src="js/engine/audio-synth.js?v=5.3"></script>
+<script src="js/data/pixel-sprites.js?v=5.3"></script>
+<script src="js/data/world-maps.js?v=5.3"></script>
+<script src="js/data/items-crafting.js?v=5.3"></script>
+<script src="js/data/jobs-monsters.js?v=5.3"></script>
+<script src="js/data/quests-npcs.js?v=5.3"></script>
+<script src="questions/question-bridge.js?v=5.3"></script>
+<script src="js/engine/camera-renderer.js?v=5.3"></script>
+<script src="js/systems/exploration-gather.js?v=5.3"></script>
+<script src="js/systems/quiz-widgets.js?v=5.3"></script>
+<script src="js/systems/battle-break-boost.js?v=5.3"></script>
+<script src="js/systems/progression-town.js?v=5.3"></script>
 
 </body>
 </html>
