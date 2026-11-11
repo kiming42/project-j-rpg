@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 下半框即時 ?/N 進度、嚴格次序任務與四態視覺總管 (progression-town.js - v6.2)
+ * Project J：艾瑟瑞亞的破曉 — 圖標化分步任務指引 (①收集素材 ➔ ②工坊打造 ➔ ③交付) 總管 (progression-town.js - v6.5)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -33,7 +33,6 @@ window.Aetheria = window.Aetheria || {};
     return parts.join("") || "初始裝備";
   }
 
-  // 將任務進度陣列 [{ key, name, cur, max }] 格式化為「枯枝 2/3 ｜ 黏土 1/2」HTML
   function formatProgressListHtml(list, forDarkBg) {
     if (!list || list.length === 0) return "";
     const S = window.Aetheria.Data.Sprites;
@@ -48,9 +47,41 @@ window.Aetheria = window.Aetheria || {};
         ? S.iconHtml(getItemSpriteKey(item.key))
         : "";
       return '<span style="color:' + col + ';font-weight:900;margin-right:6px;white-space:nowrap;">' +
-        icon + item.name + ": " + item.cur + "/" + item.max + (ok ? "✓" : "") +
+        icon + item.name + ":" + item.cur + "/" + item.max + (ok ? "✓" : "") +
       '</span>';
     }).join(" ");
+  }
+
+  // 問題 9 核心升級：自動判斷當前主線屬於「①收集素材」定係「②去工坊打造/去工程點建造」並輸出清晰提示！
+  function buildNextStepHintHtml(s, mq, forDarkBg) {
+    if (!mq || !mq.getProgressList) return "";
+    const list = mq.getProgressList(s);
+    const allMatsReady = list.length > 0 && list.every(function(i) { return i.cur >= i.max; });
+    const questDone = mq.checkComplete(s);
+
+    const hlCol = forDarkBg ? "#5ac54f" : "#1d5eb8";
+    const stepCol = forDarkBg ? "#ffd166" : "#b5381a";
+
+    // 若材料已齊全，但任務尚未完成 -> 代表需要執行「步驟 ②：去工坊打造裝備 / 去工程牌投入建造」！
+    if (allMatsReady && !questDone) {
+      if (mq.id === "mq_03" || mq.id === "mq_04" || mq.id === "mq_10" || mq.id === "mq_13") {
+        return '<span style="color:' + hlCol + ';font-weight:900;">➔ 【步驟②】材料已齊！請回營地打開上方【工坊】打造裝備！</span>';
+      }
+      if (mq.id === "mq_05" || mq.id === "mq_08" || mq.id === "mq_11" || mq.id === "mq_14" || mq.id === "mq_16") {
+        return '<span style="color:' + hlCol + ';font-weight:900;">➔ 【步驟②】建材已齊！請走近地圖上的【工程牌】按 A 鍵投入建造！</span>';
+      }
+    }
+
+    // 檢查是否需要先去工坊合成「加工厚木板 / 麻繩 / 鐵釘 / 防水膠 / 風帆 / 耐火磚」
+    const craftMatKeys = ["plank", "rope", "nails", "pitch", "heavySail", "firebrick"];
+    const missingCraftMat = list.find(function(i) {
+      return craftMatKeys.indexOf(i.key) !== -1 && i.cur < i.max;
+    });
+    if (missingCraftMat) {
+      return '<span style="color:' + stepCol + ';font-weight:900;">（提示：' + missingCraftMat.name + ' 需回營地【工坊 ➔ 建材加工】合成）</span>';
+    }
+
+    return "";
   }
 
   function isInCampForgeZone(state) {
@@ -246,7 +277,7 @@ window.Aetheria = window.Aetheria || {};
       setTimeout(function() { el.remove(); }, 880);
     },
 
-    // ================= 更新下半屏雙行任務框：即時顯示「枯枝 ?/3、黏土 ?/2」進度 =================
+    // ================= 更新下半屏分步任務進度框 (①收集素材 ➔ ②工坊打造 ➔ ③交付) =================
     updateAllHud: function() {
       window.Aetheria.State.recalcMaxHp();
       const s = window.Aetheria.State.data;
@@ -279,25 +310,21 @@ window.Aetheria = window.Aetheria || {};
           const isAcc = Boolean(s.questProgress && s.questProgress["acc_" + mq.id]);
           const isDone = mq.checkComplete(s);
 
-          // 步驟 1：尚未找 NPC 對話接取任務
           if (!isAcc) {
             questEl.innerHTML =
               '<div><span class="q-badge-avail">! 新主線</span> <b>[' + mq.chapter + '] 請先找【' + mq.giverName + '】對話接取任務</b></div>' +
-              '<div class="log-prog-line">位置：' + mq.giverZone + '（走近 ' + mq.giverName + ' 按 A 鍵聊天接取）</div>';
-          }
-          // 步驟 3：已接取且條件已達成，等待找 NPC 交付
-          else if (isDone) {
+              '<div class="log-prog-line">位置：<b>' + mq.giverZone + '</b>（走近 ' + mq.giverName + ' 按 A 鍵聊天接取）</div>';
+          } else if (isDone) {
             const progHtml = mq.getProgressList ? formatProgressListHtml(mq.getProgressList(s), false) : "";
             questEl.innerHTML =
               '<div><span class="q-badge-ready">✓ 可交付</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></div>' +
-              '<div class="log-prog-line">' + progHtml + ' <b style="color:#1d5eb8;">➔ 去找【' + mq.giverName + '】交付領獎！</b></div>';
-          }
-          // 步驟 2：已接取・進行中（即時顯示「枯枝 ?/3、黏土 ?/2」）
-          else {
+              '<div class="log-prog-line">' + progHtml + ' <b style="color:#1d5eb8;">➔ 【步驟③】去【' + mq.giverZone + '】找【' + mq.giverName + '】領獎！</b></div>';
+          } else {
             const progHtml = mq.getProgressList ? formatProgressListHtml(mq.getProgressList(s), false) : cleanText(mq.desc);
+            const nextStepHtml = buildNextStepHintHtml(s, mq, false);
             questEl.innerHTML =
               '<div><span class="q-badge-active">⏳ 進行中</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></div>' +
-              '<div class="log-prog-line">進度：' + progHtml + '</div>';
+              '<div class="log-prog-line"><span>① 收集：</span>' + progHtml + ' ' + nextStepHtml + '</div>';
           }
         } else {
           questEl.innerHTML = S.iconHtml("icon_scroll") + "主線全破！無盡試煉之塔最高：第 " + s.maxTowerFloor + " 層";
@@ -337,7 +364,6 @@ window.Aetheria = window.Aetheria || {};
       const proj = window.Aetheria.Data.SURVIVAL_PROJECTS && window.Aetheria.Data.SURVIVAL_PROJECTS[projectId];
       if (!proj) return;
 
-      // 若玩家直接點工程牌，自動將對應主線標記為已接取，避免漏接
       const mq = window.Aetheria.Data.getCurrentMainQuest(s);
       if (mq && !s.questProgress["acc_" + mq.id]) {
         s.questProgress["acc_" + mq.id] = true;
@@ -395,7 +421,7 @@ window.Aetheria = window.Aetheria || {};
       } else {
         const tip = document.createElement("div");
         tip.style.cssText = "font-size:12px; color:#ffd166; margin-top:6px; text-align:center;";
-        tip.innerText = "提示：厚木板、麻繩、鐵釘、防水膠、風帆與耐火磚可回【0.曙光營地 ➔ 工坊 ➔ 建材加工】合成！";
+        tip.innerText = "提示：厚木板、麻繩、鐵釘、防水膠、風帆與耐火磚可回【鐵匠帳篷 ➔ 工坊 ➔ 建材加工】合成！";
         body.appendChild(tip);
       }
     },
@@ -445,7 +471,6 @@ window.Aetheria = window.Aetheria || {};
       s.projectsBuilt[projectId] = true;
       if (proj.onComplete) proj.onComplete(s);
 
-      // 自動將當前主線標記為已接取，方便直接向 NPC 交付領獎
       const mq = window.Aetheria.Data.getCurrentMainQuest(s);
       if (mq) s.questProgress["acc_" + mq.id] = true;
 
@@ -534,7 +559,7 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("享用【" + meal.name + "】！獲得 3 場戰鬥強化 Buff！");
     },
 
-    // ================= 1. NPC 對話：4 狀態視覺分明（！可接取 / ⏳已接進行中 / ✓可交付領獎 / ✓已完成） =================
+    // ================= 1. NPC 對話：4 狀態分明卡片與分步任務指引 =================
     openNpcDialogue: function(npcId) {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -552,22 +577,19 @@ window.Aetheria = window.Aetheria || {};
       const btnGrid = document.getElementById("npc-action-buttons");
       btnGrid.innerHTML = "";
 
-      // A. 檢查當前主線任務是否由此 NPC 負責交接
       const mq = window.Aetheria.Data.getCurrentMainQuest(s);
       if (mq && mq.giverNpcId === npcId) {
         const isAcc = Boolean(s.questProgress && s.questProgress["acc_" + mq.id]);
         const mqDone = mq.checkComplete(s);
         const progHtml = mq.getProgressList ? formatProgressListHtml(mq.getProgressList(s), true) : "";
+        const nextHint = buildNextStepHintHtml(s, mq, true);
 
         const mqCard = document.createElement("div");
 
-        // 狀態 1：尚未接取主線 (黃色高亮卡片)
         if (!isAcc) {
           mqCard.className = "q-card-avail";
           mqCard.innerHTML =
-            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-              '<span><span class="q-badge-avail">！可接主線</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></span>' +
-            '</div>' +
+            '<div><span class="q-badge-avail">！可接主線</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></div>' +
             '<div style="font-size:12px; color:#f5e6c4; margin:4px 0;">' + cleanText(mq.desc) + '</div>' +
             '<div style="font-size:12px; color:#ffd166; font-weight:900;">獎勵：' + cleanText(mq.rewardText) + ' ➔ 【點擊此處接受任務】</div>';
           mqCard.onclick = function() {
@@ -578,41 +600,33 @@ window.Aetheria = window.Aetheria || {};
             self.updateAllHud();
             self.showToast("已接受主線任務：【" + cleanText(mq.title) + "】！");
           };
-        }
-        // 狀態 3：已接取且條件已達成，可立即交付領獎 (翠綠發光卡片)
-        else if (mqDone) {
+        } else if (mqDone) {
           mqCard.className = "q-card-ready";
           mqCard.innerHTML =
-            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-              '<span><span class="q-badge-ready">✓ 可交付領獎！</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></span>' +
-            '</div>' +
+            '<div><span class="q-badge-ready">✓ 可交付領獎！</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></div>' +
             (progHtml ? '<div style="font-size:12px; margin:4px 0;">進度：' + progHtml + '</div>' : '') +
             '<div style="font-size:13px; color:#5ac54f; font-weight:900; margin-top:4px;">★ 條件已達成！點擊立即交付並領取：' + cleanText(mq.rewardText) + '</div>';
           mqCard.onclick = function() {
             self.claimMainQuestFromNpc(mq.id, npcId);
           };
-        }
-        // 狀態 2：已接取・進行中 (藍色卡片，清楚顯示 ?/N 進度)
-        else {
+        } else {
           mqCard.className = "q-card-active";
           mqCard.innerHTML =
-            '<div style="display:flex; justify-content:space-between; align-items:center;">' +
-              '<span><span class="q-badge-active">⏳ 已接取・進行中</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></span>' +
-            '</div>' +
-            '<div style="font-size:12px; margin:4px 0;">當前進度：' + (progHtml || cleanText(mq.desc)) + '</div>' +
-            '<div style="font-size:11px; color:#8ce0ff;">完成獎勵：' + cleanText(mq.rewardText) + '（備齊後回來點擊交付）</div>';
+            '<div><span class="q-badge-active">⏳ 已接取・進行中</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></div>' +
+            '<div style="font-size:12px; margin:4px 0;">① 收集進度：' + (progHtml || cleanText(mq.desc)) + '</div>' +
+            (nextHint ? '<div style="font-size:12px; margin:3px 0;">' + nextHint + '</div>' : '') +
+            '<div style="font-size:11px; color:#8ce0ff;">完成獎勵：' + cleanText(mq.rewardText) + '</div>';
           mqCard.onclick = function() {
             if (mq.id === "mq_01") {
               self.openProjectModal("proj_camp_forge");
             } else {
-              self.showToast("任務進行中！請先集齊所需目標再回來交付。");
+              self.showToast("任務進行中！請按步驟收集材料並打造指定物品後再回來交付。");
             }
           };
         }
         btnGrid.appendChild(mqCard);
       }
 
-      // B. 渲染此村民的專屬支線委託 (嚴格按次序：前一個完成後才顯示下一個！)
       if (npc.villagerQuests && npc.villagerQuests.length > 0) {
         let allVQsDone = true;
         let shownUnfinishedOne = false;
@@ -621,14 +635,12 @@ window.Aetheria = window.Aetheria || {};
           const rec = s.npcQuests && s.npcQuests[vq.id];
           if (!rec || rec.status !== "completed") allVQsDone = false;
 
-          // 尚未解鎖的後續委託完全隱藏，確保一次只專注一個委託！
           if (!window.Aetheria.Data.isVillagerQuestUnlocked(s, vq)) return;
           if ((!rec || rec.status !== "completed") && shownUnfinishedOne) return;
           if (!rec || rec.status !== "completed") shownUnfinishedOne = true;
 
           const vCard = document.createElement("div");
 
-          // 狀態 1：尚未接取 (黃色高亮)
           if (!rec) {
             vCard.className = "q-card-avail";
             vCard.innerHTML =
@@ -636,9 +648,7 @@ window.Aetheria = window.Aetheria || {};
               '<div style="font-size:12px; color:#f5e6c4; margin:3px 0;">' + vq.desc + '</div>' +
               '<div style="font-size:12px; color:#ffd166; font-weight:900;">報酬：' + vq.rewardText + ' ➔ 【點擊此處接受委託】</div>';
             vCard.onclick = function() { self.acceptVillagerQuest(vq.id, npcId); };
-          }
-          // 狀態 2 & 3：已接取
-          else if (rec.status === "accepted") {
+          } else if (rec.status === "accepted") {
             const ready = window.Aetheria.Data.isVillagerQuestReady(s, vq);
             const vProgList = window.Aetheria.Data.getVillagerQuestProgressList(s, vq);
             const vProgHtml = formatProgressListHtml(vProgList, true);
@@ -657,12 +667,10 @@ window.Aetheria = window.Aetheria || {};
                 '<div style="font-size:12px; margin:4px 0;">當前進度：' + vProgHtml + '</div>' +
                 '<div style="font-size:11px; color:#8ce0ff;">報酬：' + vq.rewardText + '（達成後回來點擊交付）</div>';
               vCard.onclick = function() {
-                self.showToast("支線進行中！請先達成目標進度再回來交付。");
+                self.showToast("支線進行中！請先集齊所需物資再回來交付。");
               };
             }
-          }
-          // 狀態 4：已完成 (暗灰收納)
-          else {
+          } else {
             vCard.className = "q-card-done";
             vCard.innerHTML = '<div><span class="q-badge-done">✓ 已完成</span> <b>' + vq.title + '</b></div>';
           }
@@ -695,7 +703,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // C. 專屬功能服務按鈕
       if (npc.serviceLabel) {
         const srvBtn = document.createElement("button");
         srvBtn.className = "na-btn highlight";
@@ -707,14 +714,13 @@ window.Aetheria = window.Aetheria || {};
           srvBtn.innerHTML = S.iconHtml("icon_forge") + cleanText(npc.serviceLabel);
           srvBtn.onclick = function() {
             if (npc.serviceAction === "openMonolithModal") self.openGuildModal("monolith");
-            else if (npc.serviceAction === "openMerchantShop") self.openForgeModal("alchemy");
+            else if (npc.serviceAction === "openMerchantShop") self.openForgeModal("tool");
             else if (self[npc.serviceAction]) self[npc.serviceAction]();
           };
         }
         btnGrid.appendChild(srvBtn);
       }
 
-      // D. 旅人指令 (探查 / 切磋)
       if (npc.pathActions && npc.pathActions.length > 0) {
         const paRow = document.createElement("div");
         paRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr; gap:5px;";
@@ -758,7 +764,6 @@ window.Aetheria = window.Aetheria || {};
       s.questProgress["claimed_" + mqId] = true;
       mq.onClaim(s);
 
-      // 若下一個主線也是同一個 NPC 發起，自動留在對話頁面顯示新主線供玩家接取！
       window.Aetheria.Audio.sfxLevelUp();
       window.Aetheria.State.save();
       if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
@@ -869,7 +874,7 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("已傳送至【" + mapObj.name + "】（資源已刷新）！");
     },
 
-    // ================= 3. 拓荒日誌 (零劇透單一主線 + 4狀態分明列表) =================
+    // ================= 3. 拓荒日誌 (零劇透單一主線 + 分步任務流程) =================
     openGuildModal: function(activeTab) {
       activeTab = activeTab || "quest";
       window.Aetheria.State.updateGuildRank();
@@ -913,6 +918,7 @@ window.Aetheria = window.Aetheria || {};
           const isAcc = Boolean(s.questProgress && s.questProgress["acc_" + mq.id]);
           const isDone = mq.checkComplete(s);
           const progHtml = mq.getProgressList ? formatProgressListHtml(mq.getProgressList(s), true) : "";
+          const nextStepHtml = buildNextStepHintHtml(s, mq, true);
 
           const mqCard = document.createElement("div");
           if (!isAcc) {
@@ -931,8 +937,9 @@ window.Aetheria = window.Aetheria || {};
             mqCard.className = "q-card-active";
             mqCard.innerHTML =
               '<div><span class="q-badge-active">⏳ 已接取・進行中</span> <b>[' + mq.chapter + '] ' + cleanText(mq.title) + '</b></div>' +
-              '<div style="font-size:12px; margin:4px 0;">' + cleanText(mq.desc) + '</div>' +
-              '<div style="font-size:12px; margin:4px 0;">進度：' + progHtml + '</div>' +
+              '<div style="font-size:12px; margin:4px 0;">流程：' + cleanText(mq.desc) + '</div>' +
+              '<div style="font-size:12px; margin:4px 0;">① 收集進度：' + progHtml + '</div>' +
+              (nextStepHtml ? '<div style="font-size:12px; margin:3px 0;">' + nextStepHtml + '</div>' : '') +
               '<div style="font-size:11px; color:#8ce0ff;">交接人：【' + mq.giverName + '】（' + mq.giverZone + '）｜獎勵：' + cleanText(mq.rewardText) + '</div>';
           }
           body.appendChild(mqCard);
@@ -1199,7 +1206,7 @@ window.Aetheria = window.Aetheria || {};
     deliverGuildBounty: function(bountyId) {
       const s = window.Aetheria.State.data;
       if (s.currentZone !== "camp_hub" && s.currentZone !== "tent_guild") {
-        this.showToast("請返回【0.曙光營地】向公會長雷恩交付試煉領獎！");
+        this.showToast("請返回【0.公會帳篷】向公會長雷恩交付試煉領獎！");
         return;
       }
       const entry = (s.activeBounties || []).find(function(e) {
@@ -1548,7 +1555,7 @@ window.Aetheria = window.Aetheria || {};
     craftWorkshopMat: function(wkId) {
       const s = window.Aetheria.State.data;
       if (!isInCampForgeZone(s)) {
-        this.showToast("需返回【0.曙光露營基地】找鐵匠巴爾才可加工工程建材！");
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可加工工程建材！");
         return;
       }
       const wk = (window.Aetheria.Data.WORKSHOP_RECIPES || []).find(function(r) { return r.id === wkId; });
@@ -1599,7 +1606,7 @@ window.Aetheria = window.Aetheria || {};
     craftArmor: function(aId) {
       const s = window.Aetheria.State.data;
       if (!isInCampForgeZone(s)) {
-        this.showToast("需返回【0.曙光露營基地】找鐵匠巴爾才可鍛造防具！");
+        this.showToast("需返回【0.曙光營地】找鐵匠巴爾才可鍛造防具！");
         return;
       }
       const a = window.Aetheria.Data.ARMORS[aId];
@@ -1895,114 +1902,6 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.State.save();
       this.openJobPetModal();
       this.updateAllHud();
-    },
-
-    // ================= 7. 設定頁面 =================
-    openSettingsModal: function(tab) {
-      tab = tab || "astrolabe";
-      const s = window.Aetheria.State.data;
-      const S = window.Aetheria.Data.Sprites;
-      const self = this;
-
-      this.setActivePanel("panel-modal");
-      document.getElementById("modal-title").innerHTML = S.iconHtml("icon_gear") + "系統設定";
-
-      const body = document.getElementById("modal-body");
-      body.innerHTML = "";
-
-      const tabBar = document.createElement("div");
-      tabBar.className = "tab-bar";
-      [
-        { id: "astrolabe", label: "星象調頻" },
-        { id: "preview",   label: "題型預覽" },
-        { id: "report",    label: "四科報告" },
-        { id: "system",    label: "存檔/重置" }
-      ].forEach(function(t) {
-        const b = document.createElement("button");
-        b.className = "na-btn" + (tab === t.id ? " highlight" : "");
-        b.innerText = t.label;
-        b.onclick = function() { self.openSettingsModal(t.id); };
-        tabBar.appendChild(b);
-      });
-      body.appendChild(tabBar);
-
-      if (tab === "astrolabe") {
-        [
-          { key: "chinese",    name: "中文科（字詞四選一、例句拼字）" },
-          { key: "english",    name: "英文科（全盲鍵盤串字、例句四選一）" },
-          { key: "science",    name: "科學科（看圖填充、情境推理、簡答）" },
-          { key: "humanities", name: "人文科（左右連線配對、地形圖題）" }
-        ].forEach(function(sub) {
-          const on = Boolean(s.activeSubjects[sub.key]);
-          const row = document.createElement("div");
-          row.className = "sys-card";
-          row.style.display = "flex";
-          row.style.justifyContent = "space-between";
-          row.style.alignItems = "center";
-          row.innerHTML =
-            '<span>' + S.iconHtml("icon_scroll") + sub.name + '</span>' +
-            '<button class="na-btn ' + (on ? 'highlight' : '') + '" style="padding:4px 10px;" onclick="Aetheria.UI.toggleSubject(\'' + sub.key + '\')">' + (on ? '已啟用' : '未啟用') + '</button>';
-          body.appendChild(row);
-        });
-      } else if (tab === "preview") {
-        window.Aetheria.QuizBridge.getAllQuestions().forEach(function(q, idx) {
-          const btn = document.createElement("button");
-          btn.className = "na-btn";
-          btn.style.cssText = "width:100%; text-align:left; padding:7px 10px; margin-bottom:4px;";
-          btn.innerHTML = S.iconHtml("icon_scroll") + (idx + 1) + ". <b>[" + cleanText(q.subjectLabel) + "]</b> — " + cleanText(q.typeLabel);
-          btn.onclick = function() { window.Aetheria.Battle.startBattle(null, "combat", q.id); };
-          body.appendChild(btn);
-        });
-      } else if (tab === "report") {
-        const allQ = window.Aetheria.QuizBridge.getAllQuestions();
-        const subjStats = {
-          chinese:    { name: "中文科", total: 0, mastered: 0, stars: 0 },
-          english:    { name: "英文科", total: 0, mastered: 0, stars: 0 },
-          science:    { name: "科學科", total: 0, mastered: 0, stars: 0 },
-          humanities: { name: "人文科", total: 0, mastered: 0, stars: 0 }
-        };
-        allQ.forEach(function(q) {
-          const st = subjStats[q.subject];
-          if (st) {
-            st.total++;
-            const m = s.questionMastery && s.questionMastery[q.id];
-            if (m && m.stars > 0) { st.mastered++; st.stars += m.stars; }
-          }
-        });
-
-        const repCard = document.createElement("div");
-        repCard.className = "sys-card-scroll";
-        repCard.innerHTML =
-          '<div style="font-weight:900; margin-bottom:4px;">四科掌握度（最高連勝：' + (s.maxStreak || 0) + ' 題）</div>' +
-          Object.values(subjStats).map(function(st) {
-            const pct = st.total > 0 ? Math.round((st.mastered / st.total) * 100) : 0;
-            return '<div style="display:flex; justify-content:space-between; margin:3px 0;">' +
-              '<span>' + st.name + '：<b>' + st.mastered + '/' + st.total + '</b> (' + pct + '%)</span>' +
-              '<span style="color:#8f563b; font-weight:bold;">★' + st.stars + '</span>' +
-            '</div>';
-          }).join("");
-        body.appendChild(repCard);
-      } else if (tab === "system") {
-        const sysCard = document.createElement("div");
-        sysCard.className = "sys-card";
-        sysCard.innerHTML =
-          '<div style="display:flex; flex-direction:column; gap:6px;">' +
-            '<button class="na-btn" style="padding:8px;" onclick="Aetheria.Audio.toggleMute(); Aetheria.UI.showToast(\'已切換音樂開關！\');">切換 8-bit 音樂 (開 / 關)</button>' +
-            '<button class="na-btn" style="padding:8px;" onclick="Aetheria.UI.playCutscene(\'intro\')">重溫開場故事序幕</button>' +
-            '<button class="na-btn highlight" style="padding:8px;" onclick="Aetheria.UI.exportSavePrompt()">複製存檔 JSON 代碼 (備份)</button>' +
-            '<button class="na-btn" style="padding:8px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原)</button>' +
-            '<button class="na-btn" style="padding:8px;" onclick="document.getElementById(\'title-screen\').style.display=\'flex\'; Aetheria.UI.initTitleScreen();">返回遊戲首頁</button>' +
-            '<button class="na-btn" style="padding:8px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm(\'確定要清除所有進度並重新開始 v6.2 拓荒冒險嗎？\')) Aetheria.State.resetSave()">重置遊戲 (清除進度)</button>' +
-          '</div>';
-        body.appendChild(sysCard);
-      }
-    },
-
-    toggleSubject: function(key) {
-      const s = window.Aetheria.State.data;
-      s.activeSubjects[key] = !s.activeSubjects[key];
-      window.Aetheria.State.save();
-      this.openSettingsModal("astrolabe");
     },
 
     exportSavePrompt: function() {
