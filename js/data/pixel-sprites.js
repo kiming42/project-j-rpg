@@ -1,6 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 全 26 種獨立素材與角色 16x16 點陣圖資庫 (pixel-sprites.js - v5.2)
- * 升級：為每一種素材（包含 T1~T4 不同階級礦石、植物、特產、6大破防核心與消耗品）提供專屬獨立 16x16 點陣圖！
+ * Project J：艾瑟瑞亞的破曉 — 全40種獨立素材、10位NPC與拓荒工程 16x16 點陣圖資庫 (pixel-sprites.js - v6.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -58,7 +57,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
   }
 
   const MATRICES = {
-    // ================= 1. 主角、戰寵、NPC 與魔物 =================
+    // ================= 1. 主角與四大戰寵 =================
     hero_down_0: [
       "....KKKKKKKK....",
       "...KBBBBBBBBK...",
@@ -221,6 +220,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "...KKKK..KKKK...",
       "................"
     ],
+
+    // ================= 2. 營地 4 大導師 + 新增 6 位各區村民 NPC =================
     npc_blacksmith: [
       "....KKKKKKKK....",
       "...KRRRRRRRRK...",
@@ -293,6 +294,122 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "...KKKK..KKKK...",
       "................"
     ],
+    // 新村民 1：老漁夫・阿海 (戴斗笠、穿藍背心持魚竿)
+    npc_fisher: [
+      ".....KKKKKK.....",
+      "...KKYYYYYYKK...",
+      ".KKYYYYyyyyYYKK.",
+      "KooooooooooooooK",
+      "..KSSSSSSSSSSK..",
+      "..KSSKSSSSKSSK..",
+      "..KssWWWWWWssK..",
+      ".KBBBBBBBBBBBBK.",
+      ".KBBbbbbbbbbBBK.",
+      ".KSBbbbbbbbbBSK.",
+      "...KbbbbbbbbK...",
+      "...KbbKKKKbbK...",
+      "...KwwK..KwwK...",
+      "...KKKK..KKKK...",
+      "................",
+      "................"
+    ],
+    // 新村民 2：草藥婆婆・梅姑 (綠頭巾、慈祥婆婆)
+    npc_herbalist: [
+      "....KKKKKKKK....",
+      "...KGGGGGGGGK...",
+      "..KGLLLLLLLLGK..",
+      "..KGWWWWWWWWGK..",
+      "..KSSSSSSSSSSK..",
+      "..KSSKSSSSKSSK..",
+      "...KSSSSSSSSK...",
+      "..KggggggggggK..",
+      ".KGggggggggggGK.",
+      ".KSgLLLLLLLLgSK.",
+      "...KggggggggK...",
+      "...KggKKKKggK...",
+      "...KwwK..KwwK...",
+      "...KKKK..KKKK...",
+      "................",
+      "................"
+    ],
+    // 新村民 3：受困斥候・里奧 (綠羽帽、輕甲斥候)
+    npc_scout: [
+      "......KKKK..KK..",
+      "....KKGGGGKKRRK.",
+      "...KGGGGGGGGKRK.",
+      "..KggggggggggK..",
+      "..KSSSSSSSSSSK..",
+      "..KSSKSSSSKSSK..",
+      "...KSSSSSSSSK...",
+      "..KooooooooooK..",
+      ".KOooooooooooOK.",
+      ".KSOoYYYYYYoOSK.",
+      "...KooooooooK...",
+      "...KooKKKKooK...",
+      "...KwwK..KwwK...",
+      "...KKKK..KKKK...",
+      "................",
+      "................"
+    ],
+    // 新村民 4：見習礦工・石頭 (黃色安全礦工帽 + 頭燈)
+    npc_miner: [
+      "....KKKKKKKK....",
+      "...KYYYYYYYYK...",
+      "..KYYYWWWWYYYK..",
+      "..KyyyyyyyyyyK..",
+      "..KSSSSSSSSSSK..",
+      "..KSSKSSSSKSSK..",
+      "...KssssssssK...",
+      "..KddddddddddK..",
+      ".KddooooooooAdd.",
+      ".KSdooooooooAdSK",
+      "...KddddddddK...",
+      "...KddKKKKddK...",
+      "...KwwK..KwwK...",
+      "...KKKK..KKKK...",
+      "................",
+      "................"
+    ],
+    // 新村民 5：遺跡學者・古斯塔 (白髮眼鏡學者)
+    npc_scholar: [
+      "....KKKKKKKK....",
+      "...KMMMMMMMMK...",
+      "..KMWWWWWWWWMK..",
+      "..KSSSSSSSSSSK..",
+      "..KCCKSSSSKCCK..",
+      "...KSSSSSSSSK...",
+      "..KbbbbbbbbbbK..",
+      ".KbbYYYYYYYYbbK.",
+      ".KSbYbbbbbbYbSK.",
+      "...KbbbbbbbbK...",
+      "...KbbKKKKbbK...",
+      "...KwwK..KwwK...",
+      "...KKKK..KKKK...",
+      "................",
+      "................",
+      "................"
+    ],
+    // 新村民 6：老船匠・達克 (紅頭巾海狼船匠)
+    npc_shipwright: [
+      "....KKKKKKKK....",
+      "...KRRRRRRRRK...",
+      "..KRRWWWWWWWRK..",
+      "..KSSSSSSSSSSK..",
+      "..KSSKSSSSKSSK..",
+      "..KsswwwwwwssK..",
+      ".KwwwwwwwwwwwwK.",
+      ".KwOOOOOOOOOOwK.",
+      ".KSOOyyyyyyOOSK.",
+      "...KooooooooK...",
+      "...KddKKKKddK...",
+      "...KwwK..KwwK...",
+      "...KKKK..KKKK...",
+      "................",
+      "................",
+      "................"
+    ],
+
+    // ================= 3. 魔物、賞金首與領主 =================
     mon_bamboo: [
       "....KKKKKKKK....",
       "...KLLLLLLLLK...",
@@ -348,8 +465,276 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ],
 
-    // ================= 2. 全 26 種素材專屬獨立 16x16 點陣圖 (不同 Tier 完全不同圖案！) =================
-    // [礦石 Tier 1] 藍晶鐵礦：褐岩嵌蒼藍鐵礦塊
+    // ================= 4. 新增 8 種「天然生存原材」與 6 種「工坊加工建材」獨立 16x16 圖 =================
+    // [原材 1] 散落枯枝 (branch)：分叉乾枯樹枝
+    mat_branch: [
+      "..........KKKK..",
+      ".........KOOOO..",
+      "..KKKK..KOOooK..",
+      ".KOOOOKKOOooK...",
+      "..KOOooooOOOK...",
+      "...KKKKooooK....",
+      ".....KOOooK.....",
+      "....KOOooK......",
+      "...KOOooK.......",
+      "..KOOooK........",
+      ".KwwwwK.........",
+      ".KKKKK..........",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 2] 尖銳燧石 (flint)：鋒利黑灰打火石片
+    mat_flint: [
+      ".......KKK......",
+      "......KMMMK.....",
+      ".....KMWWWMK....",
+      "....KMMWWmmMK...",
+      "...KMMmmmmmmMK..",
+      "..KMMmddddddmMK.",
+      ".KMMmddddddddmMK",
+      "..KKddddddddddK.",
+      "....KKKKKKKKKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 3] 河床黏土 (clay)：濕潤柔軟的赤褐陶土團
+    mat_clay: [
+      "................",
+      ".....KKKKKK.....",
+      "...KKooooooKK...",
+      "..KooOOOOOOooK..",
+      ".KooOOSssSOOooK.",
+      ".KooOOooooOOooK.",
+      "KooooooooooooooK",
+      "KwwwwwwwwwwwwwwK",
+      ".KKKKKKKKKKKKKK.",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 4] 琥珀松脂 (resin)：晶瑩金橘色松樹樹脂水滴
+    mat_resin: [
+      ".......KK.......",
+      "......KYYK......",
+      ".....KYYYYK.....",
+      "....KYYWWYYK....",
+      "...KYYWWyyYYK...",
+      "..KYYWyyyyyYYK..",
+      "..KYYyyyyyyYYK..",
+      "..KyyyyOOOOyyK..",
+      "...KOOOOOOOO....",
+      "....KKKKKKKK....",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 5] 玄武岩塊 (basalt)：厚重方形切割黑岩石磚
+    mat_basalt: [
+      "................",
+      "..KKKKKKKKKKKK..",
+      ".KddddddddddddK.",
+      "KddMMMMMMMMMMddK",
+      "KddMmmmmmmmmMddK",
+      "KddMmmmmmmmmMddK",
+      "KddmddddddddmddK",
+      "KddddddddddddddK",
+      ".KKKKKKKKKKKKKK.",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 6] 荒野亞麻 (hemp)：金綠交織的強韌亞麻草束
+    mat_hemp: [
+      "..KK...KK...KK..",
+      ".KLLK.KLLK.KLLK.",
+      "..KLLKKLLKKLLK..",
+      "...KLLLLLLLLK...",
+      "....KGGGGGGK....",
+      "...KYYYYYYYYK...",
+      "...KyyyyyyyyK...",
+      "..KGGGGGGGGGGK..",
+      ".KGGgLLLLLLgGGK.",
+      "..KKKggggggKKK..",
+      "....KKKKKKKK....",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 7] 幽靈古帆布 (sailCloth)：帶海盜藍紋的厚帆布卷
+    mat_sailCloth: [
+      "..KKKKKKKKKKKK..",
+      ".KWWWWWWWWWWWWK.",
+      "KWWSSSSSSSSSSWWK",
+      "KWSBBBBBBBBBBSWK",
+      "KWSSSSSSSSSSSSWK",
+      "KWSBBBBBBBBBBSWK",
+      "KWWssssssssssWWK",
+      ".KssssssssssssK.",
+      "..KKKKKKKKKKKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [原材 8] 強韌獸筋 (sinew)：雙股交纏的高彈性冰原獸筋弦
+    mat_sinew: [
+      ".......KKKK.....",
+      ".....KKSSSSKK...",
+      "...KKSSWWWWSSK..",
+      "..KSSWWKKKKWWSK.",
+      ".KSSWK......KWSK",
+      ".KSWK..KKKK..KWK",
+      ".KSSK.KSSSSK.KSK",
+      "..KSKKSSssSSKKSK",
+      "...KKKKssssKKKK.",
+      ".......KKKK.....",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+
+    // [加工建材 1] 加工厚木板 (plank)：雙層釘合的平整木工板材
+    mat_plank: [
+      "................",
+      ".KKKKKKKKKKKKKK.",
+      "KOOOOOOOOOOOOOOK",
+      "KOMOOOOOOOOOOMOK",
+      "KooooooooooooooK",
+      ".KKKKKKKKKKKKKK.",
+      "KOOOOOOOOOOOOOOK",
+      "KOMOOOOOOOOOOMOK",
+      "KwwwwwwwwwwwwwwK",
+      ".KKKKKKKKKKKKKK.",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [加工建材 2] 強化麻繩索 (rope)：紮實盤繞的登山工程麻繩圈
+    mat_rope: [
+      "....KKKKKKKK....",
+      "..KKYYYYYYYYKK..",
+      ".KYYssssssssYYK.",
+      "KYssKKKKKKKKssYK",
+      "KYsK..KKKK..KsYK",
+      "KYsK.KYYYYK.KsYK",
+      "KYssKYYYYYYKssYK",
+      ".KYYssssssssYYK.",
+      "..KKooooooooKK..",
+      "....KKKKKKKK....",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [加工建材 3] 鍛造鐵釘 (nails)：三根交叉的鋒利鍛造長鐵釘
+    mat_nails: [
+      "..KKKK....KKKK..",
+      ".KMMMMK..KMMMMK.",
+      "..KKMMK..KMMKK..",
+      "....KMMKKMMK....",
+      ".....KMMMMK.....",
+      "....KMMKKMMK....",
+      "...KMMK..KMMK...",
+      "..KWWK....KWWK..",
+      "..KKK......KKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [加工建材 4] 防水松脂膠 (pitch)：裝滿金黑防水瀝青松脂的木桶
+    mat_pitch: [
+      "...KKKKKKKKKK...",
+      "..KYYYYYYYYYYK..",
+      ".KYYyyyyyyyyYYK.",
+      ".KwwwwwwwwwwwwK.",
+      ".KMMMMMMMMMMMMK.",
+      ".KooooooooooooK.",
+      ".KooooooooooooK.",
+      ".KMMMMMMMMMMMMK.",
+      "..KwwwwwwwwwwK..",
+      "...KKKKKKKKKK...",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [加工建材 5] 遠航風帆 (heavySail)：張開的黃金紋章大船帆
+    mat_heavySail: [
+      ".......KK.......",
+      "....KKKKKKKK....",
+      "..KKWWWWWWWWKK..",
+      ".KWWWWYYYYWWWWK.",
+      "KWWWWYYRRYYWWWWK",
+      "KWWWWYYYYYYWWWWK",
+      ".KWWWWWWWWWWWWK.",
+      "..KKSSSSSSSSKK..",
+      "....KKKKKKKK....",
+      ".......KK.......",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    // [加工建材 6] 黑曜耐火磚 (firebrick)：散發熔岩金光的黑曜砌牆磚
+    mat_firebrick: [
+      "................",
+      ".KKKKKKKKKKKKKK.",
+      "KppppppKKppppppK",
+      "KpRRRRpKKpRRRRpK",
+      "KppppppKKppppppK",
+      "KKKKKKKKKKKKKKKK",
+      "KpppKKppppppKKpK",
+      "KpYYKKpRRRRpKKYK",
+      "KpppKKppppppKKpK",
+      ".KKKKKKKKKKKKKK.",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+
+    // ================= 5. 原有 26 種礦石/靈草/核心/藥水獨立 16x16 圖 =================
     mat_iron: [
       "................",
       "....KKKKKKKK....",
@@ -368,7 +753,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [礦石 Tier 2] 流沙秘銀礦：高聳雙峰銀白水晶簇
     mat_mithril: [
       ".......KK.......",
       "......KWWK......",
@@ -387,7 +771,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [礦石 Tier 3] 熔岩黑曜石：帶赤紅熔岩裂紋的暗紫黑曜稜晶
     mat_obsidian: [
       "......KKKK......",
       ".....KppppK.....",
@@ -406,7 +789,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [礦石 Tier 4] 深淵星隕鐵：閃耀八芒星辰光輝的神話隕鐵
     mat_starIron: [
       ".......KK.......",
       "......KYYK......",
@@ -425,7 +807,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [木材 Tier 1] 翠風原木：橫切年輪原木圓柱
     mat_wood: [
       "................",
       "................",
@@ -444,7 +825,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [植物 Tier 1] 紅傘微光菇：白點紅傘蘑菇
     mat_herb: [
       "....KKKKKKKK....",
       "..KKRRRRRRRRKK..",
@@ -463,7 +843,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [植物 Tier 1] 堅韌藤蔓：盤繞帶刺翠綠藤蔓
     mat_vine: [
       ".....KKKKKK.....",
       "...KKGGGGGGKK...",
@@ -482,7 +861,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [植物 Tier 2] 翠風太陽花：金瓣紅心向日葵
     mat_flower: [
       "....KKKKKKKK....",
       "..KKYYYYYYYYKK..",
@@ -501,7 +879,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [植物 Tier 3] 雪山冰蓮：晶瑩剔透的冰藍雪蓮花
     mat_iceLotus: [
       ".......KK.......",
       "......KWWK......",
@@ -520,7 +897,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [植物 Tier 4] 世界樹金葉：閃耀神聖金脈的世界樹葉
     mat_goldLeaf: [
       ".........KKKK...",
       ".......KKYYYYKK.",
@@ -539,7 +915,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [特產 Tier 2] 洞窟硬甲殼：螺旋紋裝甲背殼
     mat_shell: [
       "....KKKKKKKK....",
       "..KKMMMMMMMMKK..",
@@ -558,7 +933,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [特產 Tier 2] 深海珊瑚：多孔分枝赤紅海珊瑚
     mat_coral: [
       "..KK....KK....KK",
       ".KRRK..KRRK..KRR",
@@ -577,7 +951,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [特產 Tier 3] 霜狼禦寒毛皮：厚實銀白冰紋毛皮
     mat_fur: [
       "..KKKK....KKKK..",
       ".KWWWWKKKKWWWWK.",
@@ -596,7 +969,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [特產 Tier 3] 熔岩龍鱗：金心赤紅龍族護鱗
     mat_magmaScale: [
       "....KKKKKKKK....",
       "..KKRRRRRRRRKK..",
@@ -615,7 +987,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [特產 Tier 2] 銀鱗鮮魚：活潑的銀藍鮮魚
     mat_fish: [
       "................",
       "......KKKKKK....",
@@ -634,7 +1005,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // [特產 Tier 4] 古文明聖碑殘片：刻有黃金符文的石碑碎片
     mat_tabletShard: [
       "...KKKKKKKKKK...",
       "..KddddddddddK..",
@@ -653,9 +1023,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-
-    // ================= 3. 六大魔物破防核心 / 符文專屬點陣圖 =================
-    // 竹精木心：翡翠生命木心
     mat_coreBamboo: [
       "..KKKK....KKKK..",
       ".KGGGGK..KGGGGK.",
@@ -674,13 +1041,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // 骷髏魂火：幽紫冥界魂火
     mat_coreSkull: [
       ".......KK.......",
       "......KPPK......",
       "....KKPPPPKK....",
       "...KPPCCCCPPK...",
-      "..KPPCWWIWCCPK..",
+      "..KPPCWWWWCCPK..",
       "..KPPCWWWWCCPK..",
       "..KPPPCCCCPPPK..",
       "...KppppppppK...",
@@ -693,7 +1059,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // 海妖水核：深海漩渦水寶珠
     mat_coreSiren: [
       "....KKKKKKKK....",
       "..KKBBBBBBBBKK..",
@@ -712,7 +1077,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // 雪狼冰魄：六角寒霜冰晶魄
     mat_coreWolf: [
       "......KKKK......",
       "....KKCCCCKK....",
@@ -731,7 +1095,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // 炎魔熔核：爆裂紅蓮熔岩核
     mat_coreGolem: [
       "....KKKKKKKK....",
       "..KKRRRRRRRRKK..",
@@ -750,7 +1113,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-    // 龍王逆鱗：皇冠金紅龍晶
     mat_coreDragon: [
       ".KK....KK....KK.",
       "KYYK..KYYK..KYYK",
@@ -769,8 +1131,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................",
       "................"
     ],
-
-    // ================= 4. 消耗品與環境物件 =================
     mat_potionHeal: [
       ".....KKKKKK.....",
       "....KOOOOOOK....",
@@ -844,7 +1204,79 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       "................"
     ],
 
-    // 環境物件與 UI 圖標
+    // ================= 6. 實地拓荒工程建築與環境物件 =================
+    build_site: [
+      "..KKKKKKKKKKKK..",
+      ".KYYYYKKKKYYYYK.",
+      ".KYYKKOOOOOOKYK.",
+      ".KOOOOOOOOOOOOK.",
+      ".KOwwwwwwwwwwOK.",
+      "..KKKKwwwwKKKK..",
+      "....KKwwwwKK....",
+      "...KwwwwwwwwK...",
+      "..KKKKKKKKKKKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    ladder_built: [
+      "..KKKK....KKKK..",
+      "..KOOOKKKKOOOK..",
+      "..KOOOOOOOOOOK..",
+      "..KOOOK..KOOOK..",
+      "..KOOOKKKKOOOK..",
+      "..KOOOOOOOOOOK..",
+      "..KOOOK..KOOOK..",
+      "..KOOOKKKKOOOK..",
+      "..KOOOOOOOOOOK..",
+      "..KKKK....KKKK..",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    raft_built: [
+      ".......KK.......",
+      ".....KKWWKK.....",
+      "...KKWWWWWWKK...",
+      "..KWWWWYYYYWWK..",
+      ".......KK.......",
+      ".KKKKKKKKKKKKKK.",
+      "KOOOOOOOOOOOOOOK",
+      "KwwwwwwwwwwwwwwK",
+      ".KKKKKKKKKKKKKK.",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    shelter_built: [
+      "......KKKK......",
+      "....KKWWWWKK....",
+      "..KKWWCCCCWWKK..",
+      ".KWWWWWWWWWWWWK.",
+      "KooooooooooooooK",
+      "KooOOOOOOOOOOooK",
+      "KooOOKKKKKKOOooK",
+      "KooOOKRRRRKOOooK",
+      "KooOOKRYYRKOOooK",
+      "KKKKKKKKKKKKKKKK",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
     tree: [
       "....KKKKKKKK....",
       "..KKGGGGGGGGKK..",
@@ -1502,7 +1934,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     RAW_SVGS[k] = compileMatrix16(MATRICES[k]);
   });
 
-  // 相容舊鍵名與異色閃光版
   RAW_SVGS.mat_crystal          = RAW_SVGS.mat_iron;
   RAW_SVGS.mat_mushroom         = RAW_SVGS.mat_herb;
   RAW_SVGS.pet_slime_shiny      = compileMatrix16(MATRICES.pet_slime, { B: "#ffd166", b: "#e08e45", C: "#ffffff" });
@@ -1542,7 +1973,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     getDataURL: function(key) {
       return RAW_SVGS[key] || RAW_SVGS.crate;
     },
-    // 根據素材 ID 取得專屬獨立圖標 key (確保 26 種素材每一個都唔同圖！)
     getMatSpriteKey: function(matKey) {
       const k = "mat_" + matKey;
       if (RAW_SVGS[k]) return k;
