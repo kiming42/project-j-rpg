@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 5分頁鍛造/防具/符文鑲嵌、營地料理、聖碑祭壇與劇情播放器 (progression-town.js - v4.0)
+ * Project J：艾瑟瑞亞的破曉 — 純 DOM 像素頭像、5分頁工坊、營地料理與聖碑總管 (progression-town.js - v5.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -12,7 +12,7 @@ window.Aetheria = window.Aetheria || {};
   }
 
   function getItemSpriteKey(matKey) {
-    if (matKey === "iron" || matKey === "mithril" || matKey === "obsidian" || matKey === "starIron" || matKey === "tabletShard") return "mat_crystal";
+    if (matKey === "iron" || matKey === "mithril" || matKey === "obsidian" || matKey === "starIron" || matKey === "tabletShard" || matKey === "coral") return "mat_crystal";
     if (matKey === "herb") return "mat_mushroom";
     if (matKey === "flower" || matKey === "iceLotus" || matKey === "goldLeaf" || matKey === "vine") return "mat_flower";
     if (matKey === "potionHeal" || matKey === "potionHint") return "icon_potion";
@@ -35,14 +35,14 @@ window.Aetheria = window.Aetheria || {};
 
     if (validZones.indexOf(s.currentZone) === -1) {
       s.currentZone = "camp_hub";
-      s.heroX = 250;
-      s.heroY = 220;
+      s.heroX = 320;
+      s.heroY = 260;
     }
 
     const mapObj = Maps.getMap(s.currentZone);
     if (mapObj) {
-      if (isNaN(s.heroX) || s.heroX < 20 || s.heroX > mapObj.width - 20) s.heroX = 250;
-      if (isNaN(s.heroY) || s.heroY < 20 || s.heroY > mapObj.height - 20) s.heroY = 220;
+      if (isNaN(s.heroX) || s.heroX < 20 || s.heroX > mapObj.width - 20) s.heroX = 320;
+      if (isNaN(s.heroY) || s.heroY < 20 || s.heroY > mapObj.height - 20) s.heroY = 260;
       s.petX = s.heroX - 20;
       s.petY = s.heroY + 4;
     }
@@ -52,7 +52,6 @@ window.Aetheria = window.Aetheria || {};
     cutsceneQueue: [],
     cutsceneIndex: 0,
 
-    // ================= 過場劇情演出播放器 (Story Cutscene Engine) =================
     playCutscene: function(cutKey) {
       const scripts = (window.Aetheria.Data.STORY_CUTSCENES && window.Aetheria.Data.STORY_CUTSCENES[cutKey]) || null;
       if (!scripts || scripts.length === 0) return;
@@ -143,6 +142,8 @@ window.Aetheria = window.Aetheria || {};
       sanitizePlayerPosition();
       window.Aetheria.State.save();
 
+      if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
+
       const titleEl = document.getElementById("title-screen");
       if (titleEl) titleEl.style.display = "none";
 
@@ -161,6 +162,7 @@ window.Aetheria = window.Aetheria || {};
       window.Aetheria.State.startFreshNewGame();
       sanitizePlayerPosition();
       window.Aetheria.Data.Maps.refreshAllResources();
+      if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
 
       const titleEl = document.getElementById("title-screen");
       if (titleEl) titleEl.style.display = "none";
@@ -170,7 +172,6 @@ window.Aetheria = window.Aetheria || {};
       this.updateAllHud();
       if (window.Aetheria.Renderer) window.Aetheria.Renderer.renderWorld();
 
-      // 自動播放開場故事序幕！
       window.Aetheria.State.data.seenCutscenes.intro = true;
       window.Aetheria.State.save();
       this.playCutscene("intro");
@@ -226,7 +227,6 @@ window.Aetheria = window.Aetheria || {};
         lvEl.innerHTML = S.iconHtml("icon_sword") + "Lv." + s.lv + " " + jobName + " (DEF " + window.Aetheria.State.getTotalDef() + ")";
       }
 
-      // 顯示行前料理 Buff 狀態標籤
       const mealEl = document.getElementById("hud-meal");
       if (mealEl) {
         if (s.activeMeal && s.activeMeal.battlesLeft > 0 && window.Aetheria.Data.CAMP_MEALS[s.activeMeal.id]) {
@@ -289,7 +289,7 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // ================= 0. 新增！營地燉肉鍋「行前料理 & 免費回血」選單 =================
+    // ================= 0. 營地燉肉鍋「行前料理 & 免費回血」選單 =================
     openCookingModal: function() {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -302,7 +302,6 @@ window.Aetheria = window.Aetheria || {};
       const body = document.getElementById("modal-body");
       body.innerHTML = "";
 
-      // 免費喝湯回滿 HP
       const healCard = document.createElement("div");
       healCard.className = "sys-card-scroll";
       healCard.innerHTML =
@@ -312,7 +311,6 @@ window.Aetheria = window.Aetheria || {};
         '</div>';
       body.appendChild(healCard);
 
-      // 當前生效中的料理
       if (s.activeMeal && s.activeMeal.battlesLeft > 0 && window.Aetheria.Data.CAMP_MEALS[s.activeMeal.id]) {
         const curMeal = window.Aetheria.Data.CAMP_MEALS[s.activeMeal.id];
         const curBox = document.createElement("div");
@@ -358,7 +356,7 @@ window.Aetheria = window.Aetheria || {};
       const meal = window.Aetheria.Data.CAMP_MEALS[mealId];
       const Helper = window.Aetheria.Data.CraftingHelper;
       if (!meal || !Helper.payCost(s.inventory, meal.cost)) {
-        this.showToast("食材不足！可去森林採集蘑菇/太陽花，或到河邊釣魚！");
+        this.showToast("食材不足！可去森林採集蘑菇/太陽花，或到水波釣魚點玩垂釣小遊戲！");
         return;
       }
       s.activeMeal = { id: meal.id, battlesLeft: meal.battles };
@@ -372,7 +370,7 @@ window.Aetheria = window.Aetheria || {};
       this.showToast("享用【" + meal.name + "】！生命全滿並獲得 3 場戰鬥強化 Buff！");
     },
 
-    // ================= 1. NPC 對話與旅人指令 =================
+    // ================= 1. NPC 對話與旅人指令 (改用純 <img> 像素頭像，零 Canvas) =================
     openNpcDialogue: function(npcId) {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -389,13 +387,9 @@ window.Aetheria = window.Aetheria || {};
       document.getElementById("npc-role-label").innerText = cleanText(npc.role);
       document.getElementById("npc-speech-text").innerText = npc.greeting;
 
-      const portCanvas = document.getElementById("npc-portrait-canvas");
-      if (portCanvas) {
-        const pCtx = portCanvas.getContext("2d");
-        pCtx.imageSmoothingEnabled = false;
-        pCtx.clearRect(0, 0, 40, 40);
-        const sp = S.get(npc.sprite);
-        if (sp) pCtx.drawImage(sp, 2, 2, 36, 36);
+      const portImg = document.getElementById("npc-portrait-img");
+      if (portImg) {
+        portImg.src = S.getDataURL(npc.sprite);
       }
 
       const btnGrid = document.getElementById("npc-action-buttons");
@@ -448,7 +442,7 @@ window.Aetheria = window.Aetheria || {};
       this.openGuildModal("monolith");
     },
 
-    // ================= 2. 傳送陣 =================
+    // ================= 2. 傳送陣 (點擊傳送或刷新時 100% 重生所有高階礦脈、巨石與枯木) =================
     openWorldMapModal: function() {
       const s = window.Aetheria.State.data;
       const S = window.Aetheria.Data.Sprites;
@@ -458,7 +452,7 @@ window.Aetheria = window.Aetheria || {};
       document.getElementById("modal-title").innerHTML = S.iconHtml("icon_map") + "大陸傳送陣 (已解鎖：" + unlockedList.length + "/" + window.Aetheria.Data.Maps.ORDERED_WORLD_ZONES.length + " 區)";
 
       const body = document.getElementById("modal-body");
-      body.innerHTML = '<div style="margin-bottom:6px; color:#cbd5e1; font-size:13px;">擊敗各區「守關領主」並步行踏入下一區，即可點亮傳送石碑：</div>';
+      body.innerHTML = '<div style="margin-bottom:6px; color:#cbd5e1; font-size:13px;">解開各區雙封印柱、擊敗守關領主並踏入下一區，即可點亮傳送石碑：</div>';
 
       window.Aetheria.Data.Maps.ORDERED_WORLD_ZONES.forEach(function(z) {
         const isUnlocked = unlockedList.indexOf(z.id) !== -1;
@@ -470,7 +464,7 @@ window.Aetheria = window.Aetheria || {};
           card.innerHTML =
             '<div style="display:flex; justify-content:space-between; align-items:center;">' +
               '<b style="font-size:15px;">' + S.iconHtml("icon_map") + z.name + '</b>' +
-              '<button class="na-btn highlight" style="padding:5px 12px;" onclick="Aetheria.UI.teleportToZone(\'' + z.id + '\', ' + z.x + ', ' + z.y + ')">' + (isCurrent ? "刷新資源" : "傳送") + '</button>' +
+              '<button class="na-btn highlight" style="padding:5px 12px;" onclick="Aetheria.UI.teleportToZone(\'' + z.id + '\', ' + z.x + ', ' + z.y + ')">' + (isCurrent ? "刷新全區資源" : "傳送") + '</button>' +
             '</div>' +
             '<div style="font-size:12px; margin-top:2px;">' + z.desc + '</div>';
         } else {
@@ -495,20 +489,22 @@ window.Aetheria = window.Aetheria || {};
       if (zoneId === "endless_tower") {
         window.Aetheria.Data.Maps.advanceTowerFloor(s.maxTowerFloor || 1);
       }
+      if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
+
       s.currentZone = zoneId;
       s.heroX = tx;
       s.heroY = ty;
-      s.petX = tx - 18;
+      s.petX = tx - 20;
       s.petY = ty + 6;
       window.Aetheria.State.save();
 
       const mapObj = window.Aetheria.Data.Maps.getMap(zoneId);
       window.Aetheria.Audio.playBgm(mapObj.bgm || "forest");
       this.closePanelToExplore();
-      this.showToast("已傳送至【" + mapObj.name + "】！");
+      this.showToast("已傳送至【" + mapObj.name + "】（所有高階礦脈、釣魚點與巨石已刷新）！");
     },
 
-    // ================= 3. 冒險者公會與古文明聖碑大廳 (3 大分頁：21章主線 / 懸賞委託 / 四大聖碑) =================
+    // ================= 3. 冒險者公會與古文明聖碑大廳 =================
     openGuildModal: function(activeTab) {
       activeTab = activeTab || "quest";
       const s = window.Aetheria.State.data;
@@ -539,7 +535,6 @@ window.Aetheria = window.Aetheria || {};
       });
       body.appendChild(tabBar);
 
-      // 分頁 1：21 章推進式主線任務 + 階級俸祿
       if (activeTab === "quest") {
         const rankAlreadyClaimed = s.claimedRankSupplies.indexOf(s.guildRank) !== -1;
         const ghLv = s.campBuildings.greenhouse || 0;
@@ -570,7 +565,6 @@ window.Aetheria = window.Aetheria || {};
           body.appendChild(mqCard);
         }
 
-        // 顯示已完成與後續章節概覽
         const listHeader = document.createElement("div");
         listHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px; font-size:13px;";
         listHeader.innerText = "【七大章節主線進度總覽】";
@@ -591,7 +585,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 2：公會懸賞委託 (含防刷冷卻與錯題討伐 2 隻要求)
       else if (activeTab === "bounty") {
         const activeHeader = document.createElement("div");
         activeHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:2px 0 4px; font-size:14px;";
@@ -687,7 +680,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 3：四大古文明知識聖碑祭壇 (獻上聖碑殘片、解鎖歷史卷軸與永久神恩)
       else if (activeTab === "monolith") {
         const shardCount = s.inventory.tabletShard || 0;
         const infoBox = document.createElement("div");
@@ -756,7 +748,7 @@ window.Aetheria = window.Aetheria || {};
         return;
       }
       if (bId === "bounty_wrong_shadow") {
-        s.wrongBountyKills = 0; // 接單時強制歸零擊殺進度，必須真打 2 場！
+        s.wrongBountyKills = 0;
       }
       s.activeBounties.push(bId);
       window.Aetheria.Audio.sfxTalkBlip();
@@ -785,7 +777,7 @@ window.Aetheria = window.Aetheria || {};
       }
       s.activeBounties = s.activeBounties.filter(function(id) { return id !== bountyId; });
       if (!s.bountyCooldowns) s.bountyCooldowns = {};
-      s.bountyCooldowns[bountyId] = true; // 標記進入冷卻，防止原地無限刷
+      s.bountyCooldowns[bountyId] = true;
       b.onComplete(s);
       window.Aetheria.Audio.sfxLevelUp();
       window.Aetheria.State.save();
@@ -871,7 +863,7 @@ window.Aetheria = window.Aetheria || {};
       this.openGuildModal("quest");
     },
 
-    // ================= 4. 鐵匠鋪：5 大分類 Tab (武器 / 防具 / 符文鑲嵌 / 工具 / 煉金商店) =================
+    // ================= 4. 鐵匠鋪：5 大分類 Tab =================
     openForgeModal: function(activeTab) {
       activeTab = activeTab || "weapon";
       const s = window.Aetheria.State.data;
@@ -904,7 +896,6 @@ window.Aetheria = window.Aetheria || {};
       });
       body.appendChild(tabBar);
 
-      // 分頁 1：10 階武器鍛造
       if (activeTab === "weapon") {
         const weaponList = Object.values(window.Aetheria.Data.WEAPONS).sort(function(a, b) { return a.tier - b.tier; });
         let highestOwnedTier = 1;
@@ -950,7 +941,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 2：6 階防具鎧甲鍛造 + 聖物飾品
       else if (activeTab === "armor") {
         const armorList = Object.values(window.Aetheria.Data.ARMORS).sort(function(a, b) { return a.tier - b.tier; });
         let highestArmorTier = 1;
@@ -1007,7 +997,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 3：新增！魔物核心「符文鑲嵌 (Rune Socketing)」
       else if (activeTab === "rune") {
         if (!s.socketedRunes) s.socketedRunes = { weapon: null, armor: null };
         const wRune = s.socketedRunes.weapon ? window.Aetheria.Data.RUNES[s.socketedRunes.weapon] : null;
@@ -1044,7 +1033,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 4：工具升級
       else if (activeTab === "tool") {
         Object.entries(window.Aetheria.Data.TOOLS_UPGRADE).forEach(function(entry) {
           const tKey = entry[0];
@@ -1079,7 +1067,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 5：金幣商店 & 煉金提煉
       else if (activeTab === "alchemy") {
         const shopHeader = document.createElement("div");
         shopHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:2px 0 4px; font-size:14px;";
@@ -1105,7 +1092,7 @@ window.Aetheria = window.Aetheria || {};
 
         const alchHeader = document.createElement("div");
         alchHeader.style.cssText = "color:var(--na-gold); font-weight:900; margin:8px 0 4px; font-size:14px;";
-        alchHeader.innerHTML = S.iconHtml("icon_potion") + "萬能素材提煉爐";
+        alchHeader.innerHTML = S.iconHtml("icon_potion") + "萬能素材提煉爐 (低階合高階)";
         body.appendChild(alchHeader);
 
         window.Aetheria.Data.ALCHEMY_CONVERSIONS.forEach(function(c) {
@@ -1134,7 +1121,6 @@ window.Aetheria = window.Aetheria || {};
         return;
       }
       if (!s.socketedRunes) s.socketedRunes = { weapon: null, armor: null };
-      // 若該孔位已有舊符文，先退回背包
       if (s.socketedRunes[slotType]) {
         const oldKey = s.socketedRunes[slotType];
         s.inventory[oldKey] = (s.inventory[oldKey] || 0) + 1;
@@ -1583,7 +1569,7 @@ window.Aetheria = window.Aetheria || {};
             '<button class="na-btn highlight" style="padding:9px;" onclick="Aetheria.UI.exportSavePrompt()">複製存檔 JSON 代碼 (備份)</button>' +
             '<button class="na-btn" style="padding:9px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原)</button>' +
             '<button class="na-btn" style="padding:9px;" onclick="document.getElementById(\'title-screen\').style.display=\'flex\'; Aetheria.UI.initTitleScreen();">返回遊戲首頁</button>' +
-            '<button class="na-btn" style="padding:9px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm(\'確定要清除所有進度並重新開始 v4.0 完整冒險嗎？\')) Aetheria.State.resetSave()">重置遊戲 (清除進度重新開始)</button>' +
+            '<button class="na-btn" style="padding:9px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm(\'確定要清除所有進度並重新開始 v5.0 完整冒險嗎？\')) Aetheria.State.resetSave()">重置遊戲 (清除進度重新開始)</button>' +
           '</div>';
         body.appendChild(sysCard);
       }
@@ -1614,6 +1600,7 @@ window.Aetheria = window.Aetheria || {};
       const raw = prompt("請貼上先前備份的存檔 JSON 代碼：");
       if (raw && window.Aetheria.State.importJSON(raw)) {
         sanitizePlayerPosition();
+        if (window.Aetheria.Renderer) window.Aetheria.Renderer.builtZoneKey = null;
         this.showToast("存檔還原成功！");
         this.updateAllHud();
         this.openSettingsModal("system");
