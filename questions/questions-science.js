@@ -1,14 +1,15 @@
 /* ============================================================================
- * 科學科獨立題庫 — 上半部 Part 2A (questions/questions-science.js - v6.4)
- * 內含：12幅教科書級有機向量插畫 + 第2課《青春期的變化》(30題) + 第3課《應對青春期》(30題)
+ * 科學科獨立題庫 — 上半部 Part 3A (questions/questions-science.js - v6.5)
+ * 內含：12幅精細教科書級向量插畫 + 第2課《青春期的變化》(30題) + 第3課《應對青春期》(30題)
+ * 修正：1.人物與科學插畫全面補齊五官、肢體動態與細節
+ *       2.所有簡答題、情境題與選擇題的 options 與 answer 100% 一字不差完全吻合
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
 
 (function() {
-  // 科學科教科書級柔和漸層與有機曲線向量圖庫 (嚴格參考課本附圖風格，無Emoji、無生硬方塊積木)
   const SCI_DIAGRAMS = {
-    // 1. 第2課 #25：男性的生殖系統結構簡圖 (1:1 還原附圖解剖切面與綠線標示風格)
+    // 1. 第2課 #25：男性的生殖系統結構簡圖 (參考課本附圖解剖切面與綠線標示風格)
     sci_l2_male_repro: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 165">
       <defs>
         <radialGradient id="maleHalo" cx="50%" cy="46%" r="48%">
@@ -21,16 +22,16 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <circle cx="140" cy="76" r="64" fill="#ffffff" opacity="0.55" stroke="#81d4fa" stroke-width="2"/>
       <!-- 身體下腹、陰莖與陰囊側面柔和解剖輪廓 -->
       <path d="M98,16 C125,12 178,16 198,38 L198,136 L128,136 L128,118 C126,128 112,132 104,124 C96,116 96,96 102,86 C96,94 90,112 86,120 C82,126 72,124 72,114 C72,98 82,78 90,66 C88,50 92,30 98,16 Z" fill="#f9d5d3" stroke="#c48b89" stroke-width="2"/>
-      <!-- 膀胱 (黃色有機囊狀) 與前列腺 (粉紅) -->
+      <!-- 膀胱 (黃色囊狀) 與前列腺 (粉紅) -->
       <path d="M118,32 C122,22 158,24 162,40 C164,54 152,66 142,68 C130,66 114,48 118,32 Z" fill="#fff15c" stroke="#e0c238" stroke-width="1.5"/>
       <path d="M134,68 C134,62 150,62 150,68 C152,76 132,76 134,68 Z" fill="#f29cb1"/>
-      <!-- 睾丸 (粉紅橢圓) 與陰囊保護層 -->
+      <!-- 睾丸 (粉紅橢圓) -->
       <ellipse cx="115" cy="108" rx="10" ry="13" fill="#f49ac1" stroke="#e06c9f" stroke-width="1.5"/>
-      <!-- 輸精管 (紅粉色管道：由睾丸向上繞過膀胱頂部連接尿道) -->
+      <!-- 輸精管 (紅粉色管道：由睾丸向上繞過膀胱連接尿道) -->
       <path d="M118,95 C124,96 126,108 122,116 C128,112 128,96 118,86 C106,72 104,42 114,26 C124,14 160,16 168,34 C172,48 162,64 146,72" fill="none" stroke="#eb6b7e" stroke-width="3" stroke-linecap="round"/>
       <!-- 尿道 (黃色管道：由膀胱經陰莖通往體外) -->
       <path d="M142,66 C140,74 134,78 120,78 C102,78 90,88 80,120" fill="none" stroke="#fff15c" stroke-width="2.8" stroke-linecap="round"/>
-      <!-- 課本風格白邊綠芯指引線與標籤 -->
+      <!-- 白邊綠芯指引線與標籤 -->
       <line x1="108" y1="36" x2="54" y2="24" stroke="#ffffff" stroke-width="4"/><line x1="108" y1="36" x2="54" y2="24" stroke="#7ac143" stroke-width="2"/>
       <line x1="86" y1="74" x2="48" y2="66" stroke="#ffffff" stroke-width="4"/><line x1="86" y1="74" x2="48" y2="66" stroke="#7ac143" stroke-width="2"/>
       <line x1="115" y1="108" x2="188" y2="116" stroke="#ffffff" stroke-width="4"/><line x1="115" y1="108" x2="188" y2="116" stroke="#7ac143" stroke-width="2"/>
@@ -40,12 +41,11 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="35" y="68" font-size="10" font-weight="bold" fill="#00695c" text-anchor="middle">排出體外？</text>
       <rect x="186" y="104" width="84" height="22" rx="4" fill="#ffffff" stroke="#26a69a" stroke-width="1.5"/>
       <text x="228" y="119" font-size="10" font-weight="bold" fill="#00695c" text-anchor="middle">製造精子器官？</text>
-      <!-- 底部淡藍圓角標題牌 -->
       <rect x="64" y="136" width="152" height="24" rx="8" fill="#a3daf6"/>
       <text x="140" y="152" font-size="12" font-weight="bold" fill="#263238" text-anchor="middle">男性的生殖系統結構簡圖</text>
     </svg>`,
 
-    // 2. 第2課 #26：女性的生殖系統結構簡圖 (同系列教科書解剖插畫風格)
+    // 2. 第2課 #26：女性的生殖系統結構簡圖
     sci_l2_female_repro: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 165">
       <defs>
         <radialGradient id="femHalo" cx="50%" cy="46%" r="48%">
@@ -78,35 +78,48 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="140" y="152" font-size="12" font-weight="bold" fill="#263238" text-anchor="middle">女性的生殖系統結構簡圖</text>
     </svg>`,
 
-    // 3. 第2課 #27：左圖男孩照鏡噴髮膠整理髮型、右圖女孩對爸爸說自己上學
+    // 3. 第2課 #27：左圖男孩照鏡噴髮膠整理髮型、右圖女孩背書包向爸爸揮手說自己上學（重繪完整五官與肢體）
     sci_l2_psych_both: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#f3e5f5"/>
-      <line x1="140" y1="10" x2="140" y2="145" stroke="#ce93d8" stroke-width="2" stroke-dasharray="4,3"/>
-      <!-- 左半：男孩照鏡噴髮膠 -->
-      <path d="M16,24 L56,24 L56,112 L16,112 Z" fill="#e1f5fe" stroke="#5c6bc0" stroke-width="3" rx="4"/>
-      <path d="M78,56 C78,38 108,38 108,56 C108,72 78,72 78,56 Z" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M74,50 C76,32 108,30 112,48 C102,42 84,42 74,50 Z" fill="#3e2723"/>
-      <path d="M118,52 L128,52 L128,74 L118,74 Z" fill="#29b6f6" stroke="#0277bd" stroke-width="1.5"/>
-      <path d="M116,54 L104,46 M116,56 L104,54" stroke="#81d4fa" stroke-width="2" stroke-dasharray="2,2"/>
-      <text x="70" y="136" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">男孩：噴髮膠整理髮型</text>
-      <!-- 右半：女孩背書包向爸爸揮手說自己上學 -->
-      <path d="M196,62 C196,44 224,44 224,62 L232,122 L188,122 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
-      <rect x="150" y="16" width="120" height="26" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="1.5"/>
-      <text x="210" y="33" font-size="10" font-weight="bold" fill="#4a148c" text-anchor="middle">「我自己上學就可以了」</text>
-      <text x="210" y="136" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">女孩：不需父母接送</text>
+      <line x1="140" y1="10" x2="140" y2="145" stroke="#ba68c8" stroke-width="2" stroke-dasharray="4,3"/>
+      <!-- 左半：男孩照鏡子手持噴霧罐噴髮膠（完整五官、帥氣翹髮、笑容） -->
+      <rect x="12" y="22" width="38" height="92" rx="6" fill="#e1f5fe" stroke="#5c6bc0" stroke-width="3"/>
+      <path d="M18,34 L34,26 M18,44 L40,32" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+      <path d="M58,124 C60,96 102,96 104,124 Z" fill="#42a5f5" stroke="#1565c0" stroke-width="2"/>
+      <circle cx="81" cy="68" r="19" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M62,60 C60,38 86,32 100,42 C96,48 104,52 98,60 C88,50 72,50 62,60 Z" fill="#3e2723"/>
+      <circle cx="74" cy="66" r="2.2" fill="#212121"/><circle cx="88" cy="66" r="2.2" fill="#212121"/>
+      <path d="M76,75 Q81,80 86,75" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round"/>
+      <!-- 手舉噴髮膠罐與噴霧 -->
+      <rect x="112" y="50" width="12" height="24" rx="2" fill="#29b6f6" stroke="#0277bd" stroke-width="1.5"/>
+      <rect x="115" y="45" width="6" height="5" fill="#e53935"/>
+      <path d="M112,48 L98,42 M112,50 L98,50 M112,52 L100,56" stroke="#0288d1" stroke-width="1.8" stroke-dasharray="2,2"/>
+      <text x="70" y="142" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">左圖：噴髮膠整理髮型</text>
+      <!-- 右半：女孩背書包向爸爸揮手說「我自己上學就可以了」 -->
+      <circle cx="164" cy="70" r="14" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.5"/>
+      <path d="M150,64 C152,48 176,48 178,64 Z" fill="#4e342e"/>
+      <circle cx="160" cy="69" r="1.8" fill="#212121"/><circle cx="169" cy="69" r="1.8" fill="#212121"/>
+      <path d="M148,124 C150,94 178,94 180,124 Z" fill="#78909c" stroke="#37474f" stroke-width="1.5"/>
+      <!-- 背書包的女孩 -->
+      <rect x="234" y="86" width="18" height="26" rx="4" fill="#ffb300" stroke="#e65100" stroke-width="1.5"/>
+      <path d="M202,124 C204,96 242,96 244,124 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
+      <circle cx="223" cy="68" r="18" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M205,62 C206,42 240,42 241,62 C232,52 214,52 205,62 Z" fill="#3e2723"/>
+      <circle cx="216" cy="67" r="2.2" fill="#212121"/><circle cx="230" cy="67" r="2.2" fill="#212121"/>
+      <path d="M218,76 Q223,81 228,76" fill="none" stroke="#ad1457" stroke-width="2" stroke-linecap="round"/>
+      <path d="M204,100 L188,88" stroke="#ffe0b2" stroke-width="5.5" stroke-linecap="round"/>
+      <rect x="148" y="12" width="124" height="24" rx="6" fill="#ffffff" stroke="#8e24aa" stroke-width="1.5"/>
+      <text x="210" y="28" font-size="10" font-weight="bold" fill="#4a148c" text-anchor="middle">「我自己上學就可以了」</text>
+      <text x="210" y="142" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">右圖：不需父母接送</text>
     </svg>`,
 
-    // 4. 第3課 #25：健康飲食金字塔 (四層結構與流質飲料)
+    // 4. 第3課 #25：健康飲食金字塔
     sci_l3_food_pyramid: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 160">
       <rect width="280" height="160" rx="12" fill="#f1f8e9"/>
-      <!-- 頂層：吃最少 -->
       <polygon points="140,12 112,42 168,42" fill="#ffcdd2" stroke="#c62828" stroke-width="2"/>
-      <!-- 第三層：吃適量 -->
       <polygon points="112,42 86,74 194,74 168,42" fill="#ffe0b2" stroke="#ef6c00" stroke-width="2"/>
-      <!-- 第二層：多吃些 -->
       <polygon points="86,74 58,108 222,108 194,74" fill="#c8e6c9" stroke="#2e7d32" stroke-width="2"/>
       <line x1="140" y1="74" x2="140" y2="108" stroke="#2e7d32" stroke-width="2"/>
-      <!-- 最底層：吃最多 -->
       <polygon points="58,108 30,144 250,144 222,108" fill="#fff9c4" stroke="#f9a825" stroke-width="2"/>
       <text x="140" y="36" font-size="10" font-weight="bold" fill="#b71c1c" text-anchor="middle">頂層(吃最少)：？</text>
       <text x="140" y="62" font-size="10" font-weight="bold" fill="#e65100" text-anchor="middle">吃適量：奶類、肉魚蛋</text>
@@ -115,39 +128,50 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="140" y="130" font-size="11" font-weight="bold" fill="#f57f17" text-anchor="middle">最底層(吃最多)：？</text>
     </svg>`,
 
-    // 5. 第3課 #26：左圖打乒乓球（中等強度）、右圖跑步（劇烈強度）
+    // 5. 第3課 #26：左圖打乒乓球（中等強度）、右圖快速跑步（劇烈強度）— 重繪完整人物動作與五官
     sci_l3_exercise_intensity: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#e8f5e9"/>
       <line x1="140" y1="12" x2="140" y2="142" stroke="#81c784" stroke-width="2" stroke-dasharray="4,3"/>
-      <!-- 左：乒乓球桌與球拍 -->
-      <path d="M20,96 L120,96 L112,114 L28,114 Z" fill="#1e88e5" stroke="#0d47a1" stroke-width="2"/>
-      <line x1="70" y1="88" x2="70" y2="104" stroke="#ffffff" stroke-width="2.5"/>
-      <path d="M36,56 C36,42 56,42 56,56 C56,66 48,70 46,78 L42,78 C42,70 36,66 36,56 Z" fill="#e53935" stroke="#b71c1c" stroke-width="1.5"/>
-      <text x="70" y="32" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">左圖：打乒乓球</text>
-      <text x="70" y="136" font-size="10" font-weight="bold" fill="#2e7d32" text-anchor="middle">（能說話不能唱歌）</text>
-      <!-- 右：快速奔跑流汗 -->
-      <path d="M195,48 C195,34 215,34 215,48 C215,62 195,62 195,48 Z" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M188,66 L218,62 L206,96 L182,92 Z" fill="#ff7043" stroke="#d84315" stroke-width="2"/>
-      <path d="M162,56 L180,56 M156,70 L176,70 M164,84 L180,84" stroke="#29b6f6" stroke-width="2.5" stroke-linecap="round"/>
-      <text x="210" y="32" font-size="11" font-weight="bold" fill="#b71c1c" text-anchor="middle">右圖：快速跑步</text>
-      <text x="210" y="136" font-size="10" font-weight="bold" fill="#c62828" text-anchor="middle">（呼吸急促難說完整句）</text>
+      <!-- 左半：男孩在球桌前揮拍打乒乓球 -->
+      <circle cx="52" cy="54" r="15" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.8"/>
+      <path d="M37,48 C38,32 66,32 67,48 Z" fill="#3e2723"/>
+      <circle cx="47" cy="54" r="2" fill="#212121"/><circle cx="58" cy="54" r="2" fill="#212121"/>
+      <path d="M48,61 Q52,65 56,61" fill="none" stroke="#5d4037" stroke-width="1.8"/>
+      <path d="M38,98 C40,70 64,70 66,98 Z" fill="#42a5f5" stroke="#1565c0" stroke-width="1.8"/>
+      <path d="M64,78 L84,68" stroke="#ffccbc" stroke-width="5.5" stroke-linecap="round"/>
+      <!-- 紅色乒乓球拍與白色乒乓球 -->
+      <circle cx="90" cy="64" r="9" fill="#e53935" stroke="#b71c1c" stroke-width="1.5"/>
+      <circle cx="108" cy="58" r="4" fill="#ffffff" stroke="#fb8c00" stroke-width="1.2"/>
+      <!-- 藍色球桌與球網 -->
+      <polygon points="18,98 124,98 116,114 26,114" fill="#1e88e5" stroke="#0d47a1" stroke-width="2"/>
+      <line x1="72" y1="90" x2="72" y2="104" stroke="#ffffff" stroke-width="2.5"/>
+      <text x="70" y="24" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">左圖：打乒乓球</text>
+      <text x="70" y="138" font-size="10" font-weight="bold" fill="#2e7d32" text-anchor="middle">（能說話但不能唱歌）</text>
+      <!-- 右半：男孩邁步快速奔跑、大口喘氣流汗 -->
+      <circle cx="216" cy="52" r="16" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.8"/>
+      <path d="M200,46 C202,30 230,30 232,46 Z" fill="#3e2723"/>
+      <circle cx="211" cy="51" r="2" fill="#212121"/><circle cx="223" cy="51" r="2" fill="#212121"/>
+      <ellipse cx="218" cy="60" rx="4" ry="3" fill="#b71c1c"/>
+      <!-- 汗珠與速度線 -->
+      <path d="M196,42 C192,48 198,52 200,46 Z M236,46 C234,52 240,56 242,48 Z" fill="#29b6f6"/>
+      <path d="M154,56 L178,56 M148,72 L174,72 M156,88 L178,88" stroke="#29b6f6" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- 奔跑身軀與擺動四肢 -->
+      <path d="M198,68 L222,68 L214,98 L192,98 Z" fill="#ff7043" stroke="#d84315" stroke-width="2"/>
+      <path d="M214,74 L238,66 M198,74 L178,84" stroke="#ffccbc" stroke-width="5.5" stroke-linecap="round"/>
+      <path d="M212,98 L234,116 M196,98 L176,118" stroke="#37474f" stroke-width="6" stroke-linecap="round"/>
+      <text x="210" y="24" font-size="11" font-weight="bold" fill="#b71c1c" text-anchor="middle">右圖：快速跑步</text>
+      <text x="210" y="138" font-size="10" font-weight="bold" fill="#c62828" text-anchor="middle">（呼吸急促難說完整句）</text>
     </svg>`,
 
-    // 6. 第3課 #27：皮膚毛孔結構圖（皮脂腺分泌油脂、堵塞毛孔形成黑頭、細菌感染發炎成暗瘡）
+    // 6. 第3課 #27：皮膚毛孔結構圖（皮脂腺、黑頭、發炎）
     sci_l3_skin_pore: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 160">
       <rect width="280" height="160" rx="12" fill="#fff3e0"/>
-      <!-- 皮膚表皮與真皮層橫切面 (紅腫隆起發炎) -->
       <path d="M16,58 L96,58 C108,42 122,42 126,56 L154,56 C158,42 172,42 184,58 L264,58 L264,136 L16,136 Z" fill="#ffccbc" stroke="#d84315" stroke-width="2"/>
-      <!-- 毛囊通道與堵塞的油脂/黑頭 -->
       <path d="M126,54 C124,84 118,118 138,124 C158,118 154,84 152,54 Z" fill="#ffe082" stroke="#ffa000" stroke-width="2"/>
-      <!-- 毛孔頂端黑頭硬粒 -->
       <path d="M126,48 C132,42 146,42 152,48 L150,58 L128,58 Z" fill="#4e342e"/>
-      <!-- 兩側皮脂腺囊泡 -->
       <path d="M124,78 C102,72 96,94 114,98 C120,98 124,92 126,88 Z" fill="#fff59d" stroke="#fbc02d" stroke-width="1.5"/>
       <path d="M154,78 C176,72 182,94 164,98 C158,98 154,92 152,88 Z" fill="#fff59d" stroke="#fbc02d" stroke-width="1.5"/>
-      <!-- 局部紅腫發炎暈圈 -->
       <path d="M100,62 C92,82 96,112 116,120 M180,62 C188,82 184,112 164,120" fill="none" stroke="#e53935" stroke-width="2.5" stroke-dasharray="4,2"/>
-      <!-- 課本綠線標示 -->
       <line x1="108" y1="86" x2="58" y2="86" stroke="#7ac143" stroke-width="2"/>
       <line x1="138" y1="50" x2="72" y2="28" stroke="#7ac143" stroke-width="2"/>
       <line x1="176" y1="98" x2="218" y2="98" stroke="#7ac143" stroke-width="2"/>
@@ -162,88 +186,74 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
     // 7. 第8課 #25：方向標示圖（綠色箭頭由「東」吹向「西」）
     sci_l8_wind_dir: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#e1f5fe"/>
-      <!-- 十字方向羅盤 -->
       <line x1="140" y1="24" x2="140" y2="132" stroke="#78909c" stroke-width="2"/>
       <line x1="46" y1="78" x2="234" y2="78" stroke="#78909c" stroke-width="2"/>
       <text x="140" y="18" font-size="12" font-weight="bold" fill="#37474f" text-anchor="middle">北 (N)</text>
       <text x="140" y="148" font-size="12" font-weight="bold" fill="#37474f" text-anchor="middle">南 (S)</text>
       <text x="28" y="82" font-size="13" font-weight="bold" fill="#1565c0" text-anchor="middle">西</text>
       <text x="252" y="82" font-size="13" font-weight="bold" fill="#2e7d32" text-anchor="middle">東</text>
-      <!-- 醒目綠色大箭頭由「東」指向「西」 -->
       <path d="M222,68 L96,68 L96,56 L64,78 L96,100 L96,88 L222,88 Z" fill="#66bb6a" stroke="#1b5e20" stroke-width="2"/>
       <text x="154" y="82" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">風從東方吹向西方</text>
     </svg>`,
 
-    // 8. 第8課 #26：香港天文台三大觀測儀器：(1)百葉箱 (2)風向儀和風速表 (3)翻斗式雨量器
+    // 8. 第8課 #26：香港天文台三大觀測儀器
     sci_l8_hko_instruments: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 160">
       <rect width="280" height="160" rx="12" fill="#e8f5e9"/>
-      <!-- (1) 百葉箱 -->
       <path d="M18,42 L82,42 L82,98 L18,98 Z" fill="#ffffff" stroke="#546e7a" stroke-width="2"/>
       <path d="M14,42 L50,26 L86,42 Z" fill="#cfd8dc" stroke="#455a64" stroke-width="2"/>
       <path d="M24,52 L76,52 M24,62 L76,62 M24,72 L76,72 M24,82 L76,82" stroke="#90a4ae" stroke-width="2"/>
       <path d="M26,98 L26,126 M74,98 L74,126" stroke="#546e7a" stroke-width="3"/>
       <text x="50" y="144" font-size="10" font-weight="bold" fill="#1b5e20" text-anchor="middle">(1) 百葉箱</text>
-      <!-- (2) 風杯式風速表與風向儀 -->
       <line x1="142" y1="32" x2="142" y2="126" stroke="#455a64" stroke-width="3.5"/>
       <line x1="114" y1="48" x2="170" y2="48" stroke="#37474f" stroke-width="2.5"/>
       <path d="M114,42 C106,42 106,54 114,54 Z M170,42 C178,42 178,54 170,54 Z" fill="#263238"/>
       <path d="M118,74 L166,74 M166,74 L158,68 M166,74 L158,80 M118,68 L118,80" stroke="#0277bd" stroke-width="2.5"/>
       <text x="142" y="144" font-size="10" font-weight="bold" fill="#01579b" text-anchor="middle">(2) 風向儀/風速表</text>
-      <!-- (3) 翻斗式雨量器 -->
       <path d="M206,46 L258,46 L254,124 L210,124 Z" fill="#eceff1" stroke="#546e7a" stroke-width="2"/>
       <path d="M206,46 L232,68 L258,46" fill="#b0bec5" stroke="#455a64" stroke-width="1.5"/>
       <path d="M218,22 L214,36 M232,18 L228,34 M246,22 L242,36" stroke="#29b6f6" stroke-width="2" stroke-linecap="round"/>
       <text x="232" y="144" font-size="10" font-weight="bold" fill="#263238" text-anchor="middle">(3) 翻斗式雨量器</text>
     </svg>`,
 
-    // 9. 第8課 #27：溫暖潮濕空氣吹過較冷海面與地面，低空水蒸氣凝結形成「霧」
+    // 9. 第8課 #27：海霧形成過程圖
     sci_l8_fog_formation: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#cfd8dc"/>
-      <!-- 較冷的海面與陸地 -->
       <path d="M0,112 L150,112 L150,155 L0,155 Z" fill="#0277bd"/>
       <path d="M145,104 C185,96 235,98 280,104 L280,155 L145,155 Z" fill="#558b2f"/>
       <text x="75" y="138" font-size="11" font-weight="bold" fill="#e1f5fe" text-anchor="middle">較冷的海面</text>
       <text x="215" y="138" font-size="11" font-weight="bold" fill="#f1f8e9" text-anchor="middle">較冷的地面</text>
-      <!-- 濕暖空氣流動箭頭 -->
       <path d="M18,54 C48,46 82,52 108,64" fill="none" stroke="#ff7043" stroke-width="3" stroke-linecap="round"/>
       <polygon points="112,66 102,58 104,68" fill="#ff7043"/>
       <text x="62" y="42" font-size="11" font-weight="bold" fill="#bf360c" text-anchor="middle">溫暖潮濕的空氣</text>
-      <!-- 低空飄浮的白茫茫濃霧層 -->
       <path d="M88,76 C102,62 138,62 152,74 C168,60 208,62 222,76 C242,66 266,74 268,90 C266,104 236,106 212,102 C188,108 148,106 126,102 C98,106 76,94 88,76 Z" fill="#ffffff" opacity="0.88" stroke="#b0bec5" stroke-width="2"/>
       <text x="178" y="88" font-size="12" font-weight="bold" fill="#37474f" text-anchor="middle">低空遇冷形成白茫茫的？</text>
     </svg>`,
 
-    // 10. 第9課 #25：兩塊板塊紅色箭頭背對背向外分離、岩漿湧出形成裂谷
+    // 10. 第9課 #25：板塊分離形成裂谷圖
     sci_l9_plate_rift: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#e1f5fe"/>
-      <!-- 底部熾熱流動岩漿層 -->
       <path d="M12,96 L268,96 L268,144 L12,144 Z" fill="#ff5722" stroke="#bf360c" stroke-width="2"/>
       <path d="M118,96 L140,62 L162,96 Z" fill="#ff9800"/>
-      <!-- 左右分離的兩塊地殼板塊與中央凹陷裂谷 -->
       <path d="M12,48 L112,48 L126,76 L118,96 L12,96 Z" fill="#8d6e63" stroke="#4e342e" stroke-width="2"/>
       <path d="M168,48 L268,48 L268,96 L162,96 L154,76 Z" fill="#8d6e63" stroke="#4e342e" stroke-width="2"/>
-      <!-- 背對背向外指的紅色大箭頭 -->
       <path d="M96,68 L48,68 L48,58 L28,73 L48,88 L48,78 L96,78 Z" fill="#e53935" stroke="#ffffff" stroke-width="1.5"/>
       <path d="M184,68 L232,68 L232,58 L252,73 L232,88 L232,78 L184,78 Z" fill="#e53935" stroke="#ffffff" stroke-width="1.5"/>
       <text x="140" y="30" font-size="12" font-weight="bold" fill="#b71c1c" text-anchor="middle">兩塊板塊互相分離 ➔ 形成？</text>
       <text x="140" y="126" font-size="11" font-weight="bold" fill="#fffde7" text-anchor="middle">地殼下流動的岩漿</text>
     </svg>`,
 
-    // 11. 第9課 #26：三格圖解 — (1)海底魚龍遺骸被掩埋 (2)地殼運動岩層隆起 (3)高山出現魚龍化石
+    // 11. 第9課 #26：三格圖解 — 海底魚龍化石隆起成高山
     sci_l9_ichthyosaur_3step: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#eceff1"/>
-      <!-- 第 1 格：海底魚龍遺骸被泥沙掩埋 -->
       <rect x="8" y="12" width="84" height="130" rx="6" fill="#e1f5fe" stroke="#90a4ae" stroke-width="1.5"/>
       <path d="M8,52 L92,52 L92,96 L8,96 Z" fill="#4fc3f7"/>
       <path d="M8,96 L92,96 L92,142 L8,142 Z" fill="#bcaaa4"/>
       <path d="M26,112 C42,104 62,106 76,114 C62,118 42,118 26,112 Z" fill="#fff8e1" stroke="#5d4037" stroke-width="1.5"/>
       <text x="50" y="30" font-size="10" font-weight="bold" fill="#01579b" text-anchor="middle">(1) 海底遺骸掩埋</text>
-      <!-- 第 2 格：地殼運動擠壓令岩層彎曲隆起 -->
       <rect x="98" y="12" width="84" height="130" rx="6" fill="#e1f5fe" stroke="#90a4ae" stroke-width="1.5"/>
       <path d="M98,112 Q140,56 182,112 L182,142 L98,142 Z" fill="#a1887f" stroke="#5d4037" stroke-width="2"/>
       <path d="M104,124 Q140,72 176,124" fill="none" stroke="#d7ccc8" stroke-width="3" stroke-dasharray="4,2"/>
       <text x="140" y="30" font-size="10" font-weight="bold" fill="#4e342e" text-anchor="middle">(2) 岩層擠壓隆起</text>
-      <!-- 第 3 格：高山上出現魚龍化石 -->
       <rect x="188" y="12" width="84" height="130" rx="6" fill="#e1f5fe" stroke="#90a4ae" stroke-width="1.5"/>
       <path d="M188,142 L228,46 L272,142 Z" fill="#78909c" stroke="#37474f" stroke-width="2"/>
       <path d="M214,78 L228,46 L242,78 Z" fill="#ffffff"/>
@@ -251,18 +261,15 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="230" y="30" font-size="10" font-weight="bold" fill="#263238" text-anchor="middle">(3) 高山發現化石</text>
     </svg>`,
 
-    // 12. 第9課 #27：三個古生物化石圖 — (1)魚化石 (2)菊石螺旋化石 (3)植物樹葉化石
+    // 12. 第9課 #27：三個古生物化石圖 — (1)魚化石 (2)菊石化石 (3)植物化石
     sci_l9_three_fossils: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <rect width="280" height="155" rx="12" fill="#efebe9"/>
-      <!-- (1) 魚骨形狀化石 -->
       <path d="M16,28 C22,16 78,16 84,28 L86,112 C80,124 20,124 14,112 Z" fill="#d7ccc8" stroke="#8d6e63" stroke-width="2"/>
       <path d="M26,70 L74,70 M74,70 L82,60 M74,70 L82,80 M36,56 L42,84 M48,54 L54,86 M60,58 L64,82" stroke="#4e342e" stroke-width="2.2" stroke-linecap="round"/>
       <text x="50" y="140" font-size="11" font-weight="bold" fill="#3e2723" text-anchor="middle">(1) ？化石</text>
-      <!-- (2) 螺旋外殼菊石化石 -->
       <path d="M104,28 C110,16 170,16 176,28 L178,112 C172,124 108,124 102,112 Z" fill="#d7ccc8" stroke="#8d6e63" stroke-width="2"/>
       <path d="M140,70 C144,66 148,72 142,76 C134,80 126,70 132,60 C140,48 158,54 160,70 C162,88 140,98 124,88 C110,76 116,46 138,42" fill="none" stroke="#4e342e" stroke-width="3" stroke-linecap="round"/>
       <text x="140" y="140" font-size="11" font-weight="bold" fill="#3e2723" text-anchor="middle">(2) ？化石</text>
-      <!-- (3) 樹葉葉脈形狀化石 -->
       <path d="M194,28 C200,16 260,16 266,28 L268,112 C262,124 198,124 192,112 Z" fill="#d7ccc8" stroke="#8d6e63" stroke-width="2"/>
       <path d="M230,42 C248,56 250,86 230,102 C210,86 212,56 230,42 Z" fill="none" stroke="#4e342e" stroke-width="2.2"/>
       <path d="M230,42 L230,108 M230,60 L242,52 M230,74 L244,66 M230,66 L218,58 M230,82 L218,74" stroke="#4e342e" stroke-width="2" stroke-linecap="round"/>
@@ -273,7 +280,6 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
   window.Aetheria.QuestionBank.Science = {
     DIAGRAMS: SCI_DIAGRAMS,
 
-    // 1. 科學科 4 個課次清單
     LESSONS: [
       { key: "sci_l2", name: "科學・第2課 青春期的變化 (30題)" },
       { key: "sci_l3", name: "科學・第3課 應對青春期 (30題)" },
@@ -281,7 +287,6 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       { key: "sci_l9", name: "科學・第9課 探索地貌 (30題)" }
     ],
 
-    // 2. 科學科題庫 (上半部：第 2 課 30 題 + 第 3 課 30 題)
     QUESTIONS: [
       // ==================== 第 2 課：青春期的變化 (30題) ====================
       { id: "sci_l2_01", unitKey: "sci_l2", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "人的一生大致分為五個成長階段：嬰幼兒期、兒童期、______、成年期和老年期。", blanks: ["青春期"], distractors: ["少年期", "叛逆期", "成熟期"] },
@@ -345,7 +350,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "C. 子宮內膜"
       },
 
-      // 第2課 分類題 (#19 ~ #21) -> 分類籃
+      // 第2課 分類題 (#19 ~ #21)
       {
         id: "sci_l2_19", unitKey: "sci_l2", qCategory: "sci_classify", type: "classify", typeLabel: "分類題",
         prompt: "請將以下青春期的生理特徵放入對應的分類籃：",
@@ -388,7 +393,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "生理變化：1, 4 ｜ 心理變化：2, 3, 5"
       },
 
-      // 第2課 簡答題 (#22 ~ #24)
+      // 第2課 簡答題 (#22 ~ #24 — options[0] 與 answer 100% 完全一致)
       {
         id: "sci_l2_22", unitKey: "sci_l2", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
         prompt: "【簡答題】成年期初期和後期的身體特徵有甚麼分別？",
@@ -402,14 +407,14 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       },
       {
         id: "sci_l2_23", unitKey: "sci_l2", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】請列舉三項青春期常見的心理特徵。",
+        prompt: "【簡答題】請列舉青春期常見的心理特徵。",
         options: [
           "渴望獨立自主、注重自我形象、對異性感興趣、重視朋輩認同、對性產生好奇。",
           "完全依賴父母、不在乎外表、拒絕與同輩交往。",
           "記憶力完全衰退、不喜歡任何個人空間、情緒永遠毫無起伏。",
           "只喜歡獨自留在房間睡覺、對所有事物失去好奇心。"
         ],
-        answer: "渴望獨立自主、注重自我形象、對異性感興趣、重視朋輩認同、對性產生好奇（任選三項）。"
+        answer: "渴望獨立自主、注重自我形象、對異性感興趣、重視朋輩認同、對性產生好奇。"
       },
       {
         id: "sci_l2_24", unitKey: "sci_l2", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
@@ -420,7 +425,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "卵子受精後立即脫落並經尿道排出體外，形成月經。",
           "卵巢外壁每年脫落一次並經輸精管排出體外。"
         ],
-        answer: "卵巢按月排出卵子，子宮內膜開始增厚和充血。之後卵子經輸卵管移向子宮，子宮內膜繼續增厚和充血。約兩星期後，如果卵子沒有受精，子宮內膜便會脫落，經陰道排出體外，形成月經。"
+        answer: "卵巢按月排卵，子宮內膜增厚充血；卵子經輸卵管移向子宮，內膜繼續增厚；約兩星期後若卵子未受精，子宮內膜脫落經陰道排出形成月經。"
       },
 
       // 第2課 看圖填充題 (#25 ~ #27)
@@ -443,7 +448,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         blanks: ["注重自我形象", "渴望獨立自主"], distractors: ["依賴家人照顧", "忽視個人衛生", "抗拒上學"]
       },
 
-      // 第2課 情境題 (#28 ~ #30)
+      // 第2課 情境題 (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
       {
         id: "sci_l2_28", unitKey: "sci_l2", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
         prompt: "【情境題】家誠今年11歲，與媽媽去游泳池時，拒絕再跟媽媽進入女更衣室，堅持自己去男更衣室。為甚麼他會有這樣的轉變？我們對待自己和別人的身體應有甚麼態度？",
@@ -453,7 +458,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "因為女更衣室沒有淋浴設備。我們可以隨意進入任何更衣室。",
           "因為他害怕游泳。我們應該拒絕去游泳池。"
         ],
-        answer: "因為他已經長大，踏入青春期，開始意識到男女有別，進入異性更衣室會讓自己和別人感到不自在或尷尬。我們應保護自己的身體，並尊重別人的私隱。"
+        answer: "因為他已踏入青春期，意識到男女有別，進異性更衣室會不自在或尷尬。我們應保護自己的身體，並尊重別人的私隱。"
       },
       {
         id: "sci_l2_29", unitKey: "sci_l2", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
@@ -464,7 +469,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "這是因為睡前喝太多開水導致膀胱破裂。",
           "這是異常現象，代表身體發育停止。"
         ],
-        answer: "這是「夢遺」。因為男性進入青春期後，睾丸開始製造精子；如果在睡覺時陰莖受到刺激（例如內褲較緊或被子較重），可能會排出精液。這是正常的生理現象，對身體沒有害處，無須害怕。"
+        answer: "這是「夢遺」。男性進入青春期後睾丸開始製造精子；睡覺時若陰莖受刺激可能排出精液，屬正常生理現象，對身體無害，無須害怕。"
       },
       {
         id: "sci_l2_30", unitKey: "sci_l2", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
@@ -475,13 +480,13 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "(1) 月經期間應該進行超負荷馬拉松比賽。(2) 男生絕對不會增長脂肪。",
           "(1) 月經期間不可洗頭及運動。(2) 男生胸部變大是傳染病。"
         ],
-        answer: "(1) 女性在月經期間是可以運動的，適度的運動對身體有益，但需要根據個人的身體狀況選擇合適的運動方式。(2) 在青春期，男性的肌肉和脂肪都會增長，因此只要沒有其他不適，胸部變大也是正常的生理現象。"
+        answer: "(1) 月經期間可以做適度運動，對身體有益，但需按個人狀況選擇合適運動。(2) 青春期男性肌肉和脂肪都會增長，若無不適，胸部變大亦屬正常生理現象。"
       },
 
       // ==================== 第 3 課：應對青春期 (30題) ====================
       { id: "sci_l3_01", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "青春期男女因發育情況不同而出現個別差異，這是______的現象，我們不必感到煩惱。", blanks: ["正常"], distractors: ["異常", "罕見", "危險"] },
       { id: "sci_l3_02", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "面對青春期發育的個別差異，我們應持有的正確態度是：明白及______。", blanks: ["接受"], distractors: ["比較", "隱瞞", "自卑"] },
-      { id: "sci_l3_03", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "青春期的發育情況主要受______、睡眠、______和______影響，因人而異，不必互相比較。", blanks: ["遺傳", "飲食", "運動"], distractors: ["天氣", "衣着", "星座"] },
+      { id: "sci_l3_03", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "青春期的發育情況主要受______、睡眠、______和______影響，因人而異，不必互相比較。", blanks: ["遺傳", "飲食", "運動"], allowSwapIndices: [1, 2], distractors: ["天氣", "衣着", "星座"] },
       { id: "sci_l3_04", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "親代（父母）的特徵會遺傳給子代（子女）。青少年的發育受先天______的影響，但後天的生活______亦十分重要。", blanks: ["遺傳", "習慣"], distractors: ["財富", "運氣", "興趣"] },
       { id: "sci_l3_05", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "有助生長的荷爾蒙主要在晚上 10 時至凌晨 2 時的______睡眠中分泌。", blanks: ["深層"], distractors: ["淺層", "午間", "短暫"] },
       { id: "sci_l3_06", unitKey: "sci_l3", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "衛生署建議 6 至 13 歲學童每天睡______至______小時。", blanks: ["9", "11"], distractors: ["4", "6", "15"] },
@@ -545,7 +550,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "C. 過多的油脂與黏附在毛孔上的塵埃混合，堵塞毛孔形成硬粒"
       },
 
-      // 第3課 分類題 (#19 ~ #21) -> 分類籃
+      // 第3課 分類題 (#19 ~ #21)
       {
         id: "sci_l3_19", unitKey: "sci_l3", qCategory: "sci_classify", type: "classify", typeLabel: "分類題",
         prompt: "請將以下影響發育的因素放入「先天因素」或「後天因素」分類籃：",
@@ -585,7 +590,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "吃最多：3 ｜ 多吃些：1, 5 ｜ 吃適量：4, 6 ｜ 吃最少：2"
       },
 
-      // 第3課 簡答題 (#22 ~ #24)
+      // 第3課 簡答題 (#22 ~ #24 — options[0] 與 answer 100% 完全一致)
       {
         id: "sci_l3_22", unitKey: "sci_l3", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
         prompt: "【簡答題】為甚麼「運動」有助於青少年強健骨骼、減輕壓力和預防肥胖？請分別說明。",
@@ -595,18 +600,18 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "運動只會消耗骨質並增加身體脂肪積聚。",
           "運動只在老年期有效，對青春期發育沒有影響。"
         ],
-        answer: "強健骨骼：運動可以刺激骨骼生長，促進身高發展。減輕壓力：運動能穩定情緒，在白天消耗體力，也有助夜間深層睡眠。預防肥胖：運動可以刺激肌肉生長，減少脂肪積聚。"
+        answer: "強健骨骼：刺激骨骼生長促進身高；減輕壓力：穩定情緒並消耗體力助夜間深層睡眠；預防肥胖：刺激肌肉生長減少脂肪積聚。"
       },
       {
         id: "sci_l3_23", unitKey: "sci_l3", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】我們怎樣可以在日常生活中爭取機會增加運動量？請列舉兩個例子。",
+        prompt: "【簡答題】我們怎樣可以在日常生活中爭取機會增加運動量？",
         options: [
           "以走樓梯代替使用扶手電梯；一邊看電視一邊做伸展運動；乘車時提前一個站下車步行到目的地。",
           "每天睡前在床上做兩小時劇烈運動；整天坐着玩電子遊戲。",
           "減少所有日常步行，全部改乘計程車。",
           "只在每年運動會當天跑一次步。"
         ],
-        answer: "以走樓梯代替使用扶手電梯；一邊看電視，一邊做伸展運動；乘車時提前一個站下車，步行到目的地（任選兩項）。"
+        answer: "以走樓梯代替使用扶手電梯；一邊看電視一邊做伸展運動；乘車時提前一個站下車步行到目的地。"
       },
       {
         id: "sci_l3_24", unitKey: "sci_l3", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
@@ -617,7 +622,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "使用電子屏幕越長，專注力和睡眠質素越高。",
           "完全沒有任何潛在風險。"
         ],
-        answer: "風險：有機會阻礙青少年的身心發展，降低專注力、情緒管理能力和現實社交技巧。做法：必須有效地管理時間，在網絡與現實間取得平衡；同時保持禮貌，做個負責任的數碼公民。"
+        answer: "風險：阻礙身心發展，降低專注力、情緒管理能力和現實社交技巧。做法：有效管理時間，在網絡與現實間取得平衡，做負責任的數碼公民。"
       },
 
       // 第3課 看圖填充題 (#25 ~ #27)
@@ -625,7 +630,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         id: "sci_l3_25", unitKey: "sci_l3", qCategory: "sci_img_fill", type: "image_fill", typeLabel: "看圖填充題",
         svgKey: "sci_l3_food_pyramid",
         prompt: "觀察健康飲食金字塔：最底層（吃最多）是______；第二層（多吃些）是______和______；最頂層（吃最少）是______。",
-        blanks: ["穀物類", "蔬菜類", "水果類", "油、鹽、糖類"], distractors: ["肉魚蛋類", "奶類", "零食類"]
+        blanks: ["穀物類", "蔬菜類", "水果類", "油、鹽、糖類"], allowSwapIndices: [1, 2], distractors: ["肉魚蛋類", "奶類", "零食類"]
       },
       {
         id: "sci_l3_26", unitKey: "sci_l3", qCategory: "sci_img_fill", type: "image_fill", typeLabel: "看圖填充題",
@@ -640,7 +645,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         blanks: ["皮脂腺", "黑頭", "發炎"], distractors: ["汗腺", "白頭", "結冰"]
       },
 
-      // 第3課 情境題 (#28 ~ #30)
+      // 第3課 情境題 (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
       {
         id: "sci_l3_28", unitKey: "sci_l3", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
         prompt: "【情境題】新聞報道一名 16 歲少年，按父母遺傳預測身高應達 177 厘米，但他因升學壓力大，長期每日只睡 4 小時，身高僅 156 厘米。請分析他長不高的原因。",
@@ -650,7 +655,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "因為每天睡 4 小時太多了，應該完全不睡覺。",
           "因為讀書會消耗骨頭的重量。"
         ],
-        answer: "因為學習壓力令他長期處於焦慮狀態，損害睡眠質素，導致長期睡眠不足。有助生長的荷爾蒙主要在深層睡眠中分泌，睡眠不足導致荷爾蒙分泌減少，因此干擾了身體的正常發育。"
+        answer: "學習壓力令他長期焦慮、睡眠不足；而有助生長的荷爾蒙主要在深層睡眠中分泌，睡眠不足導致生長荷爾蒙分泌減少，干擾正常發育。"
       },
       {
         id: "sci_l3_29", unitKey: "sci_l3", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
@@ -661,7 +666,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "垃圾食物熱量高，能提供最均衡的全面營養。",
           "只會影響牙齒顏色，對骨骼發育、體重和情緒毫無影響。"
         ],
-        answer: "會引致：(1) 營養失衡：長期欠缺某些營養素，可能導致肌肉或骨骼發育不良，體力變差。(2) 肥胖：高糖和高脂肪食物易導致身體脂肪過多，甚至妨礙正常發育。(3) 情緒不穩：高糖飲食會令血糖波動大，容易煩躁、難以集中。"
+        answer: "(1)營養失衡：欠缺營養素致肌肉骨骼發育不良、體力變差；(2)肥胖：高糖高脂致脂肪過多妨礙發育；(3)情緒不穩：血糖波動大易煩躁難集中。"
       },
       {
         id: "sci_l3_30", unitKey: "sci_l3", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
@@ -672,27 +677,28 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "錯誤：洗臉次數太少。建議：改用滾燙熱水及強力洗潔精洗臉。",
           "錯誤：沒有塗抹厚重的油性化妝品遮蓋暗瘡。"
         ],
-        answer: "錯誤及後果：(1) 擠壓、用頭髮遮蓋或撕掉暗瘡痂，可能造成更嚴重的發炎，甚至留下疤痕。(2) 過度清潔可能令皮膚太乾燥，反而刺激更多油脂分泌，使暗瘡情況惡化。正確建議：應保持適度清潔，切勿擠壓；如果暗瘡的情況嚴重，應請醫生診治。"
+        answer: "錯誤：(1)擠壓或用頭髮遮蓋會造成更嚴重發炎甚至留疤；(2)過度清潔令皮膚太乾反而刺激更多油脂分泌。建議：適度清潔切勿擠壓，嚴重時求醫。"
       }
     ]
   };
 })();
 /* ============================================================================
- * 科學科獨立題庫 — 下半部 Part 2B (questions/questions-science.js - v6.4)
+ * 科學科獨立題庫 — 下半部 Part 3B (questions/questions-science.js - v6.5)
  * 內含：第8課《觀測天氣》(30題) + 第9課《探索地貌》(30題)
- * 請直接緊接貼在 Part 2A 代碼的最下方！
+ * 修正：所有簡答題、情境題與選擇題的 options 與 answer 100% 完全吻合
+ * 請直接緊接貼在 Part 3A 代碼的最下方！
  * ============================================================================ */
 (function() {
   if (!window.Aetheria || !window.Aetheria.QuestionBank || !window.Aetheria.QuestionBank.Science) return;
 
   const MORE_SCI_QUESTIONS = [
     // ==================== 第 8 課：觀測天氣 (30題) ====================
-    { id: "sci_l8_01", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我們可以運用天氣數據來描述天氣情況，例如氣溫、______、風向、______和降雨量。", blanks: ["風力", "相對濕度"], distractors: ["海拔", "氣壓", "日照"] },
-    { id: "sci_l8_02", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "香港天文台運用百葉箱內的溫度計來測量______和______。", blanks: ["氣溫", "相對濕度"], distractors: ["風速", "降雨量", "風向"] },
+    { id: "sci_l8_01", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我們可以運用天氣數據來描述天氣情況，例如氣溫、______、風向、______和降雨量。", blanks: ["風力", "相對濕度"], allowSwapIndices: [0, 1], distractors: ["海拔", "氣壓", "日照"] },
+    { id: "sci_l8_02", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "香港天文台運用百葉箱內的溫度計來測量______和______。", blanks: ["氣溫", "相對濕度"], allowSwapIndices: [0, 1], distractors: ["風速", "降雨量", "風向"] },
     { id: "sci_l8_03", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "風向是指風______的方向。例如：從東方吹向西方的風，稱為「______」。", blanks: ["吹來", "東風"], distractors: ["吹去", "西風", "北風"] },
     { id: "sci_l8_04", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "降雨量是指雨水在地面上積起來的______，通常以毫米為單位。", blanks: ["高度"], distractors: ["重量", "面積", "速度"] },
     { id: "sci_l8_05", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "______是指大氣中的水蒸氣凝結後，從雲層降落到地面的現象，它是水循環的一個階段。", blanks: ["降水"], distractors: ["蒸發", "風化", "沉積"] },
-    { id: "sci_l8_06", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "太陽照射地面，水蒸發成水蒸氣上升，在高空遇冷形成______或______，聚集成雲。", blanks: ["水點", "冰晶"], distractors: ["煙霧", "塵埃", "空氣"] },
+    { id: "sci_l8_06", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "太陽照射地面，水蒸發成水蒸氣上升，在高空遇冷形成______或______，聚集成雲。", blanks: ["水點", "冰晶"], allowSwapIndices: [0, 1], distractors: ["煙霧", "塵埃", "空氣"] },
     { id: "sci_l8_07", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "當水點落下，如果接近地面的溫度______於 0°C，水點沒有結冰，就會形成雨。", blanks: ["高"], distractors: ["低", "等", "零"] },
     { id: "sci_l8_08", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "當冰晶落下，如果接近地面的溫度______於 0°C，冰晶沒有融化，就會形成雪。", blanks: ["低"], distractors: ["高", "等", "熱"] },
     { id: "sci_l8_09", unitKey: "sci_l8", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "當雲中出現強烈的______氣流時，冰粒跟隨氣流上下翻滾並不斷增大，最終落下形成______。", blanks: ["上升", "雹"], distractors: ["下降", "霧", "霜"] },
@@ -778,7 +784,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       answer: "C. 使雲中的水滴迅速聚集，促成降雨"
     },
 
-    // 第8課 分類題 (#19 ~ #21) -> 分類籃
+    // 第8課 分類題 (#19 ~ #21)
     {
       id: "sci_l8_19", unitKey: "sci_l8", qCategory: "sci_classify", type: "classify", typeLabel: "分類題",
       prompt: "請將以下測量儀器放入其測量的天氣數據分類籃：",
@@ -817,7 +823,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       answer: "高空雲層降落(降水)：1, 3, 5 ｜ 接近地面/低空形成：2, 4"
     },
 
-    // 第8課 簡答題 (#22 ~ #24)
+    // 第8課 簡答題 (#22 ~ #24 — options[0] 與 answer 100% 完全一致)
     {
       id: "sci_l8_22", unitKey: "sci_l8", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
       prompt: "【簡答題】請描述「霧」和「霜」在外觀上有甚麼特徵。",
@@ -827,7 +833,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "霧和霜都是彩色的液態水滴。",
         "霧是附在樹葉上的固態冰塊；霜是從高空落下的大雨點。"
       ],
-      answer: "霧的特徵：白色或灰白色的霧氣，像煙霧一樣模糊視線。霜的特徵：白色、細小的冰晶，看起來像雪或糖霜。"
+      answer: "霧：白色或灰白色的霧氣，像煙霧一樣模糊視線；霜：白色、細小的冰晶，看起來像雪或糖霜。"
     },
     {
       id: "sci_l8_23", unitKey: "sci_l8", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
@@ -838,7 +844,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "1.水蒸氣在地面遇冷；2.在樹葉表面結成細小冰晶；3.太陽照射融化；4.變成白霧。",
         "1.雲層溫度升至 30°C；2.水點蒸發；3.形成彩虹；4.降下冰雹。"
       ],
-      answer: "1. 水蒸氣被強烈的上升氣流帶到高空。2. 水蒸氣在高空遇冷，形成冰粒。3. 雲中的氣流變化劇烈，冰粒跟隨氣流上下翻滾，吸附水分，並不斷增大。4. 冰粒的重量超過上升氣流的支撐力，落下到地面，形成雹。"
+      answer: "1.水蒸氣被強烈上升氣流帶到高空；2.遇冷形成冰粒；3.冰粒隨劇烈氣流上下翻滾吸附水分不斷增大；4.重量超過上升氣流支撐力落下成雹。"
     },
     {
       id: "sci_l8_24", unitKey: "sci_l8", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
@@ -872,7 +878,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       blanks: ["霧", "冷"], distractors: ["霜", "熱", "雹"]
     },
 
-    // 第8課 情境題 (#28 ~ #30)
+    // 第8課 情境題 (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
     {
       id: "sci_l8_28", unitKey: "sci_l8", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
       prompt: "【情境題】假設今天天氣數據：最高氣溫32°C、最低28°C、風向西南、風力5級、相對濕度80-95%、降雨量5-10毫米（多雲有驟雨）。請以天氣報告員身分描述今天天氣。",
@@ -893,7 +899,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "不認同，那是「雹」，是由強烈上升氣流把樹葉吹上高空形成的。",
         "不認同，那是液態的「霧」，因為氣溫在 20°C 以上。"
       ],
-      answer: "不認同，那是「霜」而不是「雪」。雪是雲中的冰晶從高空降落到地面形成的降水現象；而樹葉上的冰晶是因為接近地面的氣溫在攝氏零度以下，空氣中的水蒸氣在極冷的樹葉表面直接形成的「霜」。"
+      answer: "不認同，那是「霜」而不是「雪」。雪是雲中冰晶從高空降落的降水現象；而樹葉上的冰晶是近地面氣溫在 0°C 以下，空氣中水蒸氣在極冷樹葉表面直接形成的「霜」。"
     },
     {
       id: "sci_l8_30", unitKey: "sci_l8", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
@@ -904,7 +910,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "安全注意事項：在雷暴下舉起金屬棒。讀取方法：用肉眼估計雨水的顏色深淺。",
         "製作時沒有任何安全注意事項，讀取時只需數算雨滴的數量。"
       ],
-      answer: "安全注意事項：製作時要小心使用利器。讀取雨量計數據的方法：觀察並量度雨量計所收集的雨水高度，該高度就是降雨量。"
+      answer: "安全注意事項：製作時要小心使用利器。讀取雨量計數據方法：觀察並量度雨量計所收集的雨水高度，該高度就是降雨量。"
     },
 
     // ==================== 第 9 課：探索地貌 (30題) ====================
@@ -913,7 +919,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
     { id: "sci_l9_03", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "面積廣闊、平坦的低地稱為______（例如亞馬遜平原）。", blanks: ["平原"], distractors: ["高原", "山脈", "裂谷"] },
     { id: "sci_l9_04", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "四周由高地圍繞，中央土地低平的地貌稱為______（例如四川盆地）。", blanks: ["盆地"], distractors: ["高原", "山脈", "海溝"] },
     { id: "sci_l9_05", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "兩側地勢較高，河水流經中央低地的地貌稱為______（例如尼羅河谷）。", blanks: ["河谷"], distractors: ["盆地", "高原", "沙漠"] },
-    { id: "sci_l9_06", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "地貌受地球______力量和地球______力量影響，會逐漸發生變化。", blanks: ["內部", "外部"], distractors: ["月球", "太陽", "人造"] },
+    { id: "sci_l9_06", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "地貌受地球______力量和地球______力量影響，會逐漸發生變化。", blanks: ["內部", "外部"], allowSwapIndices: [0, 1], distractors: ["月球", "太陽", "人造"] },
     { id: "sci_l9_07", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "地殼下流動的______帶動板塊移動，令板塊與板塊相撞或分離。", blanks: ["岩漿"], distractors: ["海水", "石油", "地下水"] },
     { id: "sci_l9_08", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "兩塊板塊相撞，互相擠壓，地殼會______，形成山脈；兩塊板塊分離，地殼會______，形成裂谷。", blanks: ["褶曲", "破裂"], distractors: ["融化", "蒸發", "結冰"] },
     { id: "sci_l9_09", unitKey: "sci_l9", qCategory: "sci_fill", type: "fill_blank", typeLabel: "填充題", prompt: "______是存留在地殼岩石和冰層中的一些古生物的______（例如魚、菊石、植物等）。", blanks: ["化石", "遺骸"], distractors: ["礦物", "寶石", "金屬"] },
@@ -999,7 +1005,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       answer: "C. 這些土壤和化石是證明過去氣候變化的「記錄本」"
     },
 
-    // 第9課 分類題 (#19 ~ #21) -> 分類籃
+    // 第9課 分類題 (#19 ~ #21)
     {
       id: "sci_l9_19", unitKey: "sci_l9", qCategory: "sci_classify", type: "classify", typeLabel: "分類題",
       prompt: "請將以下著名地理景觀放入其所屬的「地貌種類」分類籃：",
@@ -1039,7 +1045,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       answer: "侵蝕作用：1, 3 ｜ 堆積作用：2, 4"
     },
 
-    // 第9課 簡答題 (#22 ~ #24)
+    // 第9課 簡答題 (#22 ~ #24 — options[0] 與 answer 100% 完全一致)
     {
       id: "sci_l9_22", unitKey: "sci_l9", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
       prompt: "【簡答題】為甚麼科學家可以從化石來推斷地貌的變化？",
@@ -1060,7 +1066,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "兩者都是因為火山岩漿直接凝固而成的。",
         "兩者都是由人工雕刻及搬運沙土而成的。"
       ],
-      answer: "風蝕地貌：風長時間侵蝕岩石，使岩石變得凹凸不平，並形成奇形怪狀的岩柱或石塔。沙漠：風持續把沙土吹到一個地方，沙土在這個地方逐漸堆積起來，形成沙漠。"
+      answer: "風蝕地貌：風長時間侵蝕岩石，使岩石變得凹凸不平形成奇形岩柱或石塔；沙漠：風持續把沙土吹到一個地方逐漸堆積起來形成沙漠。"
     },
     {
       id: "sci_l9_24", unitKey: "sci_l9", qCategory: "sci_short", type: "short_qa", typeLabel: "簡答題",
@@ -1094,7 +1100,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       blanks: ["魚", "菊石", "植物"], distractors: ["鳥類", "恐龍蛋", "珊瑚"]
     },
 
-    // 第9課 情境題 (#28 ~ #30)
+    // 第9課 情境題 (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
     {
       id: "sci_l9_28", unitKey: "sci_l9", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
       prompt: "【情境題】我國科學家在平均高度 6000 米以上的喜馬拉雅山脈上，發掘出古代海洋生物「魚龍」的化石。為甚麼高山上會出現海洋生物的化石？請詳細解釋其過程。",
@@ -1104,7 +1110,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "因為遠古人類把海底的魚龍化石搬運到喜馬拉雅山山頂埋藏。",
         "因為高山上的冰雪直接變成了魚龍化石。"
       ],
-      answer: "喜馬拉雅山脈的岩層原本在海底，當時古代海洋生物「魚龍」死後，其遺骸被海底泥沙掩埋形成化石。後來由於地殼運動（板塊相撞擠壓），把曾經位於海底的岩層推升至高處形成高山，使當年的海洋生物化石如今出現在高山之上。"
+      answer: "喜馬拉雅山脈岩層原本在海底，魚龍死後遺骸被海底泥沙掩埋成化石；後因地殼運動（板塊相撞擠壓），把海底岩層推升至高處形成高山。"
     },
     {
       id: "sci_l9_29", unitKey: "sci_l9", qCategory: "sci_scenario", type: "short_qa", typeLabel: "情境題",
@@ -1126,7 +1132,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         "火山爆發噴出紅色岩漿和黃色硫磺交替覆蓋。",
         "黃河河水把泥土染成黃色，長江河水把泥土染成紅色。"
       ],
-      answer: "乾冷的西北風從沙漠吹來粉塵，堆積形成黃土；而溫暖潮濕的東南風帶來雨水，讓黃土變成紅土。隨着地球過去氣候的冷暖變化，黃土和紅土便一層一層地堆積起來。"
+      answer: "乾冷的西北風從沙漠吹來粉塵堆積形成黃土；溫暖潮濕的東南風帶來雨水讓黃土變成紅土。隨着過去氣候冷暖變化，黃土和紅土便一層層交替堆積。"
     }
   ];
 
