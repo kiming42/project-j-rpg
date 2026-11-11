@@ -1,5 +1,6 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 21章主線、四大聖碑與配合「+1採集」的委託庫 (quests-npcs.js - v5.0)
+ * Project J：艾瑟瑞亞的破曉 — 21章主線、四大聖碑與配合「+1採集」的委託庫 (quests-npcs.js - v5.1)
+ * 修正：校準 mq_16 與 mq_17 任務完成判定，確保防具鍛造與 Lv.3 星隕鑽頭升級無衝突銜接
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -73,7 +74,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   };
 
-  // 21 個推進式主線任務鏈 (獎勵與需求完全對齊 +1 採集經濟)
   const MAIN_QUESTS = [
     {
       id: "mq_01", chapter: "序章 1/3", title: "與營地鐵匠大叔・巴爾對話",
@@ -181,18 +181,18 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       onClaim: function(s) { s.inventory.tabletShard += 1; s.inventory.fur += 2; window.Aetheria.State.gainRewards(680, 700, 50); }
     },
     {
-      id: "mq_16", chapter: "第五章 1/3", title: "升級【Lv.3 星隕鑽頭】並打造【霜狼毛皮甲】",
-      desc: "升級 Lv.3 星隕鑽頭以開採高階黑曜石，並打造 T5 霜狼禦寒毛皮甲抵禦雪原凍傷。",
-      checkComplete: function(s) { return s.unlockedArmors.indexOf("a_frost") !== -1 || s.tools.pickaxe >= 3; },
+      id: "mq_16", chapter: "第五章 1/3", title: "打造【霜狼禦寒毛皮甲 (T5)】抵禦暴風雪",
+      desc: "在【4.霜語極寒雪原】以 Lv.2 戰斧採集雪山冰蓮並收集毛皮，打造 T5 霜狼禦寒毛皮甲。",
+      checkComplete: function(s) { return s.unlockedArmors.indexOf("a_frost") !== -1; },
       rewardText: "熔岩黑曜石 x2、雪狼冰魄 x1、700 G、EXP +720",
       onClaim: function(s) { s.inventory.obsidian += 2; s.inventory.coreWolf += 1; window.Aetheria.State.gainRewards(720, 700, 45); }
     },
     {
-      id: "mq_17", chapter: "第五章 2/3", title: "於公會修復任一座【古文明聖碑】達 50 點",
-      desc: "打開【公會 ➔ 古文明聖碑】分頁，將任一座聖碑共鳴提升至 50 點以上。",
+      id: "mq_17", chapter: "第五章 2/3", title: "升級【Lv.3 星隕鑽頭】並修復聖碑達 50 點",
+      desc: "升級 Lv.3 星隕鑽頭以開採黑曜石，並於【公會 ➔ 古文明聖碑】將任一座聖碑共鳴提升至 50 點。",
       checkComplete: function(s) {
         const m = s.monolithPts || {};
-        return (m.chinese >= 50 || m.english >= 50 || m.science >= 50 || m.humanities >= 50);
+        return s.tools.pickaxe >= 3 || (m.chinese >= 50 || m.english >= 50 || m.science >= 50 || m.humanities >= 50);
       },
       rewardText: "古文明聖碑殘片 x2、雪山冰蓮 x2、800 G、EXP +800",
       onClaim: function(s) { s.inventory.tabletShard += 2; s.inventory.iceLotus += 2; window.Aetheria.State.gainRewards(800, 800, 50); }
@@ -360,7 +360,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     { rank: "SS", name: "破曉傳說大宗師", minPts: 600, dailyIron: 12, dailyPotion: 5, perk: "開局額外 +1 BP，總攻擊與破盾傷害 +30%" }
   ];
 
-  // 8 大分階公會委託池 (配合每次採集 +1，需求量調整為 2~3 個)
   const GUILD_BOUNTIES = [
     {
       id: "gb_gather_wood",
