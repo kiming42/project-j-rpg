@@ -1,8 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 1400x960 迷宮通道校正、雙封印柱與資源刷新庫 (world-maps.js - v5.1)
- * 修正：1.為所有擋路枯木、擋路巨石與炸彈裂縫牆預留獨立秘境通道缺口，破障後 100% 暢通無阻
- *       2.內移邊界採集點與傳送口座標，解決標籤文字貼邊裁切問題
- *       3.每次呼叫 refreshAllResources() 自動更新 _refreshToken，確保高階礦脈與巨石即時重生
+ * Project J：艾瑟瑞亞的破曉 — 7大實地拓荒工程、6位新村民駐點與徒手拾荒地圖庫 (world-maps.js - v6.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -54,7 +51,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   }
 
-  // ================= 第 0 區：曙光露營基地 (640x480 安全城鎮) =================
+  // ================= 第 0 區：曙光露營基地 (含徒手拾荒點、熔爐修復工程、老漁夫阿海與草藥婆婆梅姑) =================
   function buildCampHub() {
     const trees = [];
     buildBorderWalls(trees, 640, 480, { right: 260 });
@@ -65,24 +62,36 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { x: 305, y: 245, sprite: "campfire", w: 24, h: 24, solid: true },
       { x: 258, y: 248, sprite: "deco_bench", w: 28, h: 16, solid: false },
       { x: 345, y: 245, sprite: "deco_pot", w: 24, h: 24, solid: true, isCookPot: true },
-      { x: 472, y: 155, sprite: "deco_anvil", w: 22, h: 18, solid: true },
-      { x: 502, y: 145, sprite: "deco_rack", w: 24, h: 22, solid: true },
+      // 實地工程 1：巴爾的鍛造熔爐 (修復後授予新手忍刀 + Lv.1手斧 + Lv.1鐵鎬)
+      { id: "site_camp_forge", x: 482, y: 168, sprite: "deco_anvil", builtSprite: "brazier_on", w: 26, h: 26, solid: true, isProjectSite: true, projectId: "proj_camp_forge", name: "受損鍛造爐" },
+      { x: 512, y: 145, sprite: "deco_rack", w: 24, h: 22, solid: true },
       { x: 132, y: 235, sprite: "deco_lantern", w: 18, h: 24, solid: true },
       { x: 515, y: 215, sprite: "deco_sign", w: 20, h: 20, solid: true },
       { x: 515, y: 295, sprite: "deco_lantern", w: 18, h: 24, solid: true },
-      { id: "fish_camp", x: 225, y: 380, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true }
+      { id: "fish_camp", x: 235, y: 392, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true }
     ];
 
     const npcs = [
-      { id: "npc_smith", name: "鐵匠大叔・巴爾", role: "神兵/防具/鑲嵌/工具", sprite: "npc_blacksmith", badge: "[鐵匠]", x: 438, y: 168 },
-      { id: "npc_guild", name: "公會會長・雷恩", role: "21章節主線 & 懸賞", sprite: "npc_guildmaster", badge: "[公會]", x: 202, y: 168 },
-      { id: "npc_astro", name: "星象少女・艾莉婭", role: "古文明聖碑共鳴師", sprite: "npc_astrologer", badge: "[聖碑]", x: 175, y: 288 },
-      { id: "npc_merch", name: "神秘行商・奇奇", role: "稀有藥水 & 金幣商店", sprite: "npc_merchant", badge: "[行商]", x: 438, y: 288 }
+      { id: "npc_smith",     name: "鐵匠大叔・巴爾", role: "鍛造/建材加工", sprite: "npc_blacksmith", badge: "[鐵匠]", x: 432, y: 168 },
+      { id: "npc_guild",     name: "公會會長・雷恩", role: "主線回報 & 懸賞", sprite: "npc_guildmaster", badge: "[公會]", x: 202, y: 168 },
+      { id: "npc_astro",     name: "星象少女・艾莉婭", role: "古文明聖碑共鳴", sprite: "npc_astrologer", badge: "[聖碑]", x: 175, y: 265 },
+      { id: "npc_merch",     name: "神秘行商・奇奇", role: "金幣物資商店", sprite: "npc_merchant", badge: "[行商]", x: 438, y: 288 },
+      // 新增營地村民 NPC
+      { id: "npc_fisher",    name: "老漁夫・阿海",   role: "授予釣竿 & 漁夫委託", sprite: "npc_fisher", badge: "[漁夫]", x: 285, y: 375 },
+      { id: "npc_herbalist", name: "草藥婆婆・梅姑", role: "百草熬藥 & 藥師委託", sprite: "npc_herbalist", badge: "[藥師]", x: 115, y: 315 }
     ];
 
+    // 營地徒手拾荒節點 (reqToolLv: 0，赤手空拳即可拾取修復熔爐！)
     const nodes = [
-      { id: "camp_wood1", x: 148, y: 348, type: "wood", giveKey: "wood", reqTool: "axe", reqToolLv: 1, name: "營地老樹樁 [Lv.1斧]" },
-      { id: "camp_herb1", x: 465, y: 358, type: "mushroom", giveKey: "herb", reqTool: "axe", reqToolLv: 1, name: "營地紅傘菇 [Lv.1斧]" }
+      { id: "camp_br1", x: 95,  y: 185, giveKey: "branch", reqTool: "none", reqToolLv: 0, name: "散落枯枝 [徒手]" },
+      { id: "camp_br2", x: 115, y: 385, giveKey: "branch", reqTool: "none", reqToolLv: 0, name: "散落枯枝 [徒手]" },
+      { id: "camp_br3", x: 375, y: 375, giveKey: "branch", reqTool: "none", reqToolLv: 0, name: "散落枯枝 [徒手]" },
+      { id: "camp_fl1", x: 295, y: 115, giveKey: "flint",  reqTool: "none", reqToolLv: 0, name: "尖銳燧石 [徒手]" },
+      { id: "camp_fl2", x: 525, y: 115, giveKey: "flint",  reqTool: "none", reqToolLv: 0, name: "尖銳燧石 [徒手]" },
+      { id: "camp_fl3", x: 495, y: 365, giveKey: "flint",  reqTool: "none", reqToolLv: 0, name: "尖銳燧石 [徒手]" },
+      { id: "camp_cl1", x: 185, y: 388, giveKey: "clay",   reqTool: "none", reqToolLv: 0, name: "河床黏土 [徒手]" },
+      { id: "camp_cl2", x: 335, y: 392, giveKey: "clay",   reqTool: "none", reqToolLv: 0, name: "河床黏土 [徒手]" },
+      { id: "camp_vine1", x: 95, y: 255, giveKey: "vine",  reqTool: "axe",  reqToolLv: 1, name: "營地藤蔓 [Lv.1斧]" }
     ];
 
     const portals = [
@@ -150,23 +159,20 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     };
   }
 
-  // ================= 第 1 區：翠風迷霧森林 (1400x960 大型雙翼迷宮 + 獨立秘境通道) =================
+  // ================= 第 1 區：翠風迷霧森林 (含斷橋修築工程 proj_z1_bridge、斥候里奧與礦工石頭) =================
   function buildZone1Forest() {
     const trees = [];
     buildBorderWalls(trees, 1400, 960, { left: 480, top: 680, right: 480 });
 
-    // 北翼迷宮樹牆
     addWallLine(trees, 320, 60,  320, 370, 38);
     addWallLine(trees, 320, 370, 620, 370, 38);
     addWallLine(trees, 680, 180, 680, 440, 38);
 
-    // 南翼迷宮樹牆 (在 y=740 預留枯木秘境通道缺口，絕不與枯木重疊！)
     addWallLine(trees, 320, 580, 320, 680, 38);
     addWallLine(trees, 320, 800, 320, 890, 38);
     addWallLine(trees, 520, 590, 860, 590, 38);
     addWallLine(trees, 860, 590, 860, 820, 38);
 
-    // 河東右下角巨石秘境圍牆 (在 x=1180, y=660 預留巨石入口缺口)
     addWallLine(trees, 1080, 660, 1130, 660, 38);
     addWallLine(trees, 1230, 660, 1330, 660, 38);
 
@@ -174,31 +180,47 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { x: 135, y: 435, sprite: "deco_sign", w: 20, h: 20, solid: true },
       { id: "seal_z1_1", x: 480, y: 155, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "森林北翼封印柱" },
       { id: "seal_z1_2", x: 680, y: 780, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "森林南翼封印柱" },
+      // 實地工程 2：建造跨河加固吊橋 (未建好前無法過河前往東岸！)
+      { id: "site_z1_bridge", x: 992, y: 465, sprite: "build_site", builtSprite: "deco_sign", w: 28, h: 28, solid: false, isProjectSite: true, projectId: "proj_z1_bridge", name: "跨河吊橋工程" },
       { id: "fish_z1_1", x: 985, y: 350, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true },
       { id: "fish_z1_2", x: 985, y: 620, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true },
       { id: "grap_z1_w", x: 985, y: 175, sprite: "grapple_post", w: 20, h: 24, isGrapple: true, targetX: 1125, targetY: 175 },
       { id: "grap_z1_e", x: 1115, y: 175, sprite: "grapple_post", w: 20, h: 24, isGrapple: true, targetX: 975, targetY: 175 },
-      // 獨立秘境門口的擋路枯木與擋路巨石
       { id: "obs_z1_tree", x: 320,  y: 740, sprite: "deadtree_block", w: 26, h: 26, solid: true, obstacleType: "deadtree" },
       { id: "obs_z1_rock", x: 1180, y: 660, sprite: "boulder_block",  w: 26, h: 24, solid: true, obstacleType: "boulder" }
     ];
 
+    const npcs = [
+      { id: "npc_scout", name: "受困斥候・里奧", role: "跨河吊橋工程 & 斥候委託", sprite: "npc_scout", badge: "[斥候]", x: 935, y: 445 },
+      { id: "npc_miner", name: "見習礦工・石頭", role: "授予火藥袋 & 礦工委託",   sprite: "npc_miner", badge: "[礦工]", x: 625, y: 95 }
+    ];
+
     const nodes = [
-      { id: "z1_w1", x: 185, y: 280, type: "wood", giveKey: "wood", reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
-      { id: "z1_w2", x: 215, y: 620, type: "wood", giveKey: "wood", reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
-      { id: "z1_w3", x: 540, y: 260, type: "wood", giveKey: "wood", reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
-      { id: "z1_w4", x: 780, y: 420, type: "wood", giveKey: "wood", reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
+      // 徒手與基礎森林素材
+      { id: "z1_br1", x: 145, y: 340, giveKey: "branch", reqTool: "none", reqToolLv: 0, name: "散落枯枝 [徒手]" },
+      { id: "z1_fl1", x: 250, y: 560, giveKey: "flint",  reqTool: "none", reqToolLv: 0, name: "尖銳燧石 [徒手]" },
+      { id: "z1_cl1", x: 965, y: 540, giveKey: "clay",   reqTool: "none", reqToolLv: 0, name: "河岸黏土 [徒手]" },
+      // T1 原木與琥珀松脂 (Lv.1 斧)
+      { id: "z1_w1", x: 185, y: 240, type: "wood", giveKey: "wood",  reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
+      { id: "z1_w2", x: 215, y: 640, type: "wood", giveKey: "wood",  reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
+      { id: "z1_w3", x: 540, y: 260, type: "wood", giveKey: "wood",  reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
+      { id: "z1_w4", x: 780, y: 420, type: "wood", giveKey: "wood",  reqTool: "axe", reqToolLv: 1, name: "翠風老樹樁 [Lv.1斧]" },
+      { id: "z1_r1", x: 260, y: 280, type: "wood", giveKey: "resin", reqTool: "axe", reqToolLv: 1, name: "琥珀松脂樹 [Lv.1斧]" },
+      { id: "z1_r2", x: 600, y: 320, type: "wood", giveKey: "resin", reqTool: "axe", reqToolLv: 1, name: "琥珀松脂樹 [Lv.1斧]" },
+      { id: "z1_r3", x: 840, y: 520, type: "wood", giveKey: "resin", reqTool: "axe", reqToolLv: 1, name: "琥珀松脂樹 [Lv.1斧]" },
+      // T1 藤蔓與紅傘菇 (Lv.1 斧)
       { id: "z1_v1", x: 245, y: 165, type: "flower", giveKey: "vine", reqTool: "axe", reqToolLv: 1, name: "翠風藤蔓叢 [Lv.1斧]" },
       { id: "z1_v2", x: 460, y: 480, type: "flower", giveKey: "vine", reqTool: "axe", reqToolLv: 1, name: "翠風藤蔓叢 [Lv.1斧]" },
       { id: "z1_v3", x: 760, y: 260, type: "flower", giveKey: "vine", reqTool: "axe", reqToolLv: 1, name: "翠風藤蔓叢 [Lv.1斧]" },
-      { id: "z1_h1", x: 190, y: 380, type: "mushroom", giveKey: "herb", reqTool: "axe", reqToolLv: 1, name: "紅傘微光菇 [Lv.1斧]" },
+      { id: "z1_h1", x: 190, y: 395, type: "mushroom", giveKey: "herb", reqTool: "axe", reqToolLv: 1, name: "紅傘微光菇 [Lv.1斧]" },
       { id: "z1_h2", x: 420, y: 240, type: "mushroom", giveKey: "herb", reqTool: "axe", reqToolLv: 1, name: "紅傘微光菇 [Lv.1斧]" },
       { id: "z1_h3", x: 580, y: 740, type: "mushroom", giveKey: "herb", reqTool: "axe", reqToolLv: 1, name: "紅傘微光菇 [Lv.1斧]" },
+      // T1 藍晶鐵礦 (Lv.1 鎬)
       { id: "z1_i1", x: 450, y: 660, type: "crystal", giveKey: "iron", reqTool: "pickaxe", reqToolLv: 1, name: "藍晶鐵礦 [Lv.1鎬]" },
       { id: "z1_i2", x: 450, y: 760, type: "crystal", giveKey: "iron", reqTool: "pickaxe", reqToolLv: 1, name: "藍晶鐵礦 [Lv.1鎬]" },
       { id: "z1_i3", x: 780, y: 720, type: "crystal", giveKey: "iron", reqTool: "pickaxe", reqToolLv: 1, name: "藍晶鐵礦 [Lv.1鎬]" },
       { id: "z1_i4", x: 840, y: 320, type: "crystal", giveKey: "iron", reqTool: "pickaxe", reqToolLv: 1, name: "藍晶鐵礦 [Lv.1鎬]" },
-      // 破開枯木或巨石後的高階資源點 (需 Lv.2 工具，跨區必刷新)
+      // 秘境高階資源點 (需 Lv.2 工具)
       { id: "z1_m1", x: 1230, y: 790, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
       { id: "z1_f1", x: 190,  y: 830, type: "flower",  giveKey: "flower",  reqTool: "axe",     reqToolLv: 2, name: "翠風太陽花 [需Lv.2斧]" },
       { id: "z1_ch1", x: 140,  y: 760, type: "chest", legendary: true, name: "枯木秘境傳說寶箱" },
@@ -210,7 +232,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { id: "m_z1_2", x: 460, y: 220, lv: 3, type: "bamboo", name: "北翼護柱竹妖" },
       { id: "m_z1_3", x: 560, y: 480, lv: 3, type: "bamboo", name: "迷霧竹子精" },
       { id: "m_z1_4", x: 640, y: 740, lv: 4, type: "bamboo", name: "南翼護柱竹衛" },
-      { id: "m_z1_5", x: 880, y: 480, lv: 5, type: "skull",  name: "河畔巡邏骷髏" },
+      { id: "m_z1_5", x: 860, y: 480, lv: 5, type: "skull",  name: "河畔巡邏骷髏" },
       { id: "m_z1_elite", x: 1160, y: 780, lv: 6, type: "bamboo", isElite: true, name: "紫氣・蝕憶狂暴竹魔" },
       {
         id: "m_z1_boss", bossId: "boss_z1", x: 1210, y: 480, lv: 8, type: "boss", isBoss: true,
@@ -227,18 +249,18 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     return {
       id: "zone1_forest", _refreshToken: globalRefreshToken, name: "1. 翠風迷霧森林", recLv: 3, bgm: "forest", theme: "forest",
-      rain: true, fog: false, hasRiver: true, riverX: 1030, bridgeY: 455, width: 1400, height: 960,
+      rain: true, fog: false, hasRiver: true, riverX: 1030, bridgeY: 455, bridgeProject: "proj_z1_bridge", width: 1400, height: 960,
       dirtBlobs: [
         { x: 60,   y: 440, w: 960, h: 80 },
         { x: 380,  y: 120, w: 260, h: 340 },
         { x: 400,  y: 520, w: 420, h: 320 },
         { x: 1100, y: 420, w: 230, h: 120 }
       ],
-      trees: trees, decos: decos, nodes: nodes, npcs: [], monsters: monsters, portals: portals
+      trees: trees, decos: decos, nodes: nodes, npcs: npcs, monsters: monsters, portals: portals
     };
   }
 
-  // ================= 第 1-B 子迷宮：微光蘑菇洞窟 (960x720 地下迷宮) =================
+  // ================= 第 1-B 子迷宮：微光蘑菇洞窟 (含永明聖火燈塔工程 proj_cave1_beacon 與玄武岩塊) =================
   function buildCave1Mushroom() {
     const trees = [];
     buildBorderWalls(trees, 960, 720, { bottom: 480 });
@@ -246,12 +268,12 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     addWallLine(trees, 680, 180, 680, 520, 38);
     addWallLine(trees, 260, 340, 420, 340, 38);
     addWallLine(trees, 540, 340, 680, 340, 38);
-    // 左上炸彈密室圍牆 (在 x=155, y=260 留出裂縫岩壁門口)
     addWallLine(trees, 55,  260, 105, 260, 38);
     addWallLine(trees, 205, 260, 250, 260, 38);
 
     const decos = [
-      { id: "brz_cave_1", x: 480, y: 540, sprite: "brazier_off", w: 22, h: 22, solid: true, isBrazier: true },
+      // 實地工程 3：砌築永明聖火燈塔 (完成後永久驅散洞窟黑霧！)
+      { id: "site_cave_beacon", x: 480, y: 540, sprite: "brazier_off", builtSprite: "brazier_on", w: 26, h: 26, solid: true, isProjectSite: true, projectId: "proj_cave1_beacon", name: "聖火燈塔基座" },
       { id: "cw_cave_1",  x: 155, y: 260, sprite: "cracked_wall", w: 28, h: 28, solid: true, isCrackedWall: true },
       { id: "seal_c1_1",  x: 145, y: 480, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "洞窟西側封印柱" },
       { id: "seal_c1_2",  x: 815, y: 480, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "洞窟東側封印柱" }
@@ -260,8 +282,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     const nodes = [
       { id: "c1_m1", x: 145, y: 360, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
       { id: "c1_m2", x: 815, y: 360, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
-      { id: "c1_m3", x: 815, y: 200, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
-      { id: "c1_i1", x: 360, y: 480, type: "crystal", giveKey: "iron",    reqTool: "pickaxe", reqToolLv: 1, name: "藍晶鐵礦 [Lv.1鎬]" },
+      { id: "c1_b1", x: 360, y: 480, type: "crystal", giveKey: "basalt",  reqTool: "pickaxe", reqToolLv: 2, name: "洞窟玄武岩 [需Lv.2鎬]" },
+      { id: "c1_b2", x: 600, y: 480, type: "crystal", giveKey: "basalt",  reqTool: "pickaxe", reqToolLv: 2, name: "洞窟玄武岩 [需Lv.2鎬]" },
       { id: "c1_h1", x: 360, y: 240, type: "mushroom", giveKey: "herb",   reqTool: "axe",     reqToolLv: 1, name: "夜光紅傘菇 [Lv.1斧]" },
       { id: "c1_h2", x: 600, y: 240, type: "mushroom", giveKey: "herb",   reqTool: "axe",     reqToolLv: 1, name: "夜光紅傘菇 [Lv.1斧]" },
       { id: "c1_ch1", x: 125, y: 120, type: "chest", legendary: true, name: "炸彈密室傳說寶箱" }
@@ -291,39 +313,52 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     };
   }
 
-  // ================= 第 2 區：流沙繩索大峽谷 (1400x960 三迴廊岩石迷宮) =================
+  // ================= 第 2 區：流沙繩索大峽谷 (含斷崖絞盤木梯工程 proj_z2_ladder、遺跡學者古斯塔與荒野亞麻) =================
   function buildZone2Canyon() {
     const trees = [];
     buildBorderWalls(trees, 1400, 960, { left: 480, right: 480 });
     addWallLine(trees, 380, 60,  380, 620, 42);
+    // 北翼斷崖橫牆 (封鎖北翼封印柱，必須在 x=200, y=300 架設絞盤木梯才可攀上斷崖！)
+    addWallLine(trees, 50,  290, 360, 290, 38);
+
     addWallLine(trees, 720, 320, 720, 880, 42);
     addWallLine(trees, 1040, 60, 1040, 380, 42);
     addWallLine(trees, 1040, 580, 1040, 880, 42);
-    // 右上金字塔秘境圍牆 (在 x=880, y=220 預留巨石通道缺口)
     addWallLine(trees, 760, 220, 825, 220, 40);
     addWallLine(trees, 935, 220, 1000, 220, 40);
 
     const decos = [
       { x: 540, y: 480, sprite: "campfire", w: 22, h: 22, solid: true },
+      // 實地工程 4：架設斷崖重型絞盤木梯 (建成後按 A 鍵可上下攀爬北翼斷崖！)
+      {
+        id: "site_z2_ladder", x: 200, y: 305, sprite: "build_site", builtSprite: "ladder_built", w: 28, h: 32,
+        solid: false, isProjectSite: true, projectId: "proj_z2_ladder",
+        isClimbLadder: true, topY: 225, bottomY: 345, name: "斷崖絞盤木梯"
+      },
       { id: "seal_z2_1", x: 200, y: 150, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "峽谷北翼封印柱" },
       { id: "seal_z2_2", x: 880, y: 800, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "峽谷南翼封印柱" },
       { id: "obs_z2_rock", x: 880, y: 220, sprite: "boulder_block", w: 26, h: 24, solid: true, obstacleType: "boulder" }
     ];
 
+    const npcs = [
+      { id: "npc_scholar", name: "遺跡學者・古斯塔", role: "斷崖木梯藍圖 & 學者委託", sprite: "npc_scholar", badge: "[學者]", x: 495, y: 475 }
+    ];
+
     const nodes = [
-      { id: "z2_m1", x: 200, y: 260, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
+      { id: "z2_m1", x: 200, y: 210, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
       { id: "z2_m2", x: 540, y: 220, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
       { id: "z2_m3", x: 880, y: 640, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "流沙秘銀礦 [需Lv.2鎬]" },
       { id: "z2_m4", x: 1180, y: 220, type: "crystal", giveKey: "mithril", reqTool: "pickaxe", reqToolLv: 2, name: "閃光流沙秘銀 [需Lv.2鎬]", perfect: true },
-      { id: "z2_f1", x: 220, y: 760, type: "flower",  giveKey: "flower",  reqTool: "axe",     reqToolLv: 2, name: "綠洲太陽花 [需Lv.2斧]" },
-      { id: "z2_f2", x: 560, y: 760, type: "flower",  giveKey: "flower",  reqTool: "axe",     reqToolLv: 2, name: "綠洲太陽花 [需Lv.2斧]" },
-      { id: "z2_f3", x: 1180, y: 760, type: "flower", giveKey: "flower",  reqTool: "axe",     reqToolLv: 2, name: "綠洲太陽花 [需Lv.2斧]" },
-      { id: "z2_w1", x: 540, y: 620, type: "wood",    giveKey: "wood",    reqTool: "axe",     reqToolLv: 1, name: "峽谷枯木樁 [Lv.1斧]" },
+      { id: "z2_hm1", x: 220, y: 660, type: "flower", giveKey: "hemp",    reqTool: "axe",     reqToolLv: 2, name: "荒野亞麻叢 [需Lv.2斧]" },
+      { id: "z2_hm2", x: 560, y: 660, type: "flower", giveKey: "hemp",    reqTool: "axe",     reqToolLv: 2, name: "荒野亞麻叢 [需Lv.2斧]" },
+      { id: "z2_f1", x: 220, y: 780, type: "flower",  giveKey: "flower",  reqTool: "axe",     reqToolLv: 2, name: "綠洲太陽花 [需Lv.2斧]" },
+      { id: "z2_f2", x: 560, y: 780, type: "flower",  giveKey: "flower",  reqTool: "axe",     reqToolLv: 2, name: "綠洲太陽花 [需Lv.2斧]" },
+      { id: "z2_w1", x: 540, y: 580, type: "wood",    giveKey: "wood",    reqTool: "axe",     reqToolLv: 1, name: "峽谷枯木樁 [Lv.1斧]" },
       { id: "z2_ch1", x: 920, y: 120, type: "chest",  legendary: true, name: "太陽金字塔秘寶箱" }
     ];
 
     const monsters = initPatrolMonsters([
-      { id: "m_z2_1", x: 220, y: 340, lv: 11, type: "skull", name: "流沙骷髏刀客" },
+      { id: "m_z2_1", x: 220, y: 420, lv: 11, type: "skull", name: "流沙骷髏刀客" },
       { id: "m_z2_2", x: 540, y: 340, lv: 13, type: "skull", name: "峽谷重甲衛兵" },
       { id: "m_z2_3", x: 540, y: 720, lv: 14, type: "skull", name: "荒漠骷髏百夫長" },
       { id: "m_z2_4", x: 880, y: 700, lv: 15, type: "skull", name: "南翼護柱死靈" },
@@ -344,11 +379,11 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       id: "zone2_canyon", _refreshToken: globalRefreshToken, name: "2. 流沙繩索峽谷", recLv: 12, bgm: "canyon", theme: "canyon",
       rain: false, fog: false, hasRiver: false, width: 1400, height: 960,
       dirtBlobs: [{ x: 80, y: 100, w: 1240, h: 760 }],
-      trees: trees, decos: decos, nodes: nodes, npcs: [], monsters: monsters, portals: portals
+      trees: trees, decos: decos, nodes: nodes, npcs: npcs, monsters: monsters, portals: portals
     };
   }
 
-  // ================= 第 3 區：翡翠沉船海岸 (1400x960 海灣迷宮) =================
+  // ================= 第 3 區：翡翠沉船海岸 (含破浪遠航木筏工程 proj_z3_raft 與老船匠達克) =================
   function buildZone3Coast() {
     const trees = [];
     buildBorderWalls(trees, 1400, 960, { left: 480, right: 480 });
@@ -359,6 +394,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { x: 580, y: 780, sprite: "ancient_ship", w: 48, h: 42, solid: true },
       { id: "seal_z3_1", x: 240, y: 160, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "海灣北翼封印柱" },
       { id: "seal_z3_2", x: 920, y: 800, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "沉船南翼封印柱" },
+      // 實地工程 5：建造破浪遠航木筏 (建好後打通深海航道前往東岸挑戰幽靈船長！)
+      { id: "site_z3_raft", x: 992, y: 465, sprite: "build_site", builtSprite: "raft_built", w: 30, h: 30, solid: false, isProjectSite: true, projectId: "proj_z3_raft", name: "遠航木筏船塢" },
       { id: "fish_z3_1", x: 260, y: 740, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true },
       { id: "fish_z3_2", x: 640, y: 740, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true },
       { id: "fish_z3_3", x: 980, y: 360, sprite: "fishing_spot", w: 26, h: 22, isFishingSpot: true },
@@ -366,13 +403,19 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { id: "grap_z3_2", x: 1115, y: 185, sprite: "grapple_post", w: 20, h: 24, isGrapple: true, targetX: 970, targetY: 185 }
     ];
 
+    const npcs = [
+      { id: "npc_shipwright", name: "老船匠・達克", role: "遠航木筏造船 & 船匠委託", sprite: "npc_shipwright", badge: "[船匠]", x: 935, y: 445 }
+    ];
+
     const nodes = [
       { id: "z3_c1", x: 240, y: 280, type: "crystal", giveKey: "coral",  reqTool: "pickaxe", reqToolLv: 2, name: "深海珊瑚礁 [需Lv.2鎬]" },
       { id: "z3_c2", x: 580, y: 260, type: "crystal", giveKey: "coral",  reqTool: "pickaxe", reqToolLv: 2, name: "深海珊瑚礁 [需Lv.2鎬]" },
       { id: "z3_c3", x: 920, y: 620, type: "crystal", giveKey: "coral",  reqTool: "pickaxe", reqToolLv: 2, name: "深海珊瑚礁 [需Lv.2鎬]" },
       { id: "z3_c4", x: 1180, y: 720, type: "crystal", giveKey: "coral", reqTool: "pickaxe", reqToolLv: 2, name: "閃光深海珊瑚 [需Lv.2鎬]", perfect: true },
-      { id: "z3_f1", x: 580, y: 520, type: "flower",  giveKey: "flower", reqTool: "axe",     reqToolLv: 2, name: "海濱太陽花 [需Lv.2斧]" },
+      { id: "z3_hm1", x: 580, y: 520, type: "flower", giveKey: "hemp",   reqTool: "axe",     reqToolLv: 2, name: "海濱亞麻叢 [需Lv.2斧]" },
+      { id: "z3_r1", x: 220, y: 520, type: "wood",    giveKey: "resin",  reqTool: "axe",     reqToolLv: 1, name: "海岸松脂木 [Lv.1斧]" },
       { id: "z3_w1", x: 220, y: 620, type: "wood",    giveKey: "wood",   reqTool: "axe",     reqToolLv: 1, name: "漂流木樹樁 [Lv.1斧]" },
+      { id: "z3_cl1", x: 965, y: 550, giveKey: "clay", reqTool: "none",  reqToolLv: 0,       name: "海灣黏土 [徒手]" },
       { id: "z3_ch1", x: 1220, y: 150, type: "chest", legendary: true, name: "沉船孤島傳說寶箱" }
     ];
 
@@ -395,13 +438,13 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     return {
       id: "zone3_coast", _refreshToken: globalRefreshToken, name: "3. 翡翠沉船海岸", recLv: 20, bgm: "forest", theme: "coast",
-      rain: false, fog: false, hasRiver: true, riverX: 1030, bridgeY: 455, width: 1400, height: 960,
+      rain: false, fog: false, hasRiver: true, riverX: 1030, bridgeY: 455, bridgeProject: "proj_z3_raft", width: 1400, height: 960,
       dirtBlobs: [{ x: 80, y: 120, w: 920, h: 720 }, { x: 1100, y: 400, w: 230, h: 160 }],
-      trees: trees, decos: decos, nodes: nodes, npcs: [], monsters: monsters, portals: portals
+      trees: trees, decos: decos, nodes: nodes, npcs: npcs, monsters: monsters, portals: portals
     };
   }
 
-  // ================= 第 4 區：霜語極寒雪原 (1400x960 暴風雪迷宮) =================
+  // ================= 第 4 區：霜語極寒雪原 (含極地防風毛皮屋工程 proj_z4_shelter) =================
   function buildZone4Snow() {
     const trees = [];
     buildBorderWalls(trees, 1400, 960, { left: 480, right: 480 });
@@ -412,7 +455,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     addWallLine(trees, 935, 220, 1010, 220, 40);
 
     const decos = [
-      { x: 560, y: 480, sprite: "campfire", w: 22, h: 22, solid: true },
+      // 實地工程 6：搭建極地防風毛皮屋 (完工後永久免疫雪原凍傷，並可隨時按 A 鍵免費回滿 HP！)
+      { id: "site_z4_shelter", x: 560, y: 480, sprite: "build_site", builtSprite: "shelter_built", w: 32, h: 32, solid: true, isProjectSite: true, projectId: "proj_z4_shelter", name: "極地防風屋營址" },
       { id: "seal_z4_1", x: 220, y: 160, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "雪原北翼封印柱" },
       { id: "seal_z4_2", x: 920, y: 800, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "雪原南翼封印柱" },
       { id: "obs_z4_tree", x: 880, y: 220, sprite: "deadtree_block", w: 26, h: 26, solid: true, obstacleType: "deadtree" }
@@ -422,7 +466,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { id: "z4_l1", x: 220, y: 280, type: "flower",  giveKey: "iceLotus", reqTool: "axe",     reqToolLv: 2, name: "雪山永凍冰蓮 [需Lv.2斧]" },
       { id: "z4_l2", x: 580, y: 240, type: "flower",  giveKey: "iceLotus", reqTool: "axe",     reqToolLv: 2, name: "雪山永凍冰蓮 [需Lv.2斧]" },
       { id: "z4_l3", x: 580, y: 740, type: "flower",  giveKey: "iceLotus", reqTool: "axe",     reqToolLv: 2, name: "雪山永凍冰蓮 [需Lv.2斧]" },
-      { id: "z4_l4", x: 920, y: 660, type: "flower",  giveKey: "iceLotus", reqTool: "axe",     reqToolLv: 2, name: "雪山永凍冰蓮 [需Lv.2斧]" },
+      { id: "z4_b1", x: 920, y: 660, type: "crystal", giveKey: "basalt",   reqTool: "pickaxe", reqToolLv: 2, name: "凍土玄武岩 [需Lv.2鎬]" },
       { id: "z4_o1", x: 1180, y: 240, type: "crystal", giveKey: "obsidian", reqTool: "pickaxe", reqToolLv: 3, name: "極地黑曜石脈 [需Lv.3鎬]" },
       { id: "z4_o2", x: 1180, y: 740, type: "crystal", giveKey: "obsidian", reqTool: "pickaxe", reqToolLv: 3, name: "極地黑曜石脈 [需Lv.3鎬]" },
       { id: "z4_ch1", x: 920, y: 120, type: "chest",  legendary: true, name: "冰龍巢穴傳說寶箱" }
@@ -453,19 +497,20 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     };
   }
 
-  // ================= 第 5 區：赤紅熔岩火山帶 (1400x960 煉獄迷宮) =================
+  // ================= 第 5 區：赤紅熔岩火山帶 (含熔岩河與黑曜耐火石拱橋工程 proj_z5_bridge) =================
   function buildZone5Volcano() {
     const trees = [];
     buildBorderWalls(trees, 1400, 960, { left: 480, right: 480 });
     addWallLine(trees, 400, 60,  400, 580, 42);
     addWallLine(trees, 760, 360, 760, 880, 42);
-    addWallLine(trees, 1060, 560, 1060, 880, 42);
     addWallLine(trees, 760, 220, 825, 220, 40);
-    addWallLine(trees, 935, 220, 1010, 220, 40);
+    addWallLine(trees, 935, 220, 1000, 220, 40);
 
     const decos = [
       { id: "seal_z5_1", x: 220, y: 160, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "火山北翼封印柱" },
       { id: "seal_z5_2", x: 920, y: 800, sprite: "seal_pillar_off", w: 24, h: 32, solid: true, isSealPillar: true, name: "火山南翼封印柱" },
+      // 實地工程 7：鋪設黑曜耐火石拱橋 (未建好前無法跨越滾燙熔岩河挑戰紅蓮火山龍皇！)
+      { id: "site_z5_bridge", x: 992, y: 465, sprite: "build_site", builtSprite: "brazier_on", w: 28, h: 28, solid: false, isProjectSite: true, projectId: "proj_z5_bridge", name: "耐火石拱橋工程" },
       { id: "obs_z5_rock", x: 880, y: 220, sprite: "boulder_block", w: 26, h: 24, solid: true, obstacleType: "boulder" }
     ];
 
@@ -473,7 +518,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       { id: "z5_o1", x: 220, y: 280, type: "crystal", giveKey: "obsidian", reqTool: "pickaxe", reqToolLv: 3, name: "熔岩黑曜石簇 [需Lv.3鎬]" },
       { id: "z5_o2", x: 580, y: 240, type: "crystal", giveKey: "obsidian", reqTool: "pickaxe", reqToolLv: 3, name: "熔岩黑曜石簇 [需Lv.3鎬]" },
       { id: "z5_o3", x: 580, y: 740, type: "crystal", giveKey: "obsidian", reqTool: "pickaxe", reqToolLv: 3, name: "熔岩黑曜石簇 [需Lv.3鎬]" },
-      { id: "z5_o4", x: 920, y: 640, type: "crystal", giveKey: "obsidian", reqTool: "pickaxe", reqToolLv: 3, name: "熔岩黑曜石簇 [需Lv.3鎬]" },
+      { id: "z5_b1", x: 920, y: 640, type: "crystal", giveKey: "basalt",   reqTool: "pickaxe", reqToolLv: 2, name: "火山玄武岩 [需Lv.2鎬]" },
       { id: "z5_s1", x: 1180, y: 220, type: "crystal", giveKey: "starIron", reqTool: "pickaxe", reqToolLv: 3, name: "深淵星隕鐵脈 [需Lv.3鎬]" },
       { id: "z5_ch1", x: 920, y: 120, type: "chest",  legendary: true, name: "火山熔岩神器寶箱" }
     ];
@@ -497,8 +542,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     return {
       id: "zone5_volcano", _refreshToken: globalRefreshToken, name: "5. 赤紅熔岩火山", recLv: 42, bgm: "abyss", theme: "volcano", hazard: "heat",
-      rain: false, fog: false, hasRiver: false, width: 1400, height: 960,
-      dirtBlobs: [{ x: 80, y: 100, w: 1240, h: 760 }],
+      rain: false, fog: false, hasRiver: true, isLavaRiver: true, riverX: 1030, bridgeY: 455, bridgeProject: "proj_z5_bridge", width: 1400, height: 960,
+      dirtBlobs: [{ x: 80, y: 100, w: 920, h: 760 }, { x: 1100, y: 380, w: 230, h: 200 }],
       trees: trees, decos: decos, nodes: nodes, npcs: [], monsters: monsters, portals: portals
     };
   }
@@ -588,15 +633,15 @@ window.Aetheria.Data = window.Aetheria.Data || {};
   }
 
   const ORDERED_WORLD_ZONES = [
-    { id: "camp_hub",       name: "0. 曙光露營基地 (安全區)", x: 320, y: 260, desc: "新手大本營，設有鐵匠、公會、聖碑、行商、釣魚池與行前料理鍋。" },
-    { id: "zone1_forest",   name: "1. 翠風迷霧森林 (Lv.3~8)", x: 95,  y: 480, desc: "產出 T1 藍晶鐵礦、原木、紅傘菇與藤蔓。需解開南北雙封印柱挑戰樹妖王。" },
-    { id: "cave1_mushroom", name: "1-B. 微光蘑菇洞窟 (Lv.7~12)", x: 480, y: 620, desc: "產出 T2 流沙秘銀礦 [需Lv.2鎬] 與硬甲殼。含火盆驅霧與雙封印柱。" },
-    { id: "zone2_canyon",   name: "2. 流沙繩索峽谷 (Lv.12~18)", x: 95,  y: 480, desc: "產出 T2 流沙秘銀礦 [需Lv.2鎬] 與太陽花 [需Lv.2斧]。守關：荒漠流沙魔神。" },
-    { id: "zone3_coast",    name: "3. 翡翠沉船海岸 (Lv.20~26)", x: 95,  y: 480, desc: "產出 T2 深海珊瑚 [需Lv.2鎬] 與垂釣銀鱗鮮魚。守關：深海幽靈船長。" },
-    { id: "zone4_snow",     name: "4. 霜語極寒雪原 (Lv.30~38 需抗寒)", x: 95, y: 480, desc: "產出 T3 雪山冰蓮 [需Lv.2斧] 與毛皮。守關：遠古永凍冰霜龍王。" },
-    { id: "zone5_volcano",  name: "5. 赤紅熔岩火山 (Lv.42~52 需抗熱)", x: 95, y: 480, desc: "產出 T3 熔岩黑曜石 [需Lv.3鎬] 與龍鱗。守關：紅蓮火山龍皇。" },
-    { id: "zone6_sky",      name: "6. 天界浮空聖殿 (Lv.60~70)", x: 95, y: 480, desc: "產出 T4 深淵星隕鐵 [需Lv.3鎬] 與世界樹金葉 [需Lv.3斧]。終極領主：破曉神龍皇。" },
-    { id: "endless_tower",  name: "終局：無盡試煉之塔 (100層)", x: 360, y: 480, desc: "擊敗天界龍皇後開啟。每層皆有守關強敵與星隕礦脈。" }
+    { id: "camp_hub",       name: "0. 曙光露營基地 (安全區)", x: 320, y: 260, desc: "設鍛造熔爐、老漁夫阿海、草藥婆婆梅姑與行前料理鍋。" },
+    { id: "zone1_forest",   name: "1. 翠風迷霧森林 (Lv.3~8)", x: 95,  y: 480, desc: "產原木、松脂、藤蔓與藍晶礦。需修築【跨河吊橋】過河。" },
+    { id: "cave1_mushroom", name: "1-B. 微光蘑菇洞窟 (Lv.7~12)", x: 480, y: 620, desc: "產流沙秘銀與玄武岩。需砌築【永明聖火燈塔】驅霧。" },
+    { id: "zone2_canyon",   name: "2. 流沙繩索峽谷 (Lv.12~18)", x: 95,  y: 480, desc: "產秘銀、太陽花與荒野亞麻。需架設【斷崖絞盤木梯】。" },
+    { id: "zone3_coast",    name: "3. 翡翠沉船海岸 (Lv.20~26)", x: 95,  y: 480, desc: "產深海珊瑚、古帆布與鮮魚。需建造【破浪遠航木筏】渡海。" },
+    { id: "zone4_snow",     name: "4. 霜語極寒雪原 (Lv.30~38)", x: 95,  y: 480, desc: "產冰蓮、毛皮與強韌獸筋。可搭建【極地防風毛皮屋】。" },
+    { id: "zone5_volcano",  name: "5. 赤紅熔岩火山 (Lv.42~52)", x: 95,  y: 480, desc: "產熔岩黑曜石與龍鱗。需鋪設【黑曜耐火石拱橋】過熔岩河。" },
+    { id: "zone6_sky",      name: "6. 天界浮空聖殿 (Lv.60~70)", x: 95,  y: 480, desc: "產深淵星隕鐵與世界樹金葉。終極領主：破曉蝕憶神龍皇。" },
+    { id: "endless_tower",  name: "終局：無盡試煉之塔 (100層)", x: 360, y: 480, desc: "擊敗天界龍皇後開啟。挑戰 100 層極限知識共鳴。" }
   ];
 
   const MAPS_DB = {
