@@ -30,6 +30,7 @@ body, html {
   font-family: 'Microsoft JhengHei', 'PingFang HK', 'Heiti TC', sans-serif;
   overflow: hidden;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }
@@ -47,6 +48,7 @@ body, html {
   position: relative;
   overflow: hidden;
   box-shadow: 0 0 45px rgba(0,0,0,0.95);
+  flex-shrink: 0;
 }
 
 .px-icon {
@@ -98,8 +100,8 @@ body, html {
 .title-sub { font-size: 13px; letter-spacing: 2px; color: #8ce0ff; font-weight: 900; margin-bottom: 8px; }
 .title-main { font-size: 32px; color: var(--na-gold); text-shadow: 3px 3px 0 #1c1619, -2px -2px 0 #5c3824; letter-spacing: 2px; margin-bottom: 8px; }
 .title-ver { font-size: 13px; color: var(--na-scroll); background: rgba(28, 22, 25, 0.85); border: 1px solid var(--na-wood-light); padding: 3px 12px; border-radius: 12px; }
-.title-hero-showcase { margin-top: 24px; display: flex; gap: 16px; align-items: flex-end; justify-content: center; }
-.title-hero-showcase img { width: 60px; height: 60px; filter: drop-shadow(0 4px 0 #000); }
+.title-hero-showcase { margin-top: 24px; display: flex; gap: 18px; align-items: flex-end; justify-content: center; }
+.title-hero-showcase img { width: 64px; height: 64px; filter: drop-shadow(0 4px 0 #000); }
 .title-menu-panel { display: flex; flex-direction: column; gap: 12px; }
 .title-btn { padding: 14px 16px !important; font-size: 18px !important; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .title-btn.disabled { opacity: 0.4; pointer-events: none; }
@@ -113,6 +115,7 @@ body, html {
   background: #2b3a26;
   overflow: hidden;
   border-bottom: 4px solid var(--na-outline);
+  flex-shrink: 0;
 }
 
 #world-viewport {
@@ -187,7 +190,6 @@ body, html {
   background-position: 0 0, 18px 18px;
 }
 
-/* 純 DOM 地面步道、河流與木橋 */
 .dom-dirt-blob {
   position: absolute;
   border-radius: 36px;
@@ -215,7 +217,6 @@ body, html {
   pointer-events: none;
 }
 
-/* 純 DOM 實體物件與清晰文字標籤 */
 .dom-entity {
   position: absolute;
   transform-origin: center bottom;
@@ -244,6 +245,12 @@ body, html {
   margin-bottom: 2px;
   z-index: 5;
 }
+.dom-label.lbl-bottom {
+  bottom: auto;
+  top: 100%;
+  margin-top: 2px;
+  margin-bottom: 0;
+}
 .dom-label.portal-lbl { color: #8ce0ff; border-color: #3898ff; }
 .dom-label.aggro-lbl  { background: #e03c4b; color: #fff; border-color: #fff; font-size: 12px; }
 .dom-label.lock-lbl   { color: #ff758f; border-color: #e03c4b; }
@@ -263,7 +270,6 @@ body, html {
   width: 100%;
 }
 
-/* 左上角紅心與左下角 DOM 小地圖雷達 */
 #hud-hearts-box {
   position: absolute;
   top: 6px; left: 8px;
@@ -759,6 +765,7 @@ body, html {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .sub-panel {
