@@ -1,6 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 純 DOM 硬體加速相機與分階素材圖資渲染器 (camera-renderer.js - v5.2)
- * 升級：地圖上的每個礦點、靈草、珊瑚、冰蓮與金葉均根據 n.giveKey 自動顯示專屬獨立 16x16 圖案！
+ * Project J：艾瑟瑞亞的破曉 — 實地拓荒工程、動態橋樑與村民 [!]/[✓] 標記渲染器 (camera-renderer.js - v6.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -12,8 +11,10 @@ window.Aetheria = window.Aetheria || {};
       hero: null,
       pet: null,
       subPet: null,
+      bridge: null,
       decos: {},
       nodes: {},
+      npcs: {},
       monsters: {}
     },
     lastHeartsState: "",
@@ -32,7 +33,7 @@ window.Aetheria = window.Aetheria || {};
 
       terrainLayer.innerHTML = "";
       entityLayer.innerHTML = "";
-      this.domPool = { hero: null, pet: null, subPet: null, decos: {}, nodes: {}, monsters: {} };
+      this.domPool = { hero: null, pet: null, subPet: null, bridge: null, decos: {}, nodes: {}, npcs: {}, monsters: {} };
 
       // 1. 地面泥土步道
       (mapObj.dirtBlobs || []).forEach(function(b) {
@@ -52,12 +53,12 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(d);
       });
 
-      // 2. 河流與木橋
+      // 2. 河流、深海海峽、熔岩河與動態橋樑
       if (mapObj.hasRiver) {
         const rx = mapObj.riverX || 1030;
         const by = mapObj.bridgeY || 455;
         const river = document.createElement("div");
-        river.className = "dom-river";
+        river.className = "dom-river" + (mapObj.isLavaRiver ? " lava-river" : "");
         river.style.left = rx + "px";
         river.style.height = mapObj.height + "px";
         terrainLayer.appendChild(river);
@@ -67,6 +68,7 @@ window.Aetheria = window.Aetheria || {};
         bridge.style.left = (rx - 8) + "px";
         bridge.style.top = by + "px";
         terrainLayer.appendChild(bridge);
+        this.domPool.bridge = bridge;
       }
 
       // 3. 傳送門與帳篷入口
@@ -100,7 +102,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(el);
       });
 
-      // 5. 裝飾物與互動機關
+      // 5. 裝飾物、7大實地拓荒工程與互動機關
       const self = this;
       (mapObj.decos || []).forEach(function(d, idx) {
         const key = d.id || ("deco_" + idx);
@@ -125,7 +127,7 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.decos[key] = { el: el, img: img, lbl: lbl, data: d };
       });
 
-      // 6. 採集資源點：根據 n.giveKey 自動選用不同 Tier 的專屬像素圖！
+      // 6. 採集資源點 (支援 40 種獨立素材圖)
       (mapObj.nodes || []).forEach(function(n) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -151,7 +153,7 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.nodes[n.id] = { el: el, data: n };
       });
 
-      // 7. 營地與室內 NPC
+      // 7. 營地與各區村民 NPC (支援動態頭頂 [!] / [✓] 任務標記)
       (mapObj.npcs || []).forEach(function(npc) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -160,11 +162,17 @@ window.Aetheria = window.Aetheria || {};
         el.style.width = "28px";
         el.style.height = "28px";
         el.style.zIndex = Math.round(npc.y + 26);
-        const shortName = (npc.badge || "") + (npc.name.split("・")[1] || npc.name);
-        el.innerHTML =
-          '<div class="dom-label">' + shortName + '</div>' +
-          '<img src="' + Sprites.getDataURL(npc.sprite) + '" alt="">';
+
+        const lbl = document.createElement("div");
+        lbl.className = "dom-label";
+        el.appendChild(lbl);
+
+        const img = document.createElement("img");
+        img.src = Sprites.getDataURL(npc.sprite);
+        el.appendChild(img);
+
         entityLayer.appendChild(el);
+        self.domPool.npcs[npc.id] = { el: el, lbl: lbl, data: npc };
       });
 
       // 8. 野外魔物、賞金首與守關領主
@@ -253,10 +261,23 @@ window.Aetheria = window.Aetheria || {};
         const Sprites = window.Aetheria.Data.Sprites;
         const ExpSys = window.Aetheria.Explore;
 
-        const brazierLit = s.openedNodes && s.openedNodes["lit_" + mapObj.id];
+        // 洞穴黑霧遮罩 (砌築永明聖火燈塔後永久驅散)
+        const brazierLit = (s.openedNodes && s.openedNodes["lit_" + mapObj.id]) || (s.projectsBuilt && s.projectsBuilt.proj_cave1_beacon && mapObj.id === "cave1_mushroom");
         const fogEl = document.getElementById("fog-overlay");
         if (fogEl) fogEl.style.display = (mapObj.fog && !brazierLit) ? "block" : "none";
 
+        // 動態更新橋樑 / 遠航木筏航道 / 熔岩耐火石拱橋狀態
+        if (this.domPool.bridge && mapObj.hasRiver) {
+          const bProj = mapObj.bridgeProject;
+          const isBuilt = !bProj || Boolean(s.projectsBuilt && s.projectsBuilt[bProj]);
+          if (!isBuilt) {
+            this.domPool.bridge.className = "dom-bridge broken";
+          } else {
+            this.domPool.bridge.className = "dom-bridge" + (mapObj.isLavaRiver ? " stone-bridge" : "");
+          }
+        }
+
+        // 1. 更新實地拓荒工程與互動機關狀態
         Object.keys(this.domPool.decos).forEach(function(k) {
           const item = this.domPool.decos[k];
           const d = item.data;
@@ -267,7 +288,27 @@ window.Aetheria = window.Aetheria || {};
           }
           item.el.style.display = "block";
 
-          if (d.isBrazier) {
+          if (d.isProjectSite) {
+            const built = Boolean(s.projectsBuilt && s.projectsBuilt[d.projectId]);
+            item.img.src = Sprites.getDataURL(built ? (d.builtSprite || d.sprite) : d.sprite);
+            item.lbl.style.display = "block";
+            if (!built) {
+              item.lbl.className = "dom-label build-lbl";
+              item.lbl.innerText = "[工程] " + d.name + " [按A建造]";
+            } else if (d.isClimbLadder) {
+              item.lbl.className = "dom-label portal-lbl";
+              item.lbl.innerText = d.name + " [按A攀爬]";
+            } else if (d.projectId === "proj_z4_shelter") {
+              item.lbl.className = "dom-label portal-lbl";
+              item.lbl.innerText = "防風毛皮屋 [按A休整]";
+            } else if (d.projectId === "proj_camp_forge") {
+              item.lbl.className = "dom-label portal-lbl";
+              item.lbl.innerText = "鍛造熔爐 [已點燃]";
+            } else {
+              item.lbl.className = "dom-label portal-lbl";
+              item.lbl.innerText = d.name + " [已完工]";
+            }
+          } else if (d.isBrazier) {
             item.img.src = Sprites.getDataURL(brazierLit ? "brazier_on" : "brazier_off");
             item.lbl.style.display = "block";
             item.lbl.innerText = brazierLit ? "聖火已點亮" : "古代火盆[按A]";
@@ -296,6 +337,7 @@ window.Aetheria = window.Aetheria || {};
           }
         }, this);
 
+        // 2. 更新採集資源點顯示狀態
         Object.keys(this.domPool.nodes).forEach(function(nId) {
           const item = this.domPool.nodes[nId];
           const n = item.data;
@@ -303,6 +345,26 @@ window.Aetheria = window.Aetheria || {};
           item.el.style.display = isGone ? "none" : "block";
         }, this);
 
+        // 3. 更新營地與各區村民 NPC 頭頂任務標記 ([!] 可接委託 / [✓] 可交付領獎)
+        Object.keys(this.domPool.npcs).forEach(function(npcId) {
+          const item = this.domPool.npcs[npcId];
+          const npc = item.data;
+          const shortName = (npc.badge || "") + (npc.name.split("・")[1] || npc.name);
+          const marker = window.Aetheria.Data.getNpcMarkerState ? window.Aetheria.Data.getNpcMarkerState(s, npc.id) : null;
+
+          if (marker === "ready") {
+            item.lbl.className = "dom-label quest-ready-lbl";
+            item.lbl.innerText = "[✓可交付] " + shortName;
+          } else if (marker === "avail") {
+            item.lbl.className = "dom-label quest-avail-lbl";
+            item.lbl.innerText = "[!有委託] " + shortName;
+          } else {
+            item.lbl.className = "dom-label";
+            item.lbl.innerText = shortName;
+          }
+        }, this);
+
+        // 4. 更新野外魔物與守關領主位置及封印提示
         Object.keys(this.domPool.monsters).forEach(function(mId) {
           const item = this.domPool.monsters[mId];
           const m = item.data;
@@ -328,6 +390,7 @@ window.Aetheria = window.Aetheria || {};
           }
         }, this);
 
+        // 5. 更新同行戰寵與主角座標
         const isMov = Boolean(ExpSys && ExpSys.isMoving);
         const stepFrame = isMov ? (Math.floor(this.tick / 6) % 2) : 0;
         const dir = s.facing || "down";
@@ -364,6 +427,7 @@ window.Aetheria = window.Aetheria || {};
           }
         }
 
+        // 6. 計算純 DOM 相機平滑跟隨位移
         const vw = viewport.clientWidth || 460;
         const vh = viewport.clientHeight || 340;
         const camX = Math.max(0, Math.min(mapObj.width - vw, Math.round(s.heroX + 14 - vw / 2)));
@@ -410,7 +474,17 @@ window.Aetheria = window.Aetheria || {};
           const lx = Math.round((d.x / mapObj.width) * 100);
           const ly = Math.round((d.y / mapObj.height) * 100);
           html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;width:5px;height:5px;background:' + (unsealed ? '#5ac54f' : '#e0aaff') + ';"></div>';
+        } else if (d.isProjectSite) {
+          const built = s.projectsBuilt && s.projectsBuilt[d.projectId];
+          const lx = Math.round((d.x / mapObj.width) * 100);
+          const ly = Math.round((d.y / mapObj.height) * 100);
+          html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;width:5px;height:5px;background:' + (built ? '#38b6ff' : '#ff9f1c') + ';"></div>';
         }
+      });
+      (mapObj.npcs || []).forEach(function(npc) {
+        const lx = Math.round((npc.x / mapObj.width) * 100);
+        const ly = Math.round((npc.y / mapObj.height) * 100);
+        html += '<div class="mm-dot" style="left:' + lx + '%;top:' + ly + '%;width:4px;height:4px;background:#5ac54f;"></div>';
       });
       (mapObj.nodes || []).forEach(function(n) {
         if (!n.opened && !(n.legendary && s.openedNodes && s.openedNodes[n.id])) {
