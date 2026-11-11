@@ -2,9 +2,9 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v6.2)</title>
-  <link rel="stylesheet" href="css/style.css?v=6.2">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v6.5)</title>
+  <link rel="stylesheet" href="css/style.css?v=6.5">
 </head>
 <body>
 
@@ -16,7 +16,7 @@
       <div class="title-emblem-box">
         <div class="title-sub">PROJECT J : SURVIVAL &amp; TACTICAL RPG</div>
         <h1 class="title-main">艾瑟瑞亞的破曉</h1>
-        <div class="title-ver">PIONEER EDITION v6.2</div>
+        <div class="title-ver">PIONEER EDITION v6.5</div>
       </div>
       <div class="title-hero-showcase" id="title-hero-preview"></div>
     </div>
@@ -41,8 +41,9 @@
         <span class="na-badge" id="hud-lv">Lv.1 赤手空拳</span>
         <span class="na-badge badge-meal" id="hud-meal" style="display:none;">料理生效中</span>
       </div>
-      <div class="hud-minimal-right">
+      <div class="hud-minimal-right" style="display:flex; gap:4px; align-items:center; pointer-events:auto;">
         <span class="na-badge danger-safe" id="hud-zone">0. 曙光露營基地</span>
+        <button class="na-badge btn-fs-toggle" id="btn-fullscreen" onclick="Aetheria.UI.toggleFullScreen()">⛶ 全屏</button>
       </div>
     </div>
 
@@ -169,12 +170,13 @@
       </div>
 
       <div class="controls-pads">
+        <!-- 加大版十字方向鍵 (已移除中間重複的調查鍵) -->
         <div class="dpad">
           <div></div>
           <button class="dpad-btn" id="btn-up">▲</button>
           <div></div>
           <button class="dpad-btn" id="btn-left">◀</button>
-          <button class="dpad-btn dpad-center" onclick="Aetheria.Explore.interactNearby()">調查</button>
+          <div class="dpad-center-axis"></div>
           <button class="dpad-btn" id="btn-right">▶</button>
           <div></div>
           <button class="dpad-btn" id="btn-down">▼</button>
@@ -259,42 +261,41 @@
   </div>
 </div>
 
-<!-- v6.2 強制更新快取 -->
-<script src="js/engine/save-state.js?v=6.2"></script>
-<script src="js/engine/audio-synth.js?v=6.2"></script>
-<script src="js/data/pixel-sprites.js?v=6.2"></script>
-<script src="js/data/world-maps.js?v=6.2"></script>
-<script src="js/data/items-crafting.js?v=6.2"></script>
-<script src="js/data/jobs-monsters.js?v=6.2"></script>
-<script src="js/data/quests-npcs.js?v=6.2"></script>
-<script src="questions/question-bridge.js?v=6.2"></script>
-<script src="js/engine/camera-renderer.js?v=6.2"></script>
-<script src="js/systems/exploration-gather.js?v=6.2"></script>
-<script src="js/systems/quiz-widgets.js?v=6.2"></script>
-<script src="js/systems/battle-break-boost.js?v=6.2"></script>
-<script src="js/systems/progression-town.js?v=6.2"></script>
+<!-- 防雙手誤觸縮放攔截器 -->
+<script>
+  (function() {
+    document.addEventListener("dblclick", function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener("gesturestart", function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener("gesturechange", function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener("gestureend", function(e) { e.preventDefault(); }, { passive: false });
+    document.addEventListener("touchmove", function(e) {
+      if (e.touches && e.touches.length > 1) {
+        e.preventDefault();
+      }
+    }, { passive: false });
+  })();
+</script>
 
-<!-- v6.3 模組與四科獨立題庫載入順序 -->
-<script src="js/engine/save-state.js?v=6.3"></script>
-<script src="js/engine/audio-synth.js?v=6.3"></script>
-<script src="js/data/pixel-sprites.js?v=6.3"></script>
-<script src="js/data/world-maps.js?v=6.3"></script>
-<script src="js/data/items-crafting.js?v=6.3"></script>
-<script src="js/data/jobs-monsters.js?v=6.3"></script>
-<script src="js/data/quests-npcs.js?v=6.3"></script>
+<!-- v6.5 模組與四科獨立題庫載入順序 -->
+<script src="js/engine/save-state.js?v=6.5"></script>
+<script src="js/engine/audio-synth.js?v=6.5"></script>
+<script src="js/data/pixel-sprites.js?v=6.5"></script>
+<script src="js/data/world-maps.js?v=6.5"></script>
+<script src="js/data/items-crafting.js?v=6.5"></script>
+<script src="js/data/jobs-monsters.js?v=6.5"></script>
+<script src="js/data/quests-npcs.js?v=6.5"></script>
 
-<!-- 四科獨立題庫檔 (方便日後隨時增減修改題目) -->
-<script src="questions/questions-chinese.js?v=6.3"></script>
-<script src="questions/questions-english.js?v=6.3"></script>
-<script src="questions/questions-humanities.js?v=6.3"></script>
-<script src="questions/questions-science.js?v=6.3"></script>
-<script src="questions/question-bridge.js?v=6.3"></script>
+<script src="questions/questions-chinese.js?v=6.5"></script>
+<script src="questions/questions-english.js?v=6.5"></script>
+<script src="questions/questions-humanities.js?v=6.5"></script>
+<script src="questions/questions-science.js?v=6.5"></script>
+<script src="questions/question-bridge.js?v=6.5"></script>
 
-<script src="js/engine/camera-renderer.js?v=6.3"></script>
-<script src="js/systems/exploration-gather.js?v=6.3"></script>
-<script src="js/systems/quiz-widgets.js?v=6.3"></script>
-<script src="js/systems/battle-break-boost.js?v=6.3"></script>
-<script src="js/systems/progression-town.js?v=6.3"></script>
+<script src="js/engine/camera-renderer.js?v=6.5"></script>
+<script src="js/systems/exploration-gather.js?v=6.5"></script>
+<script src="js/systems/quiz-widgets.js?v=6.5"></script>
+<script src="js/systems/battle-break-boost.js?v=6.5"></script>
+<script src="js/systems/progression-town.js?v=6.5"></script>
 
 </body>
 </html>
