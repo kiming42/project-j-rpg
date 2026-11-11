@@ -1,5 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 硬核意圖攻防、舉盾博弈與 +1 經濟平衡戰鬥引擎 (battle-break-boost.js - v5.0)
+ * Project J：艾瑟瑞亞的破曉 — 多層次像素戰鬥背景與動態懸賞追蹤引擎 (battle-break-boost.js - v5.2)
+ * 升級：1.在戰鬥舞台自動生成遠景星空/雲海、雙層山脈剪影與區域像素景物（樹木、石柱、結晶、提燈、帆船）
+ *       2.自動累計 s.bountyStats.breaks 與 s.bountyStats.kills 供公會動態支線懸賞即時檢定
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -17,6 +19,106 @@ window.Aetheria = window.Aetheria || {};
     }
     const subId = state.unlockedPets.find(function(id) { return id !== state.activePet; }) || state.unlockedPets[0];
     return (window.Aetheria.Data && window.Aetheria.Data.PETS[subId]) || null;
+  }
+
+  // 根據當前地圖主題，生成多層次像素山脈地平線與像素景物裝飾
+  function buildBattleScenery(arenaEl, theme, Sprites) {
+    if (!arenaEl || !Sprites) return;
+
+    const horizonEl = arenaEl.querySelector(".bt-scenery-horizon");
+    let propsEl = arenaEl.querySelector(".bt-scenery-props");
+    if (!propsEl) {
+      propsEl = document.createElement("div");
+      propsEl.className = "bt-scenery-props";
+      arenaEl.insertBefore(propsEl, arenaEl.firstChild);
+    }
+
+    const skyPal = {
+      forest:  { m1: "#1f4235", m2: "#2f6142", star: "#a8ba59" },
+      canyon:  { m1: "#6b2b1e", m2: "#994226", star: "#ffd166" },
+      cave:    { m1: "#140d21", m2: "#281c3d", star: "#8ce0ff" },
+      coast:   { m1: "#14427a", m2: "#2264ad", star: "#ffffff" },
+      snow:    { m1: "#4a6d88", m2: "#789eb8", star: "#ffffff" },
+      volcano: { m1: "#3d0c0e", m2: "#731712", star: "#ff9f1c" },
+      sky:     { m1: "#2667c9", m2: "#5aa9e6", star: "#ffd166" }
+    }[theme] || { m1: "#1f4235", m2: "#2f6142", star: "#a8ba59" };
+
+    if (horizonEl) {
+      horizonEl.innerHTML =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" preserveAspectRatio="none" style="width:100%;height:100%;shape-rendering:crispEdges;">' +
+          '<rect x="28" y="10" width="4" height="4" fill="' + skyPal.star + '" opacity="0.8"/>' +
+          '<rect x="96" y="16" width="3" height="3" fill="' + skyPal.star + '" opacity="0.6"/>' +
+          '<rect x="184" y="8" width="4" height="4" fill="' + skyPal.star + '" opacity="0.85"/>' +
+          '<rect x="268" y="14" width="3" height="3" fill="' + skyPal.star + '" opacity="0.7"/>' +
+          '<polygon points="0,54 38,20 76,46 122,14 168,48 218,22 268,44 302,24 320,40 320,56 0,56" fill="' + skyPal.m1 + '"/>' +
+          '<polygon points="0,56 24,36 62,50 104,28 148,52 196,32 244,50 288,34 320,48 320,58 0,58" fill="' + skyPal.m2 + '"/>' +
+          '<rect x="0" y="54" width="320" height="3" fill="#141013" opacity="0.45"/>' +
+        '</svg>';
+    }
+
+    // 配置不同區域的像素背景道具
+    let propList = [];
+    if (theme === "forest") {
+      propList = [
+        { sp: "tree", left: "4%", bottom: "46%", size: 44 },
+        { sp: "tree", left: "16%", bottom: "50%", size: 36 },
+        { sp: "mat_herb", left: "34%", bottom: "42%", size: 22 },
+        { sp: "mat_flower", left: "62%", bottom: "44%", size: 22 },
+        { sp: "tree", left: "78%", bottom: "50%", size: 38 },
+        { sp: "tree", left: "88%", bottom: "45%", size: 46 }
+      ];
+    } else if (theme === "cave") {
+      propList = [
+        { sp: "pillar", left: "6%", bottom: "46%", size: 42 },
+        { sp: "mat_mithril", left: "22%", bottom: "44%", size: 26 },
+        { sp: "brazier_on", left: "46%", bottom: "45%", size: 28 },
+        { sp: "mat_obsidian", left: "68%", bottom: "44%", size: 26 },
+        { sp: "pillar", left: "86%", bottom: "46%", size: 42 }
+      ];
+    } else if (theme === "canyon") {
+      propList = [
+        { sp: "pillar", left: "5%", bottom: "46%", size: 42 },
+        { sp: "boulder_block", left: "20%", bottom: "44%", size: 28 },
+        { sp: "campfire", left: "46%", bottom: "42%", size: 26 },
+        { sp: "mat_mithril", left: "72%", bottom: "45%", size: 26 },
+        { sp: "pillar", left: "86%", bottom: "46%", size: 42 }
+      ];
+    } else if (theme === "coast") {
+      propList = [
+        { sp: "ancient_ship", left: "14%", bottom: "52%", size: 46 },
+        { sp: "mat_coral", left: "36%", bottom: "38%", size: 24 },
+        { sp: "mat_coral", left: "64%", bottom: "40%", size: 24 },
+        { sp: "grapple_post", left: "85%", bottom: "44%", size: 32 }
+      ];
+    } else if (theme === "snow") {
+      propList = [
+        { sp: "pillar", left: "6%", bottom: "46%", size: 40 },
+        { sp: "mat_iceLotus", left: "26%", bottom: "43%", size: 24 },
+        { sp: "campfire", left: "47%", bottom: "42%", size: 26 },
+        { sp: "mat_coreWolf", left: "68%", bottom: "44%", size: 24 },
+        { sp: "pillar", left: "86%", bottom: "46%", size: 40 }
+      ];
+    } else if (theme === "volcano") {
+      propList = [
+        { sp: "boulder_block", left: "7%", bottom: "45%", size: 34 },
+        { sp: "mat_obsidian", left: "26%", bottom: "44%", size: 28 },
+        { sp: "brazier_on", left: "47%", bottom: "44%", size: 28 },
+        { sp: "mat_obsidian", left: "68%", bottom: "44%", size: 28 },
+        { sp: "boulder_block", left: "85%", bottom: "45%", size: 34 }
+      ];
+    } else {
+      propList = [
+        { sp: "pillar", left: "6%", bottom: "46%", size: 44 },
+        { sp: "deco_lantern", left: "24%", bottom: "45%", size: 28 },
+        { sp: "sky_airship", left: "45%", bottom: "54%", size: 44 },
+        { sp: "mat_starIron", left: "70%", bottom: "45%", size: 26 },
+        { sp: "pillar", left: "86%", bottom: "46%", size: 44 }
+      ];
+    }
+
+    propsEl.innerHTML = propList.map(function(p) {
+      return '<img src="' + Sprites.getDataURL(p.sp) + '" class="bt-prop-img" style="left:' + p.left + ';bottom:' + p.bottom + ';width:' + p.size + 'px;height:' + p.size + 'px;" alt="">';
+    }).join("");
   }
 
   const BattleEngine = {
@@ -100,13 +202,16 @@ window.Aetheria = window.Aetheria || {};
       this.boostActive = false;
       this.guardActive = false;
 
+      const Sprites = window.Aetheria.Data.Sprites;
+      const spKey = (node.giveKey && Sprites.getMatSpriteKey) ? Sprites.getMatSpriteKey(node.giveKey) : "mat_mithril";
+
       this.enemy = {
         name: stripEmoji(node.name),
         lv: 5,
         atk: 0,
         isBoss: false,
         isShiny: true,
-        spriteKey: "mat_crystal",
+        spriteKey: spKey,
         hp: 30,
         maxHp: 30,
         shield: 1,
@@ -166,10 +271,12 @@ window.Aetheria = window.Aetheria || {};
       const e = this.enemy;
       const Sprites = window.Aetheria.Data.Sprites;
       const mapObj = window.Aetheria.Data.Maps.getMap(s.currentZone);
+      const theme = mapObj.theme || "forest";
 
       const arenaEl = document.getElementById("bt-arena-bg");
       if (arenaEl) {
-        arenaEl.className = "bt-arena-field theme-" + (mapObj.theme || "forest");
+        arenaEl.className = "bt-arena-field theme-" + theme;
+        buildBattleScenery(arenaEl, theme, Sprites);
       }
 
       const heroSlot = document.getElementById("bt-dom-hero");
@@ -195,7 +302,6 @@ window.Aetheria = window.Aetheria || {};
           subPetSlot.innerHTML = '<img src="' + Sprites.getDataURL(subKey) + '" alt="SubPet">';
           subPetSlot.style.display = "block";
         } else {
-          subPetSlot.innerHTML = "";
           subPetSlot.innerHTML = "";
           subPetSlot.style.display = "none";
         }
@@ -425,7 +531,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 模式 A：閃光礦脈完美採集 (嚴格給予該礦點設定之素材 +1 並獎勵金幣與經驗)
       if (this.mode === "harvest") {
         const node = this.harvestNodeRef || {};
         const matKey = node.giveKey || "mithril";
@@ -439,7 +544,7 @@ window.Aetheria = window.Aetheria || {};
           window.Aetheria.State.gainRewards(45, goldReward, 12);
           window.Aetheria.UI.showToast("完美共鳴採集成功！獲得【" + matObj.name + " +1】與賞金 " + goldReward + " G！");
         } else {
-          if (this.harvestNodeRef) this.harvestNodeRef.opened = false; // 答錯允許重新嘗試採集
+          if (this.harvestNodeRef) this.harvestNodeRef.opened = false;
           window.Aetheria.Audio.sfxWrong();
           window.Aetheria.UI.showToast("共鳴採集失誤（正解：" + correctText + "），請再次按 A 鍵重試！");
         }
@@ -447,7 +552,6 @@ window.Aetheria = window.Aetheria || {};
         return;
       }
 
-      // 模式 B：NPC 旅人指令檢定
       if (this.mode === "path_inquire") {
         const ref = this.pathActionRef;
         if (isCorrect && ref && ref.action) {
@@ -463,7 +567,6 @@ window.Aetheria = window.Aetheria || {};
         return;
       }
 
-      // 模式 C：收服戰寵判定
       if (this.mode === "tame_trial") {
         if (isCorrect) {
           const petId = e.tamePetId || "pet_fox";
@@ -486,7 +589,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // ================= 核心戰鬥結算：主角行動階段 =================
       if (isCorrect) {
         this.playAttackAnimation();
 
@@ -536,6 +638,8 @@ window.Aetheria = window.Aetheria || {};
             e.broken = true;
             e.breakTurnsLeft = 2;
             justBroken = true;
+            if (!s.bountyStats) s.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
+            s.bountyStats.breaks = (s.bountyStats.breaks || 0) + 1;
             window.Aetheria.Audio.sfxBreakShield();
             window.Aetheria.UI.spawnFloatingText("BREAK! 破防暈眩!", "#38b6ff", true);
           }
@@ -703,7 +807,12 @@ window.Aetheria = window.Aetheria || {};
 
       window.Aetheria.Audio.sfxLevelUp();
 
+      // 累計討伐數並自動輪替公會隨機懸賞池
+      if (!s.bountyStats) s.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
+      s.bountyStats.kills = (s.bountyStats.kills || 0) + 1;
+      s.bountyPoolSeed = (s.bountyPoolSeed || 1) + 1;
       s.bountyCooldowns = {};
+
       if (this.mode === "bounty") {
         s.wrongBountyKills = (s.wrongBountyKills || 0) + 1;
       }
@@ -716,7 +825,6 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
-      // 配合 +1 經濟，擊敗魔物每次掉落 +1 區域特產素材
       const normKey = e.normalDrop || "vine";
       s.inventory[normKey] = (s.inventory[normKey] || 0) + 1;
 
