@@ -1,13 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 六大題型互動組件與星象調頻(單/多選課)引擎 (quiz-widgets.js - v6.4)
- * 支援題型：
- *   1. eng_tile_spell : 英文串字（字數空白位 如 apple _____ / by bus __ ___ ＋ 點擊字母塊）
- *   2. classify       : 分類題（🧺 分類籃 Sorting Baskets，點擊分類籃投入項目）
- *   3. fill_blank     : 填充題（支援單格與多格填充詞語塊）
- *   4. image_fill     : 看圖填充題（教科書級有機向量圖 + 點擊放大燈箱 + 多格填充詞語塊）
- *   5. multi_mcq      : 複選題（可選多於一項，勾選後按確認提交）
- *   6. mcq / short_qa : 選擇題、簡答題、情境問答題
- * 並自動升級【設定 ➔ 星象調頻】：支援「🎯 單選課次」與「☑️ 多選課次」自由切換！
+ * Project J：艾瑟瑞亞的破曉 — 六大題型互動組件與星象調頻引擎 (quiz-widgets.js - v6.5)
+ * 修正：1.英文串字 (eng_tile_spell)：刪除題目空格與(6)(2)字數提示、新增【⌫ 退回】鍵、每題額外混入 6 個干擾字母塊
+ *       2.強化簡答題/情境題/多格填充題的答案比對邏輯，支援對調容錯與精準核對
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -21,6 +15,10 @@ window.Aetheria = window.Aetheria || {};
       copy[j] = tmp;
     }
     return copy;
+  }
+
+  function normStr(s) {
+    return String(s || "").replace(/[，。！？、；：「」『』（）()\s]/g, "").trim();
   }
 
   const QuizUI = {
@@ -41,7 +39,6 @@ window.Aetheria = window.Aetheria || {};
       if (subjTag) subjTag.innerText = "[" + (q.subjectLabel || "知識共鳴") + "]";
       if (typeTag) typeTag.innerText = q.typeLabel || "詠唱檢定";
 
-      // 處理看圖填充題的教科書向量插畫
       const svgContent = q.svgDiagram || (q.svgKey && window.Aetheria.QuizBridge && window.Aetheria.QuizBridge.getDiagram(q.svgKey)) || "";
       if (diagBox && diagSvg) {
         if (svgContent) {
@@ -56,12 +53,10 @@ window.Aetheria = window.Aetheria || {};
       if (!area) return;
       area.innerHTML = "";
 
-      // 根據題型分發至對應互動組件
       if (q.type === "eng_tile_spell") {
+        // 問題 3 修正：題目框只顯示中文詞意，不顯示底線與字數提示！
         if (promptEl) {
-          promptEl.innerHTML =
-            '<div style="color:#7f2b1d; font-size:15px;">【英文串字】' + q.meaning + '</div>' +
-            '<div style="font-family:monospace; font-size:14px; color:#1d3557; margin-top:2px; letter-spacing:1px;">字數位：<b>' + q.blankPattern + '</b></div>';
+          promptEl.innerHTML = '<div style="color:#7f2b1d; font-size:17px;">【英文串字】' + q.meaning + '</div>';
         }
         this.renderEngTileSpell(q, area);
       } else if (q.type === "classify") {
@@ -84,14 +79,13 @@ window.Aetheria = window.Aetheria || {};
       }
     },
 
-    // ================= 1. 英文串字組件 (字數空白位 _ ____ + 字母字塊點擊) =================
+    // ================= 1. 英文串字組件 (純答題空位 + 無字數數字 + 退回鍵 + 6個額外干擾字母塊) =================
     renderEngTileSpell: function(q, area) {
       const self = this;
       const rawPhrase = String(q.answer || "").trim();
       const words = rawPhrase.split(/\s+/);
       const cleanLetters = [];
 
-      // 建立每個單詞與字母的結構 (空格自動分隔，無需玩家按空白鍵)
       const wordSlotMeta = [];
       words.forEach(function(w) {
         const chars = w.split("");
@@ -105,16 +99,19 @@ window.Aetheria = window.Aetheria || {};
       });
 
       const totalLetters = cleanLetters.length;
-      const filled = new Array(totalLetters).fill(null); // 存放 { bankIdx, char }
+      const filled = new Array(totalLetters).fill(null);
+      const historyStack = []; // 記錄填入順序供「⌫ 退回」鍵使用
 
-      // 建立下方打亂的字母塊池 (若單字較短則加入 2 個干擾字母，若片語較長則使用原字母打亂)
+      // 問題 3 修正：不論單字長短，一律額外加入 6 個干擾字母塊！
       const bankChars = cleanLetters.map(function(c) { return c.toLowerCase(); });
-      if (totalLetters <= 8) {
-        const extraPool = ["a", "e", "i", "o", "s", "t", "r", "n"];
-        for (let i = 0; i < extraPool.length && bankChars.length < totalLetters + 2; i++) {
-          if (bankChars.indexOf(extraPool[i]) === -1) bankChars.push(extraPool[i]);
-        }
+      const extraAlphabet = shuffleArray(["a","b","c","d","e","f","g","h","i","l","m","n","o","p","r","s","t","u","v","w","y"]);
+      const extraTargetCount = 6;
+      let addedExtra = 0;
+      for (let i = 0; i < extraAlphabet.length && addedExtra < extraTargetCount; i++) {
+        bankChars.push(extraAlphabet[i]);
+        addedExtra++;
       }
+
       const shuffledBank = shuffleArray(bankChars.map(function(ch, idx) {
         return { id: idx, char: ch, used: false };
       }));
@@ -122,17 +119,14 @@ window.Aetheria = window.Aetheria || {};
       const wrapper = document.createElement("div");
       wrapper.style.cssText = "display:flex; flex-direction:column; gap:6px;";
 
-      // 頂部：按單詞分組的空白字母槽位 (例如 apple _____ 或 by bus __ ___)
       const slotsRow = document.createElement("div");
-      slotsRow.style.cssText = "display:flex; flex-wrap:wrap; gap:10px; justify-content:center; align-items:center; background:#141013; border:2px solid var(--na-wood-mid); border-radius:6px; padding:7px 8px; min-height:44px;";
+      slotsRow.style.cssText = "display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:center; background:#141013; border:2px solid var(--na-wood-mid); border-radius:6px; padding:8px; min-height:46px;";
 
-      // 中部：字母字塊區
       const bankRow = document.createElement("div");
-      bankRow.style.cssText = "display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-height:110px; overflow-y:auto; padding:2px;";
+      bankRow.style.cssText = "display:flex; flex-wrap:wrap; gap:5px; justify-content:center; max-height:115px; overflow-y:auto; padding:2px;";
 
-      // 底部：工具列（清除重填 / 洞察藥水提示 / 確認提交）
       const ctrlRow = document.createElement("div");
-      ctrlRow.style.cssText = "display:flex; justify-content:space-between; gap:6px;";
+      ctrlRow.style.cssText = "display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px;";
 
       function checkAutoOrSubmit() {
         const isFull = filled.every(function(item) { return item !== null; });
@@ -149,6 +143,8 @@ window.Aetheria = window.Aetheria || {};
 
       function refreshUI() {
         slotsRow.innerHTML = "";
+        const nextEmptyIdx = filled.findIndex(function(x) { return x === null; });
+
         wordSlotMeta.forEach(function(wIdxs) {
           const wordGroup = document.createElement("div");
           wordGroup.style.cssText = "display:inline-flex; gap:3px; align-items:center;";
@@ -156,11 +152,12 @@ window.Aetheria = window.Aetheria || {};
           wIdxs.forEach(function(flatIdx) {
             const cell = document.createElement("div");
             const val = filled[flatIdx];
-            const boxSize = totalLetters > 14 ? "22px" : "27px";
+            const isNext = (flatIdx === nextEmptyIdx);
+            const boxSize = totalLetters > 14 ? "23px" : "28px";
             const fontSize = totalLetters > 14 ? "14px" : "16px";
             cell.style.cssText =
-              "width:" + boxSize + "; height:" + boxSize + "; border-bottom:3px solid " + (val ? "var(--na-gold)" : "#8ce0ff") + ";" +
-              "background:" + (val ? "#2b2118" : "#1e293b") + "; color:#ffd166; font-weight:900; font-size:" + fontSize + ";" +
+              "width:" + boxSize + "; height:" + boxSize + "; border-bottom:3px solid " + (val ? "var(--na-gold)" : (isNext ? "#5ac54f" : "#8ce0ff")) + ";" +
+              "background:" + (val ? "#2b2118" : (isNext ? "#1e3a2f" : "#1e293b")) + "; color:#ffd166; font-weight:900; font-size:" + fontSize + ";" +
               "display:flex; justify-content:center; align-items:center; border-radius:4px; cursor:pointer; font-family:monospace;";
             cell.innerText = val ? val.char : "_";
 
@@ -169,18 +166,15 @@ window.Aetheria = window.Aetheria || {};
                 window.Aetheria.Audio.sfxTalkBlip();
                 val.bankItem.used = false;
                 filled[flatIdx] = null;
+                const hPos = historyStack.indexOf(flatIdx);
+                if (hPos !== -1) historyStack.splice(hPos, 1);
                 refreshUI();
               };
             }
             wordGroup.appendChild(cell);
           });
 
-          // 標示該單詞字數小標籤
-          const lenBadge = document.createElement("span");
-          lenBadge.style.cssText = "font-size:10px; color:#8d99ae; margin-left:1px;";
-          lenBadge.innerText = "(" + wIdxs.length + ")";
-          wordGroup.appendChild(lenBadge);
-
+          // 問題 3 修正：不顯示 (6)、(2) 等字數提示標籤！
           slotsRow.appendChild(wordGroup);
         });
 
@@ -188,7 +182,7 @@ window.Aetheria = window.Aetheria || {};
         shuffledBank.forEach(function(bItem) {
           const btn = document.createElement("button");
           btn.className = "bank-char" + (bItem.used ? " used" : "");
-          btn.style.cssText = "padding:5px 10px; font-size:15px; font-family:monospace; min-width:32px;";
+          btn.style.cssText = "padding:5px 10px; font-size:15px; font-family:monospace; min-width:33px;";
           btn.innerText = bItem.char;
           btn.onclick = function() {
             if (bItem.used) return;
@@ -197,6 +191,7 @@ window.Aetheria = window.Aetheria || {};
             window.Aetheria.Audio.sfxTalkBlip();
             bItem.used = true;
             filled[nextEmpty] = { char: bItem.char, bankItem: bItem };
+            historyStack.push(nextEmpty);
             refreshUI();
             if (filled.every(function(x) { return x !== null; })) {
               setTimeout(checkAutoOrSubmit, 180);
@@ -206,23 +201,48 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
+      // 新增：【⌫ 退回】鍵（退回最後填入的一個字母）
+      const backBtn = document.createElement("button");
+      backBtn.className = "na-btn highlight";
+      backBtn.innerText = "⌫ 退回";
+      backBtn.onclick = function() {
+        window.Aetheria.Audio.sfxTalkBlip();
+        while (historyStack.length > 0) {
+          const lastSlotIdx = historyStack.pop();
+          if (filled[lastSlotIdx]) {
+            filled[lastSlotIdx].bankItem.used = false;
+            filled[lastSlotIdx] = null;
+            refreshUI();
+            return;
+          }
+        }
+        // 若 historyStack 為空則從右往左退回最後一個非空槽位
+        for (let i = filled.length - 1; i >= 0; i--) {
+          if (filled[i]) {
+            filled[i].bankItem.used = false;
+            filled[i] = null;
+            refreshUI();
+            return;
+          }
+        }
+      };
+
       const clearBtn = document.createElement("button");
       clearBtn.className = "na-btn";
-      clearBtn.style.flex = "1";
       clearBtn.innerText = "清除重填";
       clearBtn.onclick = function() {
         window.Aetheria.Audio.sfxTalkBlip();
         shuffledBank.forEach(function(b) { b.used = false; });
         for (let i = 0; i < filled.length; i++) filled[i] = null;
+        historyStack.length = 0;
         refreshUI();
       };
 
       const hintBtn = document.createElement("button");
-      hintBtn.className = "na-btn highlight";
-      hintBtn.style.flex = "1";
+      hintBtn.className = "na-btn";
       const s = (window.Aetheria.State && window.Aetheria.State.data) || {};
       const hintCount = (s.inventory && s.inventory.potionHint) || 0;
-      hintBtn.innerText = "洞察提示 (" + hintCount + ")";
+      hintBtn.innerText = "洞察提示(" + hintCount + ")";
       hintBtn.onclick = function() {
         if (!s.inventory || (s.inventory.potionHint || 0) <= 0) {
           window.Aetheria.UI.showToast("洞察藥水不足！可在營地工坊提煉或商店購買。");
@@ -230,9 +250,8 @@ window.Aetheria = window.Aetheria || {};
         }
         s.inventory.potionHint--;
         window.Aetheria.State.save();
-        hintBtn.innerText = "洞察提示 (" + s.inventory.potionHint + ")";
+        hintBtn.innerText = "洞察提示(" + s.inventory.potionHint + ")";
 
-        // 自動填入每個單詞的第一個字母！
         wordSlotMeta.forEach(function(wIdxs) {
           const firstIdx = wIdxs[0];
           if (filled[firstIdx]) return;
@@ -241,6 +260,7 @@ window.Aetheria = window.Aetheria || {};
           if (availBank) {
             availBank.used = true;
             filled[firstIdx] = { char: availBank.char, bankItem: availBank };
+            historyStack.push(firstIdx);
           }
         });
         window.Aetheria.Audio.sfxGather();
@@ -250,6 +270,7 @@ window.Aetheria = window.Aetheria || {};
         }
       };
 
+      ctrlRow.appendChild(backBtn);
       ctrlRow.appendChild(clearBtn);
       ctrlRow.appendChild(hintBtn);
 
@@ -273,11 +294,9 @@ window.Aetheria = window.Aetheria || {};
       const wrapper = document.createElement("div");
       wrapper.style.cssText = "display:flex; flex-direction:column; gap:6px;";
 
-      // 頂部：待分類項目池
       const poolBox = document.createElement("div");
       poolBox.style.cssText = "background:#141013; border:2px solid var(--na-wood-mid); border-radius:6px; padding:6px 8px;";
 
-      // 下方：分類籃網格
       const basketGrid = document.createElement("div");
       const cols = baskets.length >= 4 ? "1fr 1fr" : (baskets.length === 3 ? "repeat(3, 1fr)" : "1fr 1fr");
       basketGrid.style.cssText = "display:grid; grid-template-columns:" + cols + "; gap:6px;";
@@ -297,7 +316,6 @@ window.Aetheria = window.Aetheria || {};
           activeItemId = unplaced[0].id;
         }
 
-        // 渲染待分類項目區
         if (unplaced.length === 0) {
           poolBox.innerHTML =
             '<div style="display:flex; justify-content:space-between; align-items:center;">' +
@@ -328,7 +346,6 @@ window.Aetheria = window.Aetheria || {};
           });
         }
 
-        // 渲染各個分類籃
         basketGrid.innerHTML = "";
         baskets.forEach(function(bName) {
           const inBasket = items.filter(function(it) { return it.placedBasket === bName; });
@@ -337,7 +354,6 @@ window.Aetheria = window.Aetheria || {};
             "background:#1e293b; border:2px solid #3898ff; border-radius:6px; padding:6px; cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; min-height:58px;";
 
           const tagsHtml = inBasket.map(function(it) {
-            // 取出簡短代號 (如 A. / 1. 或前 6 字)
             const shortTxt = it.label.length > 10 ? it.label.slice(0, 9) + "…" : it.label;
             return '<span data-ret="' + it.id + '" style="display:inline-block; background:#141013; color:#8ce0ff; border:1px solid #3898ff; border-radius:3px; padding:1px 5px; margin:2px; font-size:11px; font-weight:bold;">' +
               shortTxt + ' ×</span>';
@@ -351,7 +367,6 @@ window.Aetheria = window.Aetheria || {};
               (tagsHtml || '<span style="font-size:11px; color:#64748b;">點擊投入此籃</span>') +
             '</div>';
 
-          // 點擊籃內標籤可取回
           bCard.querySelectorAll("[data-ret]").forEach(function(tagEl) {
             tagEl.onclick = function(ev) {
               ev.stopPropagation();
@@ -363,7 +378,6 @@ window.Aetheria = window.Aetheria || {};
             };
           });
 
-          // 點擊分類籃將當前項目投入籃中
           bCard.onclick = function() {
             const unplacedNow = items.filter(function(it) { return it.placedBasket === null; });
             if (unplacedNow.length === 0) return;
@@ -390,20 +404,18 @@ window.Aetheria = window.Aetheria || {};
       refreshClassifyUI();
     },
 
-    // ================= 3. 填充題與看圖填充題組件 (支援 1~4 個空格與詞語塊) =================
+    // ================= 3. 填充題與看圖填充題組件 (支援對調容錯判定) =================
     renderFillBlanks: function(q, promptEl, area) {
       const self = this;
       const blanks = q.blanks || [q.answer];
       const numBlanks = blanks.length;
       const filled = new Array(numBlanks).fill(null);
 
-      // 組合詞語塊池 (正確答案 + 干擾詞)
       const rawBank = blanks.concat(q.distractors || []);
       const shuffledBank = shuffleArray(rawBank.map(function(w, idx) {
         return { id: idx, word: w, used: false };
       }));
 
-      // 更新題目文字，將 ______ 依序標示為 [空格1]、[空格2]
       function updatePromptDisplay() {
         if (!promptEl) return;
         let idxCount = 0;
@@ -429,9 +441,24 @@ window.Aetheria = window.Aetheria || {};
       bankBar.style.cssText = "display:flex; flex-wrap:wrap; gap:6px; justify-content:center;";
 
       function checkFillAnswer() {
-        const isAllRight = blanks.every(function(ans, i) {
-          return filled[i] && filled[i].word === ans;
+        const userWords = filled.map(function(f) { return f ? f.word : ""; });
+        let isAllRight = blanks.every(function(ans, i) {
+          return userWords[i] === ans;
         });
+
+        // 針對可互換順序的並列空格（例如「蔬菜類、水果類」或「瞿塘峽、巫峽、西陵峽」等並列項）提供容錯
+        if (!isAllRight && q.allowSwapIndices) {
+          const group = q.allowSwapIndices; // 例如 [1, 2]
+          const expectedSet = group.map(function(idx) { return blanks[idx]; }).sort().join("|");
+          const actualSet = group.map(function(idx) { return userWords[idx]; }).sort().join("|");
+          const otherOk = blanks.every(function(ans, i) {
+            return group.indexOf(i) !== -1 || userWords[i] === ans;
+          });
+          if (otherOk && expectedSet === actualSet) {
+            isAllRight = true;
+          }
+        }
+
         if (self.currentCallback) {
           self.currentCallback(isAllRight, blanks.join("、"), q);
         }
@@ -542,24 +569,22 @@ window.Aetheria = window.Aetheria || {};
       refreshMultiUI();
     },
 
-    // ================= 5. 單選選擇題 / 簡答題 / 情境問答題 =================
+    // ================= 5. 單選選擇題 / 簡答題 / 情境問答題 (強化精準與容錯比對) =================
     renderMCQ: function(q, area) {
       const self = this;
       const s = (window.Aetheria.State && window.Aetheria.State.data) || {};
       let opts = (q.options || []).slice();
 
-      // 若選項並非以 "A. " 開頭（例如簡答題、中文解釋題），自動打亂選項順序！
       const hasLetterPrefix = opts.some(function(o) { return /^[A-D]\./.test(String(o).trim()); });
       if (!hasLetterPrefix) {
         opts = shuffleArray(opts);
       }
 
-      // 檢查是否有「學者智慧指環」或「煉金藥師」自動排除 1 個錯誤選項
       const hasSmartFilter = (s.currentJob === "alchemist") || (s.unlockedRelics && s.unlockedRelics.indexOf("r_ring") !== -1);
       let disabledOpt = null;
       if (hasSmartFilter && opts.length > 2) {
         const wrongOpts = opts.filter(function(o) {
-          return o !== q.answer && String(o).indexOf(q.answer) !== 0;
+          return o !== q.answer && normStr(o) !== normStr(q.answer);
         });
         if (wrongOpts.length > 0) {
           disabledOpt = wrongOpts[0];
@@ -587,7 +612,10 @@ window.Aetheria = window.Aetheria || {};
         } else {
           btn.innerText = opt;
           btn.onclick = function() {
-            const isCorrect = (opt === q.answer) || (String(q.answer).length === 1 && String(opt).indexOf(q.answer + ".") === 0);
+            const isCorrect =
+              (opt === q.answer) ||
+              (normStr(opt) === normStr(q.answer)) ||
+              (String(q.answer).length === 1 && String(opt).indexOf(q.answer + ".") === 0);
             if (self.currentCallback) {
               self.currentCallback(isCorrect, q.answer, q);
             }
@@ -741,10 +769,23 @@ window.Aetheria = window.Aetheria || {};
 
   window.Aetheria.QuizUI = QuizUI;
 
-  // ================= 7. 升級【設定 ➔ 星象調頻】：支援「🎯 單選課次 / ☑️ 多選課次」與 17 課掌握度 =================
+  // ================= 7. 星象調頻（單/多選課次）與全屏切換 =================
   function attachAstrolabeUpgrade() {
     if (!window.Aetheria.UI) return;
     const UI = window.Aetheria.UI;
+
+    UI.toggleFullScreen = function() {
+      try {
+        const docEl = document.documentElement;
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+          if (docEl.requestFullscreen) docEl.requestFullscreen();
+          else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        }
+      } catch (e) {}
+    };
 
     UI.setLessonSelectMode = function(mode) {
       const s = window.Aetheria.State.data;
@@ -752,7 +793,6 @@ window.Aetheria = window.Aetheria || {};
       s.lessonSelectMode = mode;
 
       if (mode === "single") {
-        // 切換至單選模式時，只保留第一個已勾選的課次為 true
         const catalog = window.Aetheria.QuizBridge.LESSON_CATALOG;
         let firstActive = catalog.find(function(l) { return Boolean(s.activeLessons[l.key]); });
         if (!firstActive && catalog.length > 0) firstActive = catalog[0];
@@ -771,13 +811,11 @@ window.Aetheria = window.Aetheria || {};
       const catalog = window.Aetheria.QuizBridge.LESSON_CATALOG;
 
       if (s.lessonSelectMode === "single") {
-        // 單選模式：只開啟當前點擊的這一課，並自動啟用該科目
         catalog.forEach(function(l) {
           s.activeLessons[l.key] = (l.key === unitKey);
         });
         if (subjectKey) s.activeSubjects[subjectKey] = true;
       } else {
-        // 多選模式：自由切換勾選
         s.activeLessons[unitKey] = !s.activeLessons[unitKey];
         if (s.activeLessons[unitKey] && subjectKey) {
           s.activeSubjects[subjectKey] = true;
@@ -831,7 +869,6 @@ window.Aetheria = window.Aetheria || {};
       });
       body.appendChild(tabBar);
 
-      // 分頁 1：星象調頻（支援 🎯 單選課次 / ☑️ 多選課次）
       if (tab === "astrolabe") {
         const isSingle = (s.lessonSelectMode === "single");
         const modeBox = document.createElement("div");
@@ -883,7 +920,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 2：按課次篩選預覽與即場實測
       else if (tab === "preview") {
         const curUnit = previewUnitKey || Bridge.LESSON_CATALOG[0].key;
         const unitBar = document.createElement("div");
@@ -910,7 +946,6 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 3：四科 17 課詳細掌握度報告
       else if (tab === "report") {
         const allQ = Bridge.getAllQuestions();
         const topCard = document.createElement("div");
@@ -941,15 +976,15 @@ window.Aetheria = window.Aetheria || {};
         });
       }
 
-      // 分頁 4：系統存檔與重置
       else if (tab === "system") {
         const sysCard = document.createElement("div");
         sysCard.className = "sys-card";
         sysCard.innerHTML =
           '<div style="display:flex; flex-direction:column; gap:6px;">' +
+            '<button class="na-btn highlight" style="padding:8px;" onclick="Aetheria.UI.toggleFullScreen()">切換全螢幕顯示模式 (Full Screen)</button>' +
             '<button class="na-btn" style="padding:8px;" onclick="Aetheria.Audio.toggleMute(); Aetheria.UI.showToast(\'已切換音樂開關！\');">切換 8-bit 音樂 (開 / 關)</button>' +
             '<button class="na-btn" style="padding:8px;" onclick="Aetheria.UI.playCutscene(\'intro\')">重溫開場故事序幕</button>' +
-            '<button class="na-btn highlight" style="padding:8px;" onclick="Aetheria.UI.exportSavePrompt()">複製存檔 JSON 代碼 (備份)</button>' +
+            '<button class="na-btn" style="padding:8px;" onclick="Aetheria.UI.exportSavePrompt()">複製存檔 JSON 代碼 (備份)</button>' +
             '<button class="na-btn" style="padding:8px;" onclick="Aetheria.UI.importSavePrompt()">貼上存檔 JSON 代碼 (還原)</button>' +
             '<button class="na-btn" style="padding:8px;" onclick="document.getElementById(\'title-screen\').style.display=\'flex\'; Aetheria.UI.initTitleScreen();">返回遊戲首頁</button>' +
             '<button class="na-btn" style="padding:8px; background:#a32c24; border-color:#ff595e;" onclick="if(confirm(\'確定要清除所有進度並重新開始嗎？\')) Aetheria.State.resetSave()">重置遊戲 (清除進度)</button>' +
