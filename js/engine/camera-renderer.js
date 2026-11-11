@@ -1,5 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 實地拓荒工程、動態橋樑與村民 [!]/[✓] 標記渲染器 (camera-renderer.js - v6.0)
+ * Project J：艾瑟瑞亞的破曉 — 無文字標籤清爽素材地圖與 NPC 任務狀態渲染器 (camera-renderer.js - v6.2)
+ * 升級：1.移除地圖上所有素材採集點的文字標籤，徹底解決畫面擠迫問題 (僅保留清晰 16x16 專屬像素圖)
+ *       2.NPC 頭頂動態區分 [!可接取] (黃)、[⏳進行中] (藍)、[✓可交付] (綠)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -53,7 +55,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(d);
       });
 
-      // 2. 河流、深海海峽、熔岩河與動態橋樑
+      // 2. 河流與動態橋樑
       if (mapObj.hasRiver) {
         const rx = mapObj.riverX || 1030;
         const by = mapObj.bridgeY || 455;
@@ -102,7 +104,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(el);
       });
 
-      // 5. 裝飾物、7大實地拓荒工程與互動機關
+      // 5. 裝飾物與實地拓荒工程
       const self = this;
       (mapObj.decos || []).forEach(function(d, idx) {
         const key = d.id || ("deco_" + idx);
@@ -127,15 +129,15 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.decos[key] = { el: el, img: img, lbl: lbl, data: d };
       });
 
-      // 6. 採集資源點 (支援 40 種獨立素材圖)
+      // 6. 採集資源點：不顯示頭頂文字標籤，只渲染乾淨的 16x16 專屬像素圖示！
       (mapObj.nodes || []).forEach(function(n) {
         const el = document.createElement("div");
         el.className = "dom-entity";
         el.style.left = n.x + "px";
         el.style.top = n.y + "px";
-        el.style.width = "26px";
-        el.style.height = "26px";
-        el.style.zIndex = Math.round(n.y + 22);
+        el.style.width = "24px";
+        el.style.height = "24px";
+        el.style.zIndex = Math.round(n.y + 20);
 
         let spKey = "crate";
         if (n.type === "chest") {
@@ -146,14 +148,13 @@ window.Aetheria = window.Aetheria || {};
           spKey = "mat_wood";
         }
 
-        el.innerHTML =
-          '<div class="dom-label" style="font-size:10px;">' + n.name + '</div>' +
-          '<img src="' + Sprites.getDataURL(spKey) + '" alt="">';
+        // 素材一律不加 dom-label，保持地圖乾淨清爽
+        el.innerHTML = '<img src="' + Sprites.getDataURL(spKey) + '" alt="">';
         entityLayer.appendChild(el);
         self.domPool.nodes[n.id] = { el: el, data: n };
       });
 
-      // 7. 營地與各區村民 NPC (支援動態頭頂 [!] / [✓] 任務標記)
+      // 7. 營地與各區村民 NPC
       (mapObj.npcs || []).forEach(function(npc) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -261,12 +262,10 @@ window.Aetheria = window.Aetheria || {};
         const Sprites = window.Aetheria.Data.Sprites;
         const ExpSys = window.Aetheria.Explore;
 
-        // 洞穴黑霧遮罩 (砌築永明聖火燈塔後永久驅散)
         const brazierLit = (s.openedNodes && s.openedNodes["lit_" + mapObj.id]) || (s.projectsBuilt && s.projectsBuilt.proj_cave1_beacon && mapObj.id === "cave1_mushroom");
         const fogEl = document.getElementById("fog-overlay");
         if (fogEl) fogEl.style.display = (mapObj.fog && !brazierLit) ? "block" : "none";
 
-        // 動態更新橋樑 / 遠航木筏航道 / 熔岩耐火石拱橋狀態
         if (this.domPool.bridge && mapObj.hasRiver) {
           const bProj = mapObj.bridgeProject;
           const isBuilt = !bProj || Boolean(s.projectsBuilt && s.projectsBuilt[bProj]);
@@ -294,46 +293,28 @@ window.Aetheria = window.Aetheria || {};
             item.lbl.style.display = "block";
             if (!built) {
               item.lbl.className = "dom-label build-lbl";
-              item.lbl.innerText = "[工程] " + d.name + " [按A建造]";
+              item.lbl.innerText = "[工程] " + d.name;
             } else if (d.isClimbLadder) {
               item.lbl.className = "dom-label portal-lbl";
               item.lbl.innerText = d.name + " [按A攀爬]";
             } else if (d.projectId === "proj_z4_shelter") {
               item.lbl.className = "dom-label portal-lbl";
               item.lbl.innerText = "防風毛皮屋 [按A休整]";
-            } else if (d.projectId === "proj_camp_forge") {
-              item.lbl.className = "dom-label portal-lbl";
-              item.lbl.innerText = "鍛造熔爐 [已點燃]";
             } else {
-              item.lbl.className = "dom-label portal-lbl";
-              item.lbl.innerText = d.name + " [已完工]";
+              item.lbl.style.display = "none";
             }
           } else if (d.isBrazier) {
             item.img.src = Sprites.getDataURL(brazierLit ? "brazier_on" : "brazier_off");
-            item.lbl.style.display = "block";
-            item.lbl.innerText = brazierLit ? "聖火已點亮" : "古代火盆[按A]";
+            item.lbl.style.display = brazierLit ? "none" : "block";
+            item.lbl.innerText = "古代火盆[按A]";
           } else if (d.isSealPillar) {
             const unsealed = s.unlockedSeals && s.unlockedSeals[d.id];
             item.img.src = Sprites.getDataURL(unsealed ? "seal_pillar_on" : "seal_pillar_off");
             item.lbl.style.display = "block";
             item.lbl.className = "dom-label " + (unsealed ? "portal-lbl" : "lock-lbl");
             item.lbl.innerText = (d.name || "封印柱") + (unsealed ? " [已解封]" : " [按A解封]");
-          } else if (d.isFishingSpot) {
-            item.img.src = Sprites.getDataURL("fishing_spot");
-            item.lbl.style.display = "block";
-            item.lbl.innerText = "釣魚點 [按A垂釣]";
-          } else if (d.isGrapple) {
-            item.lbl.style.display = "block";
-            item.lbl.innerText = "飛爪樁 [Lv.2鉤]";
-          } else if (d.obstacleType === "boulder") {
-            item.lbl.style.display = "block";
-            item.lbl.innerText = "擋路巨石 [需Lv.2鎬]";
-          } else if (d.obstacleType === "deadtree") {
-            item.lbl.style.display = "block";
-            item.lbl.innerText = "擋路枯木 [需Lv.2斧]";
-          } else if (d.isCookPot) {
-            item.lbl.style.display = "block";
-            item.lbl.innerText = "行前料理鍋 [按A]";
+          } else {
+            item.lbl.style.display = "none";
           }
         }, this);
 
@@ -345,7 +326,7 @@ window.Aetheria = window.Aetheria || {};
           item.el.style.display = isGone ? "none" : "block";
         }, this);
 
-        // 3. 更新營地與各區村民 NPC 頭頂任務標記 ([!] 可接委託 / [✓] 可交付領獎)
+        // 3. 更新 NPC 頭頂任務狀態標記 ([!可接取] 黃 / [⏳進行中] 藍 / [✓可交付] 綠)
         Object.keys(this.domPool.npcs).forEach(function(npcId) {
           const item = this.domPool.npcs[npcId];
           const npc = item.data;
@@ -357,14 +338,17 @@ window.Aetheria = window.Aetheria || {};
             item.lbl.innerText = "[✓可交付] " + shortName;
           } else if (marker === "avail") {
             item.lbl.className = "dom-label quest-avail-lbl";
-            item.lbl.innerText = "[!有委託] " + shortName;
+            item.lbl.innerText = "[!新任務] " + shortName;
+          } else if (marker === "active") {
+            item.lbl.className = "dom-label quest-active-lbl";
+            item.lbl.innerText = "[⏳進行中] " + shortName;
           } else {
             item.lbl.className = "dom-label";
             item.lbl.innerText = shortName;
           }
         }, this);
 
-        // 4. 更新野外魔物與守關領主位置及封印提示
+        // 4. 更新野外魔物與守關領主
         Object.keys(this.domPool.monsters).forEach(function(mId) {
           const item = this.domPool.monsters[mId];
           const m = item.data;
@@ -383,7 +367,7 @@ window.Aetheria = window.Aetheria || {};
           } else if (m.reqSeals && m.reqSeals.length > 0) {
             const allUnsealed = m.reqSeals.every(function(sid) { return Boolean(s.unlockedSeals && s.unlockedSeals[sid]); });
             item.lbl.className = "dom-label " + (allUnsealed ? "portal-lbl" : "lock-lbl");
-            item.lbl.innerText = m.name + (allUnsealed ? " [可挑戰]" : " [需先解開雙封印柱]");
+            item.lbl.innerText = m.name + (allUnsealed ? " [可挑戰]" : " [需解雙封印柱]");
           } else {
             item.lbl.className = "dom-label";
             item.lbl.innerText = (m.isShiny ? "[閃光] " : "") + m.name + " Lv." + m.lv;
@@ -427,7 +411,7 @@ window.Aetheria = window.Aetheria || {};
           }
         }
 
-        // 6. 計算純 DOM 相機平滑跟隨位移
+        // 6. 相機跟隨
         const vw = viewport.clientWidth || 460;
         const vh = viewport.clientHeight || 340;
         const camX = Math.max(0, Math.min(mapObj.width - vw, Math.round(s.heroX + 14 - vw / 2)));
