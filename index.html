@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v4.0)</title>
+  <title>Project J：艾瑟瑞亞的破曉 (Dawn of Aetheria v5.0)</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -16,7 +16,7 @@
       <div class="title-emblem-box">
         <div class="title-sub">PROJECT J : TACTICAL PIXEL RPG</div>
         <h1 class="title-main">艾瑟瑞亞的破曉</h1>
-        <div class="title-ver">DAWN OF AETHERIA v4.0</div>
+        <div class="title-ver">DAWN OF AETHERIA v5.0</div>
       </div>
       <div class="title-hero-showcase" id="title-hero-preview"></div>
     </div>
@@ -29,13 +29,14 @@
       <button class="na-btn title-btn" onclick="Aetheria.UI.startNewGame()">
         新遊戲
         <span class="title-save-sub">體驗完整七章古文明聖碑物語</span>
-      </button>
+      </div>
     </div>
   </div>
 
-  <!-- ================= 上半屏：大世界舞台 & 戰術意圖戰鬥舞台 (45%) ================= -->
+  <!-- ================= 上半屏：純 DOM 開源像素地圖視窗 & 戰鬥舞台 (45%) ================= -->
   <div id="upper-screen">
-    <!-- 極簡單行 HUD：左邊紅心+Lv+防禦/料理狀態，右邊當前區域名稱 -->
+    <!-- 頂部生命紅心與極簡狀態列 -->
+    <div id="hud-hearts-box"></div>
     <div id="hud-overlay">
       <div class="hud-minimal-left">
         <span class="na-badge" id="hud-lv">Lv.1 蒼藍劍士</span>
@@ -51,10 +52,19 @@
       <span id="hud-pet"></span>
       <span id="hud-guild"></span>
       <button id="btn-bgm-toggle"></button>
+      <canvas id="world-canvas" width="256" height="144"></canvas>
     </div>
 
-    <!-- 主世界探索 Canvas -->
-    <canvas id="world-canvas" width="256" height="144"></canvas>
+    <!-- 純 DOM 2D 捲動地圖視窗 (取代 Canvas 繪圖，100% 使用開源像素貼圖與銳利 DOM 文字) -->
+    <div id="world-viewport">
+      <div id="world-map-layer">
+        <div id="world-terrain-layer"></div>
+        <div id="world-entity-layer"></div>
+      </div>
+    </div>
+
+    <!-- 純 DOM 小地圖雷達 -->
+    <div id="dom-minimap"></div>
 
     <!-- 洞穴火把視野遮罩 -->
     <div id="fog-overlay"></div>
@@ -62,10 +72,27 @@
     <!-- 環境危害閃爍遮罩 (極寒凍傷 / 熔岩灼傷) -->
     <div id="hazard-overlay"></div>
 
+    <!-- ================= 釣魚小遊戲互動視窗 (Fishing Mini-Game Overlay) ================= -->
+    <div id="fishing-minigame-modal" style="display:none;">
+      <div class="fishing-box">
+        <div class="fishing-title" id="fishing-title-txt">海濱垂釣小遊戲</div>
+        <div class="fishing-sub" id="fishing-sub-txt">當魚標游入【綠色命中區】或【金色紅心區】時，立即按下收竿！</div>
+        <div class="fishing-bar-track">
+          <div id="fishing-target-zone" class="fishing-target-zone">
+            <div class="fishing-perfect-zone"></div>
+          </div>
+          <div id="fishing-cursor" class="fishing-cursor"></div>
+        </div>
+        <div style="display:flex; gap:8px; width:100%; margin-top:6px;">
+          <button class="na-btn highlight" style="flex:2; padding:10px; font-size:16px;" onclick="Aetheria.Explore.reelInFish()">立即收竿！</button>
+          <button class="na-btn" style="flex:1; padding:10px;" onclick="Aetheria.Explore.closeFishingMinigame()">放棄</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ================= 戰術意圖與硬核攻防戰鬥舞台 ================= -->
     <div id="battle-stage">
       <div class="bt-top-hud">
-        <!-- 左上：主角 HP 條、BP 能量槽、連勝與舉盾狀態 -->
         <div class="bt-hero-status-card">
           <div class="bt-hero-hp-row">
             <span id="bt-hero-hp-txt">HP 100/100</span>
@@ -78,13 +105,11 @@
           <div class="bt-streak-pill" id="battle-streak-tag">連勝 x0｜DEF 8</div>
         </div>
 
-        <!-- 右上：魔物名稱、下回合意圖預告、護盾、HP 裝甲條 -->
         <div class="bt-enemy-status-card">
           <div class="bt-enemy-header">
             <span id="enemy-name">翠風竹子妖 Lv.2</span>
             <span id="enemy-shiny-tag" class="bt-shiny-pill" style="display:none;">閃光</span>
           </div>
-          <!-- 敵方下回合意圖預告列 -->
           <div class="bt-intent-banner" id="enemy-intent-box">
             <span id="enemy-intent-txt">意圖：普通襲擊</span>
           </div>
@@ -145,7 +170,7 @@
 
       <div id="explore-log">
         <div id="hud-quest" class="log-quest-line">主線：找營地鐵匠大叔・巴爾對話</div>
-        <div id="pinned-recipe" class="log-pin-line">目標：潮汐破盾忍刀</div>
+        <div id="pinned-recipe" class="log-pin-line">目標：翠風荊棘短刃</div>
       </div>
 
       <div class="controls-pads">
@@ -174,10 +199,10 @@
       </div>
     </div>
 
-    <!-- 【面板 2】NPC 互動對話面板 -->
+    <!-- 【面板 2】NPC 互動對話面板 (改用純 <img> 像素頭像，零 Canvas) -->
     <div id="panel-dialogue" class="sub-panel">
       <div class="dialogue-header">
-        <canvas id="npc-portrait-canvas" width="40" height="40"></canvas>
+        <img id="npc-portrait-img" src="" alt="NPC" class="npc-portrait-box">
         <div class="npc-title-box">
           <div id="npc-name-label" style="color:var(--na-gold); font-weight:900; font-size:16px;">鐵匠大叔・巴爾</div>
           <div id="npc-role-label" style="font-size:13px; color:#cbd5e1;">曙光營地首席武器師</div>
@@ -190,7 +215,7 @@
       <div id="npc-action-buttons" class="npc-btn-grid"></div>
     </div>
 
-    <!-- 【面板 3】戰鬥指令與詠唱面板 (新增「舉盾」戰術按鈕) -->
+    <!-- 【面板 3】戰鬥指令與詠唱面板 -->
     <div id="panel-battle" class="sub-panel">
       <div class="battle-cmd-header">
         <div style="display:flex; align-items:center; gap:5px;">
