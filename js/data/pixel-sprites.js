@@ -1,924 +1,462 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 逐像素手繪點陣圖資與 UI 像素小圖標庫 (pixel-sprites.js - v3.2)
- * 新增：12 款 12x12 像素 UI 小圖標 (寶劍/護盾/鐵鎚/藥水/背包/地圖/齒輪/卷軸/炸彈/金幣)
- *       及 iconHtml(key, large) 產生器，徹底取代所有 Emoji！
+ * Project J：艾瑟瑞亞的破曉 — 開源免費像素圖資庫 (pixel-sprites.js - v5.0)
+ * 升級：徹底移除 Canvas bake() 繪圖，100% 採用 CC0 開源風格 32x32 Crisp-Edges SVG 像素圖資！
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
 
 (function() {
-  const PAL = {
-    '.': null,
-    'k': '#1c1619', // 像素純黑描邊
-    'w': '#ffffff', // 高光純白
-    'b': '#3898ff', // 蒼藍頭巾 / 藍晶主色
-    'B': '#1d5eb8', // 深藍暗部 / 忍服
-    'c': '#8ce0ff', // 冰藍高光
-    'g': '#6ab04c', // 嫩綠草葉
-    'G': '#3d7a32', // 深綠暗部
-    'l': '#a8ba59', // 暖橄欖綠
-    'L': '#75a33d', // 竹青綠
-    'd': '#4b8b3b', // 森林樹冠中綠
-    'D': '#2d5938', // 森林樹冠深綠
-    's': '#203833', // 樹底深影
-    'f': '#f4be78', // 角色膚色 / 米白菇柄
-    'r': '#e0533c', // 鮮紅圍巾 / 紅傘菇 / 火龍紅
-    'R': '#a32c24', // 暗紅陰影
-    'o': '#e08e45', // 亮橙帳篷 / 狐狸毛 / 銅色
-    'O': '#c77432', // 暗橙木紋
-    't': '#9c6347', // 原木棕
-    'T': '#6e4228', // 深棕樹幹
-    'y': '#f5b700', // 黃金 / 燈籠火光
-    'Y': '#c98a00', // 暗金
-    'm': '#f6d799', // 麻繩米黃 / 帆布白
-    'p': '#9d4edd', // 巫師紫 / 深淵紫晶
-    'P': '#5a189a', // 深紫暗部
-    'e': '#8d99ae', // 鐵砧/岩石亮灰
-    'E': '#4a4e69'  // 鐵器/石材深灰
+  function svgToDataURL(inner, viewSize) {
+    const v = viewSize || 32;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + v + ' ' + v + '" shape-rendering="crispEdges">' + inner + '</svg>';
+    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  }
+
+  // 建立開源 CC0 風格 32x32 精緻像素圖資庫
+  const RAW_SVGS = {
+    // 1. UI 與道具像素圖標
+    icon_sword: svgToDataURL(
+      '<path fill="#1c1619" d="M20 2h8v8l-14 14-4 4-6-6 4-4z"/>' +
+      '<path fill="#8ce0ff" d="M22 4h4v4L14 20l-4-4z"/>' +
+      '<path fill="#ffffff" d="M22 4h2v2L12 18l-2-2z"/>' +
+      '<rect x="6" y="18" width="8" height="3" fill="#f5b700" transform="rotate(45 10 19)"/>' +
+      '<rect x="4" y="24" width="4" height="4" fill="#9c6347"/>'
+    ),
+    icon_shield: svgToDataURL(
+      '<path fill="#1c1619" d="M4 3h24v14c0 8-12 13-12 13S4 25 4 17z"/>' +
+      '<path fill="#1d5eb8" d="M6 5h20v12c0 6-10 10-10 10S6 23 6 17z"/>' +
+      '<path fill="#3898ff" d="M8 7h16v9c0 4-8 7-8 7s-8-3-8-7z"/>' +
+      '<rect x="14" y="8" width="4" height="12" fill="#f5b700"/>' +
+      '<rect x="10" y="12" width="12" height="4" fill="#f5b700"/>'
+    ),
+    icon_forge: svgToDataURL(
+      '<rect x="6" y="4" width="20" height="8" fill="#1c1619"/>' +
+      '<rect x="8" y="6" width="16" height="4" fill="#8d99ae"/>' +
+      '<rect x="14" y="12" width="4" height="10" fill="#9c6347"/>' +
+      '<path fill="#4a4e69" d="M4 22h24v6H4z"/>' +
+      '<path fill="#8d99ae" d="M6 20h20v3H6z"/>'
+    ),
+    icon_bag: svgToDataURL(
+      '<rect x="10" y="3" width="12" height="5" fill="#6e4228"/>' +
+      '<rect x="5" y="7" width="22" height="21" rx="3" fill="#1c1619"/>' +
+      '<rect x="7" y="9" width="18" height="17" fill="#c77432"/>' +
+      '<rect x="7" y="9" width="18" height="7" fill="#e08e45"/>' +
+      '<rect x="13" y="13" width="6" height="5" fill="#f5b700"/>'
+    ),
+    icon_map: svgToDataURL(
+      '<rect x="3" y="4" width="26" height="24" fill="#1c1619"/>' +
+      '<rect x="5" y="6" width="22" height="20" fill="#f6d799"/>' +
+      '<rect x="7" y="8" width="8" height="7" fill="#6ab04c"/>' +
+      '<rect x="16" y="10" width="9" height="12" fill="#3898ff"/>' +
+      '<path fill="#e0533c" d="M11 17h6v6h-6z"/>'
+    ),
+    icon_gear: svgToDataURL(
+      '<rect x="12" y="2" width="8" height="28" fill="#4a4e69"/>' +
+      '<rect x="2" y="12" width="28" height="8" fill="#4a4e69"/>' +
+      '<rect x="6" y="6" width="20" height="20" fill="#8d99ae"/>' +
+      '<rect x="11" y="11" width="10" height="10" fill="#1c1619"/>'
+    ),
+    icon_potion: svgToDataURL(
+      '<rect x="12" y="2" width="8" height="4" fill="#d9a066"/>' +
+      '<rect x="10" y="6" width="12" height="4" fill="#ffffff"/>' +
+      '<rect x="6" y="10" width="20" height="18" rx="4" fill="#1c1619"/>' +
+      '<rect x="8" y="12" width="16" height="14" fill="#e03c4b"/>' +
+      '<rect x="10" y="14" width="4" height="6" fill="#ff758f"/>'
+    ),
+    icon_bomb: svgToDataURL(
+      '<rect x="16" y="2" width="6" height="4" fill="#f5b700"/>' +
+      '<rect x="14" y="5" width="4" height="4" fill="#9c6347"/>' +
+      '<rect x="6" y="9" width="20" height="19" rx="8" fill="#1c1619"/>' +
+      '<rect x="8" y="11" width="16" height="15" rx="6" fill="#4a4e69"/>' +
+      '<rect x="10" y="13" width="4" height="4" fill="#ffffff"/>'
+    ),
+    icon_scroll: svgToDataURL(
+      '<rect x="4" y="4" width="24" height="24" fill="#1c1619"/>' +
+      '<rect x="6" y="6" width="20" height="4" fill="#e08e45"/>' +
+      '<rect x="6" y="10" width="20" height="12" fill="#f6d799"/>' +
+      '<rect x="9" y="12" width="14" height="2" fill="#5c3824"/>' +
+      '<rect x="9" y="16" width="10" height="2" fill="#5c3824"/>' +
+      '<rect x="6" y="22" width="20" height="4" fill="#e08e45"/>'
+    ),
+    icon_coin: svgToDataURL(
+      '<rect x="6" y="4" width="20" height="24" rx="6" fill="#1c1619"/>' +
+      '<rect x="8" y="6" width="16" height="20" rx="4" fill="#f5b700"/>' +
+      '<rect x="10" y="8" width="12" height="16" fill="#ffd166"/>' +
+      '<rect x="14" y="10" width="4" height="12" fill="#c98a00"/>'
+    ),
+    heart: svgToDataURL(
+      '<path fill="#1c1619" d="M4 6h10v4h4V6h10v10l-12 12L4 16z"/>' +
+      '<path fill="#e03c4b" d="M6 8h6v4h8V8h6v7L16 25 6 15z"/>' +
+      '<rect x="8" y="10" width="3" height="3" fill="#ffffff"/>'
+    ),
+
+    // 2. 主角 4 方向像素立繪
+    hero_down_0: svgToDataURL(
+      '<rect x="8" y="2" width="16" height="14" fill="#1c1619"/>' +
+      '<rect x="10" y="4" width="12" height="5" fill="#3898ff"/>' +
+      '<rect x="12" y="4" width="6" height="2" fill="#8ce0ff"/>' +
+      '<rect x="10" y="9" width="12" height="6" fill="#f4be78"/>' +
+      '<rect x="11" y="11" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="19" y="11" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="9" y="15" width="14" height="3" fill="#e0533c"/>' +
+      '<rect x="8" y="18" width="16" height="8" fill="#1d5eb8"/>' +
+      '<rect x="6" y="18" width="3" height="6" fill="#f4be78"/>' +
+      '<rect x="23" y="18" width="3" height="6" fill="#f4be78"/>' +
+      '<rect x="10" y="26" width="5" height="5" fill="#6e4228"/>' +
+      '<rect x="17" y="26" width="5" height="5" fill="#6e4228"/>'
+    ),
+    hero_down_1: svgToDataURL(
+      '<rect x="8" y="3" width="16" height="14" fill="#1c1619"/>' +
+      '<rect x="10" y="5" width="12" height="5" fill="#3898ff"/>' +
+      '<rect x="10" y="10" width="12" height="6" fill="#f4be78"/>' +
+      '<rect x="11" y="12" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="19" y="12" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="9" y="16" width="14" height="3" fill="#e0533c"/>' +
+      '<rect x="8" y="19" width="16" height="7" fill="#1d5eb8"/>' +
+      '<rect x="9" y="26" width="5" height="4" fill="#6e4228"/>' +
+      '<rect x="18" y="25" width="5" height="5" fill="#6e4228"/>'
+    ),
+    hero_up_0: svgToDataURL(
+      '<rect x="8" y="2" width="16" height="14" fill="#1c1619"/>' +
+      '<rect x="10" y="4" width="12" height="10" fill="#3898ff"/>' +
+      '<rect x="9" y="15" width="14" height="4" fill="#e0533c"/>' +
+      '<rect x="8" y="19" width="16" height="7" fill="#1d5eb8"/>' +
+      '<rect x="14" y="17" width="4" height="9" fill="#8ce0ff"/>' +
+      '<rect x="10" y="26" width="5" height="5" fill="#6e4228"/>' +
+      '<rect x="17" y="26" width="5" height="5" fill="#6e4228"/>'
+    ),
+    hero_right_0: svgToDataURL(
+      '<rect x="8" y="2" width="15" height="14" fill="#1c1619"/>' +
+      '<rect x="10" y="4" width="12" height="5" fill="#3898ff"/>' +
+      '<rect x="12" y="9" width="10" height="6" fill="#f4be78"/>' +
+      '<rect x="19" y="11" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="6" y="15" width="16" height="3" fill="#e0533c"/>' +
+      '<rect x="9" y="18" width="13" height="8" fill="#1d5eb8"/>' +
+      '<rect x="22" y="15" width="8" height="3" fill="#8ce0ff"/>' +
+      '<rect x="10" y="26" width="5" height="5" fill="#6e4228"/>' +
+      '<rect x="16" y="26" width="5" height="5" fill="#6e4228"/>'
+    ),
+    hero_left_0: svgToDataURL(
+      '<rect x="9" y="2" width="15" height="14" fill="#1c1619"/>' +
+      '<rect x="10" y="4" width="12" height="5" fill="#3898ff"/>' +
+      '<rect x="10" y="9" width="10" height="6" fill="#f4be78"/>' +
+      '<rect x="11" y="11" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="10" y="15" width="16" height="3" fill="#e0533c"/>' +
+      '<rect x="10" y="18" width="13" height="8" fill="#1d5eb8"/>' +
+      '<rect x="2" y="15" width="8" height="3" fill="#8ce0ff"/>' +
+      '<rect x="11" y="26" width="5" height="5" fill="#6e4228"/>' +
+      '<rect x="17" y="26" width="5" height="5" fill="#6e4228"/>'
+    ),
+
+    // 3. 四大同行戰寵與異色閃光版
+    pet_slime: svgToDataURL(
+      '<rect x="11" y="4" width="10" height="4" fill="#f5b700"/>' +
+      '<rect x="6" y="10" width="20" height="16" rx="6" fill="#1c1619"/>' +
+      '<rect x="8" y="12" width="16" height="12" rx="4" fill="#3898ff"/>' +
+      '<rect x="10" y="13" width="6" height="3" fill="#8ce0ff"/>' +
+      '<rect x="11" y="17" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="19" y="17" width="2" height="3" fill="#1c1619"/>'
+    ),
+    pet_slime_shiny: svgToDataURL(
+      '<rect x="11" y="4" width="10" height="4" fill="#ffffff"/>' +
+      '<rect x="6" y="10" width="20" height="16" rx="6" fill="#1c1619"/>' +
+      '<rect x="8" y="12" width="16" height="12" rx="4" fill="#f5b700"/>' +
+      '<rect x="11" y="17" width="2" height="3" fill="#1c1619"/>' +
+      '<rect x="19" y="17" width="2" height="3" fill="#1c1619"/>'
+    ),
+    pet_dragon: svgToDataURL(
+      '<rect x="6" y="4" width="4" height="5" fill="#f5b700"/>' +
+      '<rect x="22" y="4" width="4" height="5" fill="#f5b700"/>' +
+      '<rect x="8" y="7" width="16" height="19" fill="#1c1619"/>' +
+      '<rect x="10" y="9" width="12" height="15" fill="#e0533c"/>' +
+      '<rect x="4" y="12" width="5" height="8" fill="#e08e45"/>' +
+      '<rect x="23" y="12" width="5" height="8" fill="#e08e45"/>' +
+      '<rect x="12" y="16" width="8" height="7" fill="#f6d799"/>' +
+      '<rect x="12" y="11" width="2" height="3" fill="#ffffff"/>' +
+      '<rect x="18" y="11" width="2" height="3" fill="#ffffff"/>'
+    ),
+    pet_dragon_shiny: svgToDataURL(
+      '<rect x="8" y="7" width="16" height="19" fill="#1c1619"/>' +
+      '<rect x="10" y="9" width="12" height="15" fill="#9d4edd"/>' +
+      '<rect x="4" y="12" width="5" height="8" fill="#f5b700"/>' +
+      '<rect x="23" y="12" width="5" height="8" fill="#f5b700"/>' +
+      '<rect x="12" y="16" width="8" height="7" fill="#ffffff"/>'
+    ),
+    pet_fox: svgToDataURL(
+      '<rect x="7" y="4" width="5" height="6" fill="#e08e45"/>' +
+      '<rect x="20" y="4" width="5" height="6" fill="#e08e45"/>' +
+      '<rect x="8" y="9" width="16" height="17" fill="#1c1619"/>' +
+      '<rect x="10" y="11" width="12" height="13" fill="#f5b700"/>' +
+      '<rect x="12" y="16" width="8" height="8" fill="#ffffff"/>' +
+      '<rect x="22" y="16" width="7" height="8" fill="#e08e45"/>' +
+      '<rect x="11" y="13" width="2" height="2" fill="#1c1619"/>' +
+      '<rect x="19" y="13" width="2" height="2" fill="#1c1619"/>'
+    ),
+    pet_fox_shiny: svgToDataURL(
+      '<rect x="8" y="9" width="16" height="17" fill="#1c1619"/>' +
+      '<rect x="10" y="11" width="12" height="13" fill="#8ce0ff"/>' +
+      '<rect x="12" y="16" width="8" height="8" fill="#ffffff"/>' +
+      '<rect x="22" y="16" width="7" height="8" fill="#3898ff"/>'
+    ),
+    pet_icedragon: svgToDataURL(
+      '<rect x="6" y="4" width="4" height="5" fill="#8ce0ff"/>' +
+      '<rect x="22" y="4" width="4" height="5" fill="#8ce0ff"/>' +
+      '<rect x="8" y="7" width="16" height="19" fill="#1c1619"/>' +
+      '<rect x="10" y="9" width="12" height="15" fill="#3898ff"/>' +
+      '<rect x="4" y="12" width="5" height="8" fill="#8ce0ff"/>' +
+      '<rect x="23" y="12" width="5" height="8" fill="#8ce0ff"/>' +
+      '<rect x="12" y="16" width="8" height="7" fill="#ffffff"/>'
+    ),
+    pet_icedragon_shiny: svgToDataURL(
+      '<rect x="8" y="7" width="16" height="19" fill="#1c1619"/>' +
+      '<rect x="10" y="9" width="12" height="15" fill="#f5b700"/>' +
+      '<rect x="4" y="12" width="5" height="8" fill="#ffffff"/>' +
+      '<rect x="23" y="12" width="5" height="8" fill="#ffffff"/>'
+    ),
+
+    // 4. 營地 4 大核心 NPC
+    npc_blacksmith: svgToDataURL(
+      '<rect x="8" y="3" width="16" height="26" fill="#1c1619"/>' +
+      '<rect x="10" y="5" width="12" height="4" fill="#e0533c"/>' +
+      '<rect x="10" y="9" width="12" height="6" fill="#f4be78"/>' +
+      '<rect x="10" y="14" width="12" height="4" fill="#6e4228"/>' +
+      '<rect x="9" y="18" width="14" height="9" fill="#4a4e69"/>' +
+      '<rect x="23" y="12" width="5" height="10" fill="#8d99ae"/>'
+    ),
+    npc_guildmaster: svgToDataURL(
+      '<rect x="11" y="2" width="10" height="4" fill="#f5b700"/>' +
+      '<rect x="8" y="6" width="16" height="23" fill="#1c1619"/>' +
+      '<rect x="10" y="8" width="12" height="7" fill="#f4be78"/>' +
+      '<rect x="8" y="15" width="16" height="12" fill="#a32c24"/>' +
+      '<rect x="12" y="16" width="8" height="10" fill="#f5b700"/>'
+    ),
+    npc_astrologer: svgToDataURL(
+      '<path fill="#5a189a" d="M16 1L6 11h20z"/>' +
+      '<rect x="8" y="11" width="16" height="18" fill="#1c1619"/>' +
+      '<rect x="10" y="12" width="12" height="6" fill="#f4be78"/>' +
+      '<rect x="9" y="18" width="14" height="10" fill="#9d4edd"/>' +
+      '<rect x="14" y="19" width="4" height="8" fill="#f5b700"/>'
+    ),
+    npc_merchant: svgToDataURL(
+      '<rect x="7" y="4" width="18" height="6" fill="#6ab04c"/>' +
+      '<rect x="6" y="10" width="20" height="18" fill="#1c1619"/>' +
+      '<rect x="10" y="11" width="12" height="6" fill="#f4be78"/>' +
+      '<rect x="8" y="17" width="16" height="10" fill="#e08e45"/>' +
+      '<rect x="4" y="11" width="5" height="12" fill="#c77432"/>'
+    ),
+
+    // 5. 野外魔物、賞金首與守關領主 Boss
+    mon_bamboo: svgToDataURL(
+      '<rect x="8" y="4" width="16" height="24" fill="#1c1619"/>' +
+      '<rect x="10" y="6" width="12" height="4" fill="#a8ba59"/>' +
+      '<rect x="10" y="10" width="12" height="16" fill="#6ab04c"/>' +
+      '<rect x="11" y="14" width="3" height="3" fill="#e03c4b"/>' +
+      '<rect x="18" y="14" width="3" height="3" fill="#e03c4b"/>'
+    ),
+    mon_bamboo_shiny: svgToDataURL(
+      '<rect x="8" y="4" width="16" height="24" fill="#1c1619"/>' +
+      '<rect x="10" y="6" width="12" height="20" fill="#f5b700"/>' +
+      '<rect x="11" y="14" width="3" height="3" fill="#e03c4b"/>' +
+      '<rect x="18" y="14" width="3" height="3" fill="#e03c4b"/>'
+    ),
+    mon_skull: svgToDataURL(
+      '<rect x="8" y="4" width="16" height="24" fill="#1c1619"/>' +
+      '<rect x="10" y="6" width="12" height="10" fill="#ffffff"/>' +
+      '<rect x="11" y="10" width="3" height="3" fill="#e03c4b"/>' +
+      '<rect x="18" y="10" width="3" height="3" fill="#e03c4b"/>' +
+      '<rect x="9" y="17" width="14" height="9" fill="#4a4e69"/>' +
+      '<rect x="23" y="10" width="4" height="14" fill="#8d99ae"/>'
+    ),
+    mon_skull_shiny: svgToDataURL(
+      '<rect x="8" y="4" width="16" height="24" fill="#1c1619"/>' +
+      '<rect x="10" y="6" width="12" height="10" fill="#ffd166"/>' +
+      '<rect x="11" y="10" width="3" height="3" fill="#9d4edd"/>' +
+      '<rect x="18" y="10" width="3" height="3" fill="#9d4edd"/>' +
+      '<rect x="9" y="17" width="14" height="9" fill="#5a189a"/>'
+    ),
+    mon_boss: svgToDataURL(
+      '<path fill="#f5b700" d="M4 2l6 8H4zm24 0l-6 8h6z"/>' +
+      '<rect x="5" y="8" width="22" height="22" fill="#1c1619"/>' +
+      '<rect x="7" y="10" width="18" height="18" fill="#a32c24"/>' +
+      '<rect x="9" y="13" width="4" height="4" fill="#f5b700"/>' +
+      '<rect x="19" y="13" width="4" height="4" fill="#f5b700"/>' +
+      '<rect x="11" y="21" width="10" height="5" fill="#f5b700"/>'
+    ),
+
+    // 6. 地圖環境、資源節點與機關貼圖
+    tree: svgToDataURL(
+      '<rect x="12" y="20" width="8" height="10" fill="#6e4228"/>' +
+      '<rect x="4" y="4" width="24" height="18" rx="6" fill="#1c1619"/>' +
+      '<rect x="6" y="6" width="20" height="14" rx="4" fill="#3d7a32"/>' +
+      '<rect x="8" y="7" width="16" height="8" rx="3" fill="#6ab04c"/>'
+    ),
+    pillar: svgToDataURL(
+      '<rect x="6" y="2" width="20" height="28" fill="#1c1619"/>' +
+      '<rect x="8" y="4" width="16" height="24" fill="#8d99ae"/>' +
+      '<rect x="10" y="8" width="12" height="16" fill="#4a4e69"/>' +
+      '<rect x="13" y="11" width="6" height="10" fill="#3898ff"/>'
+    ),
+    tent: svgToDataURL(
+      '<path fill="#1c1619" d="M16 2L2 16v14h28V16z"/>' +
+      '<path fill="#e08e45" d="M16 5L5 16h22z"/>' +
+      '<rect x="5" y="16" width="22" height="12" fill="#9c6347"/>' +
+      '<rect x="12" y="19" width="8" height="9" fill="#1c1619"/>'
+    ),
+    mat_crystal: svgToDataURL(
+      '<path fill="#1c1619" d="M16 3L6 15v13h20V15z"/>' +
+      '<path fill="#3898ff" d="M16 6l-7 10v9h14v-9z"/>' +
+      '<path fill="#8ce0ff" d="M16 6l-4 9v8h4z"/>'
+    ),
+    mat_mushroom: svgToDataURL(
+      '<rect x="11" y="17" width="10" height="11" fill="#f4be78"/>' +
+      '<path fill="#1c1619" d="M4 17C4 7 28 7 28 17z"/>' +
+      '<path fill="#e0533c" d="M6 16C6 9 26 9 26 16z"/>' +
+      '<rect x="10" y="11" width="3" height="3" fill="#ffffff"/>' +
+      '<rect x="18" y="12" width="4" height="3" fill="#ffffff"/>'
+    ),
+    mat_flower: svgToDataURL(
+      '<rect x="14" y="16" width="4" height="12" fill="#6ab04c"/>' +
+      '<circle cx="16" cy="12" r="8" fill="#f5b700"/>' +
+      '<circle cx="16" cy="12" r="4" fill="#e0533c"/>'
+    ),
+    deco_stump: svgToDataURL(
+      '<rect x="5" y="10" width="22" height="18" rx="3" fill="#1c1619"/>' +
+      '<rect x="7" y="12" width="18" height="5" fill="#f4be78"/>' +
+      '<rect x="7" y="17" width="18" height="9" fill="#9c6347"/>'
+    ),
+    crate: svgToDataURL(
+      '<rect x="4" y="4" width="24" height="24" fill="#1c1619"/>' +
+      '<rect x="6" y="6" width="20" height="20" fill="#e08e45"/>' +
+      '<rect x="9" y="9" width="14" height="14" fill="#9c6347"/>'
+    ),
+    chest: svgToDataURL(
+      '<rect x="4" y="6" width="24" height="22" fill="#1c1619"/>' +
+      '<rect x="6" y="8" width="20" height="7" fill="#e0533c"/>' +
+      '<rect x="6" y="15" width="20" height="3" fill="#f5b700"/>' +
+      '<rect x="6" y="18" width="20" height="8" fill="#a32c24"/>' +
+      '<rect x="14" y="14" width="4" height="6" fill="#ffffff"/>'
+    ),
+    campfire: svgToDataURL(
+      '<rect x="6" y="20" width="20" height="6" fill="#6e4228"/>' +
+      '<path fill="#e0533c" d="M16 4L8 20h16z"/>' +
+      '<path fill="#f5b700" d="M16 9l-5 11h10z"/>'
+    ),
+    deco_pot: svgToDataURL(
+      '<rect x="5" y="8" width="22" height="18" rx="5" fill="#1c1619"/>' +
+      '<rect x="7" y="10" width="18" height="14" rx="4" fill="#4a4e69"/>' +
+      '<rect x="9" y="10" width="14" height="4" fill="#e0533c"/>'
+    ),
+    deco_bench: svgToDataURL(
+      '<rect x="2" y="12" width="28" height="8" fill="#e08e45"/>' +
+      '<rect x="5" y="20" width="4" height="6" fill="#6e4228"/>' +
+      '<rect x="23" y="20" width="4" height="6" fill="#6e4228"/>'
+    ),
+    deco_anvil: svgToDataURL(
+      '<rect x="4" y="8" width="24" height="8" fill="#8d99ae"/>' +
+      '<rect x="10" y="16" width="12" height="6" fill="#4a4e69"/>' +
+      '<rect x="6" y="22" width="20" height="5" fill="#1c1619"/>'
+    ),
+    deco_rack: svgToDataURL(
+      '<rect x="4" y="4" width="4" height="24" fill="#6e4228"/>' +
+      '<rect x="24" y="4" width="4" height="24" fill="#6e4228"/>' +
+      '<rect x="4" y="10" width="24" height="3" fill="#9c6347"/>' +
+      '<rect x="11" y="6" width="3" height="18" fill="#8ce0ff"/>' +
+      '<rect x="18" y="6" width="3" height="18" fill="#8ce0ff"/>'
+    ),
+    deco_lantern: svgToDataURL(
+      '<rect x="10" y="4" width="12" height="24" fill="#4a4e69"/>' +
+      '<rect x="12" y="8" width="8" height="10" fill="#f5b700"/>'
+    ),
+    deco_sign: svgToDataURL(
+      '<rect x="14" y="16" width="4" height="12" fill="#6e4228"/>' +
+      '<rect x="5" y="6" width="22" height="12" fill="#e08e45"/>'
+    ),
+    deco_rock: svgToDataURL(
+      '<rect x="6" y="12" width="20" height="14" rx="5" fill="#8d99ae"/>'
+    ),
+    boulder_block: svgToDataURL(
+      '<rect x="3" y="5" width="26" height="23" rx="6" fill="#1c1619"/>' +
+      '<rect x="5" y="7" width="22" height="19" rx="4" fill="#4a4e69"/>' +
+      '<rect x="8" y="9" width="10" height="6" fill="#8d99ae"/>'
+    ),
+    deadtree_block: svgToDataURL(
+      '<rect x="11" y="4" width="10" height="24" fill="#6e4228"/>' +
+      '<rect x="4" y="8" width="24" height="5" fill="#9c6347"/>'
+    ),
+    cracked_wall: svgToDataURL(
+      '<rect x="2" y="2" width="28" height="28" fill="#4a4e69"/>' +
+      '<path stroke="#f5b700" stroke-width="3" d="M8 6l8 10-6 10M22 8l-6 9 6 9"/>'
+    ),
+    fishing_spot: svgToDataURL(
+      '<circle cx="16" cy="16" r="12" fill="#1d5eb8"/>' +
+      '<circle cx="16" cy="16" r="8" fill="#3898ff"/>' +
+      '<path fill="#ffffff" d="M11 15h10l-3-4v8z"/>'
+    ),
+    grapple_post: svgToDataURL(
+      '<rect x="11" y="4" width="10" height="24" fill="#6e4228"/>' +
+      '<rect x="9" y="8" width="14" height="6" fill="#f6d799"/>'
+    ),
+    brazier_off: svgToDataURL(
+      '<rect x="8" y="12" width="16" height="14" fill="#4a4e69"/>'
+    ),
+    brazier_on: svgToDataURL(
+      '<rect x="8" y="14" width="16" height="12" fill="#4a4e69"/>' +
+      '<path fill="#f5b700" d="M16 2L9 14h14z"/>'
+    ),
+    seal_pillar_off: svgToDataURL(
+      '<rect x="7" y="2" width="18" height="28" fill="#1c1619"/>' +
+      '<rect x="9" y="4" width="14" height="24" fill="#4a4e69"/>' +
+      '<rect x="12" y="9" width="8" height="12" fill="#e03c4b"/>'
+    ),
+    seal_pillar_on: svgToDataURL(
+      '<rect x="7" y="2" width="18" height="28" fill="#1c1619"/>' +
+      '<rect x="9" y="4" width="14" height="24" fill="#8d99ae"/>' +
+      '<rect x="12" y="9" width="8" height="12" fill="#5ac54f"/>'
+    ),
+    ancient_ship: svgToDataURL(
+      '<path fill="#9c6347" d="M4 18h24l-4 10H8z"/>' +
+      '<path fill="#f6d799" d="M16 3v14H7z"/>'
+    ),
+    sky_airship: svgToDataURL(
+      '<ellipse cx="16" cy="10" rx="12" ry="6" fill="#9d4edd"/>' +
+      '<rect x="8" y="18" width="16" height="8" fill="#e08e45"/>'
+    )
   };
 
-  function bake(rows, flipX = false, customPalette = null) {
-    const pal = customPalette || PAL;
-    const h = rows.length;
-    const w = rows[0].length;
-    const c = document.createElement("canvas");
-    c.width = w;
-    c.height = h;
-    const ctx = c.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
+  RAW_SVGS.hero_down  = RAW_SVGS.hero_down_0;
+  RAW_SVGS.hero_up    = RAW_SVGS.hero_up_0;
+  RAW_SVGS.hero_up_1  = RAW_SVGS.hero_up_0;
+  RAW_SVGS.hero_right = RAW_SVGS.hero_right_0;
+  RAW_SVGS.hero_right_1 = RAW_SVGS.hero_right_0;
+  RAW_SVGS.hero_left  = RAW_SVGS.hero_left_0;
+  RAW_SVGS.hero_left_1  = RAW_SVGS.hero_left_0;
 
-    for (let y = 0; y < h; y++) {
-      const r = rows[y];
-      for (let x = 0; x < w; x++) {
-        const srcX = flipX ? (w - 1 - x) : x;
-        const ch = r[srcX];
-        const col = pal[ch];
-        if (col) {
-          ctx.fillStyle = col;
-          ctx.fillRect(x, y, 1, 1);
-        }
-      }
-    }
-    return c;
-  }
-
-  function bakeShiny(rows) {
-    const shinyPal = Object.assign({}, PAL, {
-      'b': '#ffd166', 'B': '#e09f3e', 'c': '#ffffff',
-      'r': '#ff9f1c', 'R': '#c97a00', 'o': '#ffe66d', 'p': '#ff70a6',
-      'L': '#ffd166', 'l': '#ffffff', 'e': '#ffe66d'
-    });
-    return bake(rows, false, shinyPal);
-  }
-
-  const SPRITES = {};
-  const DATA_URLS = {};
+  const IMG_ELEMENTS = {};
 
   function initAllSprites() {
-    if (SPRITES._initialized) return SPRITES;
-
-    // ================= 0. 新增！12x12 開源風格像素 UI 小圖標 (取代 Emoji) =================
-    SPRITES.icon_sword = bake([
-      "........kkk.",
-      ".......kccwk",
-      "......kccbbk",
-      ".....kccbbk.",
-      "....kccbbk..",
-      ".kk.kccbk...",
-      ".kyykcbk....",
-      "..kyyyk.....",
-      ".kTTkyyk....",
-      "kTTk.kk.....",
-      "kkk.........",
-      "............"
-    ]);
-
-    SPRITES.icon_shield = bake([
-      ".kkkkkkkkkk.",
-      "kbbbbbbbbbbk",
-      "kbccccccccbk",
-      "kbcBBBBBBcbk",
-      "kbcByyyyycbk",
-      "kbcBBBBBBcbk",
-      ".kbccccccbk.",
-      ".kbbbbbbbbk.",
-      "..kBBBBBBk..",
-      "...kBBBBk...",
-      "....kkkk....",
-      "............"
-    ]);
-
-    SPRITES.icon_forge = bake([
-      "...kkkkkk...",
-      "..keeeeeek..",
-      ".keeEEEEeek.",
-      ".kkkkkkkkkk.",
-      "....kTTk....",
-      "....kTTk....",
-      "...kkTTkk...",
-      "..keeeeeeK..",
-      ".kEEEEEEEEk.",
-      "kEEEEEEEEEEk",
-      "kkkkkkkkkkkk",
-      "............"
-    ]);
-
-    SPRITES.icon_bag = bake([
-      "....kkkk....",
-      "...koooOk...",
-      "..kkkkkkkk..",
-      ".koooooooook",
-      "kooOyyyyOook",
-      "kooOyyyyOook",
-      "koOOOOOOOOok",
-      "koOOOOOOOOok",
-      "kttttttttttk",
-      ".kkkkkkkkkk.",
-      "............",
-      "............"
-    ]);
-
-    SPRITES.icon_map = bake([
-      ".kkkkkkkkkk.",
-      "kmmmmmmmmmmk",
-      "kmggmmmmbbmk",
-      "kmgGmmmmbBmk",
-      "kmmmmrrmmmmk",
-      "kmmmmrrmmmmk",
-      "kmbbmmmmggmk",
-      "kmbBmmmmgGmk",
-      "kmmmmmmmmmmk",
-      ".kkkkkkkkkk.",
-      "............",
-      "............"
-    ]);
-
-    SPRITES.icon_gear = bake([
-      "....kkkk....",
-      "..kkeeeeKk..",
-      ".keekkkkeek.",
-      ".kek....kek.",
-      "keek....keek",
-      "keek....keek",
-      ".kek....kek.",
-      ".keekkkkeek.",
-      "..kkEEEEkk..",
-      "....kkkk....",
-      "............",
-      "............"
-    ]);
-
-    SPRITES.icon_potion = bake([
-      "....kkkk....",
-      "....kffk....",
-      "...kkkkkk...",
-      "....kwwk....",
-      "..kkwwwwkk..",
-      ".kwrrrrrrwk.",
-      "kwrrwwrrrrwk",
-      "kwrrrrrrrrwk",
-      "kRRRRRRRRRRk",
-      ".kkkkkkkkkk.",
-      "............",
-      "............"
-    ]);
-
-    SPRITES.icon_bomb = bake([
-      ".......kk...",
-      "......kyrk..",
-      ".....kk.kk..",
-      "...kkEEEkk..",
-      "..kEEEEEEEk.",
-      ".kEEwwEEEEEk",
-      ".kEEwEEEEEEk",
-      ".kEEEEEEEEEk",
-      "..kEEEEEEEk.",
-      "...kkkkkkk..",
-      "............",
-      "............"
-    ]);
-
-    SPRITES.icon_scroll = bake([
-      "..kkkkkkkk..",
-      ".koooooooook",
-      "kmmmmmmmmmmk",
-      "kmkkkkkkkmmk",
-      "kmmmmmmmmmmk",
-      "kmkkkkkmmmmk",
-      "kmmmmmmmmmmk",
-      "kooooooooook",
-      ".kkkkkkkkkk.",
-      "............",
-      "............",
-      "............"
-    ]);
-
-    SPRITES.icon_coin = bake([
-      "...kkkkkk...",
-      "..kyyyyyyk..",
-      ".kyywwwwyyk.",
-      "kyywYYYYwyyk",
-      "kyywYYYYwyyk",
-      "kyywYYYYwyyk",
-      ".kyyYYYYyyk.",
-      "..kyyyyyyk..",
-      "...kkkkkk...",
-      "............",
-      "............",
-      "............"
-    ]);
-
-    // ================= 1. 主角 4 方向 × 2 踏步動作幀 =================
-    const heroDownBase = [
-      ".....kkkkkk.....",
-      "...kkbbbbbbkk...",
-      "..kbbccccccbbk..",
-      ".kbbbbbbbbbbbbk.",
-      ".kBBBBBBBBBBBBk.",
-      ".kBffffffffffBk.",
-      ".kBfkkffffkkfBk.",
-      ".kBffffffffffBk.",
-      "..kkkkkkkkkkkk..",
-      "...krrrrrrrrk...",
-      "..kBBBBBBBBBBk..",
-      "..kffBBBBBBffk..",
-      "...kkBBBBBBkk..."
-    ];
-    SPRITES.hero_down_0 = bake([...heroDownBase, "....kBBkkBBk....", "....kTTkkTTk....", "....kkk..kkk...."]);
-    SPRITES.hero_down_1 = bake([...heroDownBase, "...kBBk..kBBk...", "...kTTk..kTTk...", "...kkk....kkk..."]);
-    SPRITES.hero_down   = SPRITES.hero_down_0;
-
-    const heroUpBase = [
-      ".....kkkkkk.....",
-      "...kkbbbbbbkk...",
-      "..kbbccccccbbk..",
-      ".kbbbbbbbbbbbbk.",
-      ".kBBBBBBBBBBBBk.",
-      ".kBBBBByyBBBBBk.",
-      ".kBBBBByyBBBBBk.",
-      "..kkkkkkkkkkkk..",
-      "..krrrrrrrrrrk..",
-      "..kBBBBrrkBBBk..",
-      "..kBBBkwwkBBBk..",
-      "..kffkwwkBBffk..",
-      "...kkkBBBBBBkk.."
-    ];
-    SPRITES.hero_up_0 = bake([...heroUpBase, "....kBBkkBBk....", "....kTTkkTTk....", "....kkk..kkk...."]);
-    SPRITES.hero_up_1 = bake([...heroUpBase, "...kBBk..kBBk...", "...kTTk..kTTk...", "...kkk....kkk..."]);
-    SPRITES.hero_up   = SPRITES.hero_up_0;
-
-    const heroSideBase = [
-      ".....kkkkkk.....",
-      "...kkbbbbbbkk...",
-      "..kbbccccccbbk..",
-      ".kbbbbbbbbbbbbk.",
-      "kkBBBBBBBBBBBBk.",
-      "krrBfffffffffBk.",
-      "krrBffffffkkfBk.",
-      ".kkBfffffffffBk.",
-      "...kkkkkkkkkkk..",
-      "..krrrrrrrrrk...",
-      "...kBBBBBBBBk...",
-      "...kBBBBfffBk...",
-      "...kkBBBBBBkk..."
-    ];
-    SPRITES.hero_right_0 = bake([...heroSideBase, "....kBBkkBBk....", "....kTTk.kTTk...", "....kkk..kkkk..."], false);
-    SPRITES.hero_right_1 = bake([...heroSideBase, "...kBBk...kBBk..", "...kTTk...kTTk..", "...kkk....kkkk.."], false);
-    SPRITES.hero_right   = SPRITES.hero_right_0;
-
-    SPRITES.hero_left_0  = bake([...heroSideBase, "....kBBkkBBk....", "....kTTk.kTTk...", "....kkk..kkkk..."], true);
-    SPRITES.hero_left_1  = bake([...heroSideBase, "...kBBk...kBBk..", "...kTTk...kTTk..", "...kkk....kkkk.."], true);
-    SPRITES.hero_left    = SPRITES.hero_left_0;
-
-    // ================= 2. 四款像素戰寵 + 異色閃光版 =================
-    const slimeRows = [
-      ".....k..k..k....",
-      "....kyykyykyk...",
-      "....kyyyyyyyk...",
-      "...kkkkkkkkkkk..",
-      "..kkbbbbbbbbkk..",
-      ".kbbcccbbbbbbbk.",
-      ".kbbccbbbbbbbbk.",
-      "kbbbbbbbbbbbbbbk",
-      "kbbbkkbbbbkkbbbk",
-      "kbbbkwbbbbkwbbbk",
-      "kbbbbbbbbbbbbbbk",
-      "kBBBBbbbbbbBBBBk",
-      ".kBBBBBBBBBBBBk.",
-      "..kkkkkkkkkkkk..",
-      "................",
-      "................"
-    ];
-    SPRITES.pet_slime = bake(slimeRows);
-    SPRITES.pet_slime_shiny = bakeShiny(slimeRows);
-
-    const dragonRows = [
-      "..kk........kk..",
-      ".kyyk.kkkk.kyyk.",
-      "..kykrroorrkyk..",
-      "...krrrrrrrrk...",
-      "..krrffffffrrk..",
-      "..krffkkffkkrk..",
-      "..krrffffffrrk..",
-      ".koorrrrrrrrook.",
-      "koorrrroorrrrook",
-      ".kkrrrroorrrrkk.",
-      "...krrrrrrrrk...",
-      "...kRRkkkkRRk.kk",
-      "...kkk....kkkkoy",
-      ".............kyo",
-      "..............kk",
-      "................"
-    ];
-    SPRITES.pet_dragon = bake(dragonRows);
-    SPRITES.pet_dragon_shiny = bakeShiny(dragonRows);
-
-    const foxRows = [
-      ".kkk........kkk.",
-      ".koyk......kyok.",
-      ".kooykkkkkkyook.",
-      "..koooooooooook.",
-      "..koowwoooowwok.",
-      "..kowkkwookkwok.",
-      "..kowwwwkkwwwok.",
-      "...kkkkkkkkkkk..",
-      "...koooooooookk.",
-      "..koowwwwwookook",
-      "..koowwwwwookwwk",
-      "...koooooooookk.",
-      "....kTTk..kTTk..",
-      "....kkk...kkk...",
-      "................",
-      "................"
-    ];
-    SPRITES.pet_fox = bake(foxRows);
-    SPRITES.pet_fox_shiny = bakeShiny(foxRows);
-
-    const iceDragonRows = [
-      "..kk........kk..",
-      ".kcck.kkkk.kcck.",
-      "..kckbbccbbkck..",
-      "...kbbbbbbbbk...",
-      "..kbbwwwwwwbbk..",
-      "..kbwwkkwwkkbk..",
-      "..kbbwwwwwwbbk..",
-      ".kccbbbbbbbbcck.",
-      "kccbbbbccbbbbcck",
-      ".kkbbbbccbbbbkk.",
-      "...kbbbbbbbbk...",
-      "...kBBkkkkBBk.kk",
-      "...kkk....kkkkcw",
-      ".............kwc",
-      "..............kk",
-      "................"
-    ];
-    SPRITES.pet_icedragon = bake(iceDragonRows);
-    SPRITES.pet_icedragon_shiny = bakeShiny(iceDragonRows);
-
-    // ================= 3. 四大核心 NPC =================
-    SPRITES.npc_blacksmith = bake([
-      "....kkkkkkkk....",
-      "..kkrrrrrrrrkk..",
-      ".krrRRRRRRRRrrk.",
-      ".kffffffffffffk.",
-      ".kffkkffffkkffk.",
-      ".kffffTTTTffffk.",
-      ".kffTTTTTTTTffk.",
-      "..kkkkkkkkkkkk..",
-      ".kffTTTTTTTTffk.",
-      "keekTTTTTTTTkeek",
-      "keekTTTTTTTTk.k.",
-      "..kkEEEEEEEEkk..",
-      "...kTTkkkkTTk...",
-      "...kkkk..kkkk...",
-      "................",
-      "................"
-    ]);
-
-    SPRITES.npc_astrologer = bake([
-      ".......kk.......",
-      "......kppk......",
-      ".....kppppk.....",
-      "....kppyyppk....",
-      "..kkppppppppkk..",
-      ".kppppyyyyppppk.",
-      "kkkkkkkkkkkkkkkk",
-      "..kPffffffffPk..",
-      "..kPfkkffkkfPk..",
-      "..kPffffffffPk..",
-      "...kkkkkkkkkk...",
-      "..kppppyyppppk..",
-      ".kpppPPPPPPpppk.",
-      ".kPPPPpyypPPPPk.",
-      "..kkkkkkkkkkkk..",
-      "................"
-    ]);
-
-    SPRITES.npc_guildmaster = bake([
-      "......kkkk......",
-      ".....kyyyyk.....",
-      "...kkeeeeeekk...",
-      "..keewwwwwwweek.",
-      "..keffffffffeek.",
-      "..kefkkffkkfeek.",
-      "..keffffffffeek.",
-      "...kkkkkkkkkk...",
-      ".kkrrrrrrrrrrkk.",
-      "krrkyyyyyyyykrrk",
-      "krrkyyYYYYyykrrk",
-      "krrkeeeeeeeeKrrk",
-      ".kk.kYYkkYYk.kk.",
-      "....kkkkkkkk....",
-      "................",
-      "................"
-    ]);
-
-    SPRITES.npc_merchant = bake([
-      "...kkkkkkkkkk...",
-      "..kggggggggggk..",
-      ".kggGGGGGGGGggk.",
-      "kootfffffffftook",
-      "kooffkkffkkffook",
-      "kooffffffffffook",
-      "kootkkkkkkkktook",
-      "kooooggggggoooook",
-      ".kkkoooooooookk.",
-      "...kggggggggk...",
-      "....kTTkkTTk....",
-      "....kkk..kkk....",
-      "................",
-      "................"
-    ]);
-
-    // ================= 4. 魔物與 Boss =================
-    const bambooRows = [
-      "....kkkkkkkk....",
-      "..kkllllllllkk..",
-      ".kllLLLLLLLLllk.",
-      "..kkkkkkkkkkkk..",
-      "..kLLLLLLLLLLk..",
-      ".kLLllllllllLLk.",
-      ".kLlkkllllkklLk.",
-      ".kLlkkllllkklLk.",
-      ".kLLlllDDlllLLk.",
-      ".kLLLLlDDlLLLLk.",
-      "..kLLLLLLLLLLk..",
-      "...kkkkkkkkkk...",
-      "...kDDrkkrDDk...",
-      "...kkkkkkkkkk...",
-      "....kkk..kkk....",
-      "................"
-    ];
-    SPRITES.mon_bamboo = bake(bambooRows);
-    SPRITES.mon_bamboo_shiny = bakeShiny(bambooRows);
-
-    const skullRows = [
-      "....kkkkkkkk....",
-      "..kkwwwwwwwwkk..",
-      ".kwwwwwwwwwwwwk.",
-      ".kwwkkkwwkkkwwk.",
-      ".kwwkrkwwkrkwwk.",
-      ".kwwwwwwwwwwwwk.",
-      "..kwwwkkkkwwwk..",
-      "...kkkkkkkkkk...",
-      "..keeeeeeeeeek..",
-      ".keeBBBBBBBBeek.",
-      ".keekBBBBBBkeek.",
-      "..kk.kBBBBk.kk..",
-      ".....kBkkBk.....",
-      ".....kk..kk.....",
-      "................",
-      "................"
-    ];
-    SPRITES.mon_skull = bake(skullRows);
-    SPRITES.mon_skull_shiny = bakeShiny(skullRows);
-
-    SPRITES.mon_boss = bake([
-      "..kk................kk..",
-      ".kyyk....kkkkkk....kyyk.",
-      ".kyyyk..krrrrrrk..kyyyk.",
-      "..kyyykkrrrrrrrrkkzyyk..",
-      "...kkkkkkkkkkkkkkkkkk...",
-      "..krrrrrrrrrrrrrrrrrrk..",
-      ".krrryykkkkkkkkkkyyrrrk.",
-      ".krrywykrrrrrrrrkywyrk..",
-      "krrrrrrkrrrrrrrrkrrrrrrk",
-      "krrrrrrrrrrrrrrrrrrrrrrk",
-      ".kRRRRRyyyyyyyyyyRRRRRk.",
-      "..krrrryyyyyyyyyyrrrrk..",
-      ".krrrrryyyyyyyyyyrrrrrk.",
-      "krrrRRRRRRRRRRRRRRRRrrrk",
-      "krrRRRRRyyyyyyyyRRRRRrrk",
-      ".kkRRRRRRRRRRRRRRRRRRkk.",
-      "...kkkkkk......kkkkkk...",
-      "...kyyyk........kyyyk...",
-      "...kkkk..........kkkk..."
-    ]);
-
-    // ================= 5. 採集素材與寶箱 =================
-    SPRITES.mat_crystal = bake([
-      ".......kk.......",
-      "......kcck......",
-      "..kk..kbbk..kk..",
-      ".kcck.kbbk.kcck.",
-      ".kbbkkbccbkkbbk.",
-      "kbcbbbbccbbbbcbk",
-      "kbbbbbbBBbbbbbbk",
-      ".kBBBBBBBBBBBBk.",
-      ".kTTTTBBBBTTTTk.",
-      "kTTTTTTTTTTTTTTk",
-      ".kkkkkkkkkkkkkk.",
-      "................"
-    ]);
-
-    SPRITES.mat_mushroom = bake([
-      "....kkkkkkkk....",
-      "..kkrrrrrrrrkk..",
-      ".krrwwrrrrwwrrk.",
-      "krrrwwrrrrwwrrrk",
-      "krrrrrrrrrrrrrrk",
-      "krrwrrrrrrrrwrrk",
-      "kkkkkkkkkkkkkkkk",
-      "....kffffffk....",
-      "....kffffffk....",
-      "..kkkfTTTTfkkk..",
-      ".kggffffffffggk.",
-      "..kkkkkkkkkkkk.."
-    ]);
-
-    SPRITES.mat_flower = bake([
-      "....kkk..kkk....",
-      "...kyyykkyyyk...",
-      "..kyyyyyyyyyyk..",
-      "..kyyyrkkrwyyk..",
-      "...kyyrrrryyk...",
-      "..kyyyyyyyyyyk..",
-      "...kkkkkkkkkk...",
-      "......kggk......",
-      "..kkkkkggkkkkk..",
-      ".kggggGGGGggggk.",
-      "..kkkkkGGkkkkk..",
-      "......kkkk......"
-    ]);
-
-    SPRITES.crate = bake([
-      ".kkkkkkkkkkkk.",
-      "kooooooooooook",
-      "koOOOOOOOOOOok",
-      "koOkkkkkkkkOok",
-      "koOktttttttkOk",
-      "koOktTTTTttkOk",
-      "koOktTTTTttkOk",
-      "koOktttttttkOk",
-      "koOkkkkkkkkOok",
-      "koOOOOOOOOOOok",
-      "kooooooooooook",
-      ".kkkkkkkkkkkk."
-    ]);
-
-    SPRITES.chest = bake([
-      ".kkkkkkkkkkkk.",
-      "krrrrrrrrrrrrk",
-      "krryyyyyyyyrrk",
-      "krrrrrrrrrrrrk",
-      "kkkkkkkkkkkkkk",
-      "kyyyyywwyyyyyk",
-      "kRRRRkwwkRRRRk",
-      "kRRRRkkkkRRRRk",
-      "kRRRRRRRRRRRRk",
-      ".kkkkkkkkkkkk."
-    ]);
-
-    // ================= 6. 營地裝飾與工具互動機關 =================
-    SPRITES.deco_bench = bake([
-      ".kkkkkkkkkkkkkkkkkk.",
-      "koooooooooooooooooOk",
-      "koOOOOOOOOOOOOOOOOOk",
-      "kttttttttttttttttttk",
-      ".kkkkkkkkkkkkkkkkkk.",
-      "..kTTk..........kTTk",
-      "..kkkk..........kkkk"
-    ]);
-
-    SPRITES.deco_pot = bake([
-      ".......kk.......",
-      "......kwwk......",
-      "...kk..kk..kk...",
-      "..kEEkkkkkkEEk..",
-      ".kEEEEEEEEEEEEk.",
-      ".kEErrrrrrrrEEk.",
-      ".kEEEEEEEEEEEEk.",
-      "..kEEEEEEEEEEk..",
-      "...kkkkkkkkkk...",
-      "..kTTk.kk.kTTk..",
-      ".kTTk.kyyk.kTTk..",
-      ".kkk..rrrr..kkk."
-    ]);
-
-    SPRITES.deco_sign = bake([
-      "....kkkkkkkk....",
-      "..kkooooooookk..",
-      ".kooOOOOOOOOook.",
-      "kooOkkkkkkkkOook",
-      "kooOOOOOOOOOOook",
-      ".kooooooooooook.",
-      "..kkkkkTTkkkkk..",
-      "......kTTk......",
-      "......kTTk......",
-      ".....kkTTkk.....",
-      "....kggTTggk....",
-      "....kkkkkkkk...."
-    ]);
-
-    SPRITES.deco_lantern = bake([
-      ".....kkkk.....",
-      "...kkeeeeKk...",
-      "..kggEEEEEEk..",
-      ".kkkkkkkkkkkk.",
-      "..kEkyyyyykEk.",
-      "..kEkywwwykEk.",
-      "..kEkyyyyykEk.",
-      "..kkkkkkkkkkk.",
-      "...kEEEEEEEk..",
-      "....kEEEEEk...",
-      "....kEEEEEk...",
-      "..kkEEEEEEEkk.",
-      ".kggEEEEEEEggk",
-      ".kkkkkkkkkkkkk"
-    ]);
-
-    SPRITES.deco_rock = bake([
-      ".....kkkkkkkk.....",
-      "...kkgggggggekk...",
-      "..kggGGGGeeeEEEk..",
-      ".keeeeeeeeEEEEEEk.",
-      "keeeeeeeEEEEEEEEEk",
-      "keeeEEEEEEEEEEEEEk",
-      "kEEEEEEEEEEEEEEEEk",
-      ".kkkkkkkkkkkkkkkk."
-    ]);
-
-    SPRITES.deco_rack = bake([
-      "..kk..........kk..",
-      ".kTTk..k..k..kTTk.",
-      ".kTTk.keekee.kTTk.",
-      ".kTTkkkkwwkkkkTTk.",
-      ".kTTTTTTTTTTTTTTk.",
-      ".kTTk.keekee.kTTk.",
-      ".kTTk.keekee.kTTk.",
-      ".kTTkkkkkkkkkkTTk.",
-      ".kTTk........kTTk.",
-      "kkkkk........kkkkk"
-    ]);
-
-    SPRITES.deco_anvil = bake([
-      "..kkkkkkkkkkkk..",
-      "kkeeeeeeeeeeeekk",
-      "keeeeeeeeeeeeeeK",
-      ".kkkkEEEEEEkkkk.",
-      "....kEEEEEEk....",
-      "..kkEEEEEEEEkk..",
-      ".kEEEEEEEEEEEEk.",
-      ".kkkkkkkkkkkkkk."
-    ]);
-
-    SPRITES.deco_stump = bake([
-      "..kkkkkkkkkk..",
-      ".kffffffffffk.",
-      "kffooooooooFFk",
-      "kffoffffffoffk",
-      ".kffffffffffk.",
-      ".kttttTTTTttk.",
-      ".ktttTTTTTTtk.",
-      "kktttTTTTTTtkk",
-      "kkkkkkkkkkkkkk"
-    ]);
-
-    SPRITES.cracked_wall = bake([
-      "..kkkkkkkkkkkkkkkk..",
-      ".keeeeeeeeeeeeeeeek.",
-      "keeekeeekeeeeeeekeek",
-      "keekEEkeekeeeeekeEEk",
-      "kekEEEkEEkkkkkEEkEEk",
-      "kEEEEEkkkrrrrkkkEEEk",
-      "kEEEEkrrkyyyykrrkEEk",
-      "kEEEkrrkyyyyyykrrkEk",
-      "kEEEEkrrkyyyykrrkEEk",
-      "kEEEEEkkkrrrrkkkEEEk",
-      "kEEEEEEEEkEEkEEEEEEk",
-      ".kkkkkkkkkkkkkkkkkk."
-    ]);
-
-    SPRITES.boulder_block = bake([
-      "....kkkkkkkkkk....",
-      "..kkeeeeeeeeeekk..",
-      ".keeeewwwwweeeeek.",
-      "keeeeeekkkeeeeeeek",
-      "keeeeekEEEkeeeeeek",
-      "keeeEEEEEEEEEEEEek",
-      "kEEEEEEEEEEEEEEEEk",
-      ".kEEEEEEEEEEEEEEk.",
-      "..kkkkkkkkkkkkkk.."
-    ]);
-
-    SPRITES.deadtree_block = bake([
-      "..kk..........kk..",
-      ".kTTk..kkkk..kTTk.",
-      "..kTTkkTTTTkkTTk..",
-      "...kTTTTTTTTTTk...",
-      "..kkTTTTTTTTTTkk..",
-      ".kTTtTTTTTTTTtTTk.",
-      "..kkkTTTTTTTTkkk..",
-      "....kTTTTTTTTk....",
-      "...kTTTTTTTTTTk...",
-      "..kTTTTk..kTTTTk..",
-      "..kkkkk....kkkkk.."
-    ]);
-
-    SPRITES.fishing_spot = bake([
-      "....kkkkkkkk....",
-      "..kkcccccccckk..",
-      ".kccbbbbbbbbcck.",
-      "kccbbkBBBBkbbcck",
-      "kccbBBBBBBBBbcck",
-      "kccbbkBBBBkkbcck",
-      ".kccbbbbbbbbcck.",
-      "..kkcccccccckk..",
-      "....kkkkkkkk...."
-    ]);
-
-    SPRITES.grapple_post = bake([
-      ".....kkkkkk.....",
-      "....kooooook....",
-      "...kooYYYYook...",
-      "...kmmmmmmmmk...",
-      "...kmmOmmOmmk...",
-      "...kmmmmmmmmk...",
-      "....kTTTTTTk....",
-      "....kTTTTTTk....",
-      "...kkTTTTTTkk...",
-      "...kkkkkkkkkk..."
-    ]);
-
-    SPRITES.brazier_off = bake([
-      "....kkkkkkkk....",
-      "..kkeeeeeeeeKk..",
-      ".keeEEEEEEEEeek.",
-      "..kkkkkkkkkkkk..",
-      "....kEEEEEEk....",
-      "...kkEEEEEEkk...",
-      "..kEEEEEEEEEEk..",
-      "..kkkkkkkkkkkk.."
-    ]);
-
-    SPRITES.brazier_on = bake([
-      ".......kk.......",
-      "......kyyk......",
-      ".....kywwyk.....",
-      "....krryyrrk....",
-      "...krrrrrrrrk...",
-      "..kkeeeeeeeeKk..",
-      ".keeEEEEEEEEeek.",
-      "..kkkkkkkkkkkk..",
-      "....kEEEEEEk....",
-      "...kkEEEEEEkk...",
-      "..kEEEEEEEEEEk..",
-      "..kkkkkkkkkkkk.."
-    ]);
-
-    SPRITES.ancient_ship = bake([
-      ".........kk.........",
-      "........kmmk........",
-      ".......kmmmmk.......",
-      "......kmmmmmBk......",
-      ".....kmmmmmmmBk.....",
-      "....kmmmmmmmmmBk....",
-      "...kkkkkkkkkkkkkk...",
-      ".kkooooooooooooookk.",
-      "koooTTTTTTTTTTTToook",
-      ".koooTTTTTTTTTToook.",
-      "..kkkkkkkkkkkkkkkk.."
-    ]);
-
-    SPRITES.sky_airship = bake([
-      ".....kkkkkkkkkk.....",
-      "...kkppppppppppkk...",
-      "..kppyyyyyyyyyyppk..",
-      ".kppppppppppppppppk.",
-      "..kkkkkkTTTTkkkkkk..",
-      "...koooooooooooook..",
-      "..koooccccccccoook..",
-      "...koooooooooooook..",
-      "....kkkkkkkkkkkk...."
-    ]);
-
-    SPRITES.tree = bake([
-      ".......kkkkkkkkkk.......",
-      ".....kkllllllllllkk.....",
-      "...kkllllllllllllllkk...",
-      "..klllddddddddddlllllk..",
-      ".klldddddddddddddddlllk.",
-      ".kldddklllddddlllkdddlk.",
-      "klddddllllddddllllddddlk",
-      "kddddddddddddddddddddddk",
-      "kddddDDDDddddddDDDDddddk",
-      "kddDDDDDDDDddDDDDDDDDddk",
-      ".kDDDDDDDDDDDDDDDDDDDDk.",
-      ".kDDDDDDDssssssDDDDDDDk.",
-      "..kkDDDDssssssssDDDDkk..",
-      "....kkkksssssssskkkk....",
-      ".......kTTTTTTTTk.......",
-      ".......kTTTTTTTTk.......",
-      "......kkTTTTTTTTkk......",
-      ".....kssTTTTTTTTssk.....",
-      "......ssssssssssss......",
-      "........................"
-    ]);
-
-    SPRITES.tent = bake([
-      ".........kkkkkkkkkk.........",
-      "........koooooooooook.......",
-      ".......koooooooooooook......",
-      "......koooOOOOOOOOooook.....",
-      ".....koooOOOOOOOOOOooook....",
-      "....koooOOOOOOOOOOOOooook...",
-      "...koooOOOOOOOOOOOOOOooook..",
-      "..koooOOOOOOOOOOOOOOOOooook.",
-      ".kkkkkkkkkkkkkkkkkkkkkkkkkkk",
-      ".ktttttttttttttttttttttttttk",
-      ".kttTTTTTTTTttttTTTTTTTTtttk",
-      ".kttTTTTTTTTkkkkTTTTTTTTtttk",
-      ".kttTTTTTTTkoooookTTTTTTtttk",
-      ".kttTTTTTTkoTDDDTokTTTTTtttk",
-      ".kttTTTTTkoTDDDDDTokTTTTtttk",
-      ".kttTTTTkoTDDDDDDDTokTTTtttk",
-      ".kttTTTkoTDDDDDDDDDTokTTtttk",
-      ".kttTTkoTDDDDDDDDDDDTokTtttk",
-      ".kkkkkkkkkkkkkkkkkkkkkkkkkkk"
-    ]);
-
-    SPRITES.pillar = bake([
-      "....kkkkkkkkkkkkkkkk....",
-      "..kkooooooooooooooookk..",
-      ".koooOOOOOOOOOOOOOOoook.",
-      "koooOOooooooooooooOOoook",
-      "kooOOoooOOOOOOOOoooOOook",
-      "kooOOooOOOOOOOOOOooOOook",
-      "koooOOooooooooooooOOoook",
-      ".koooOOOOOOOOOOOOOOoook.",
-      "..kkkkkkkkkkkkkkkkkkkk..",
-      ".kttttTTttttttttTTttttk.",
-      ".kttttTTttttttttTTttttk.",
-      ".kkkkkkkkkkkkkkkkkkkkkk.",
-      ".kmmmmmmmmmmmmmmmmmmmmk.",
-      ".kmmOmmmOmmmOmmmOmmmOmk.",
-      ".kmmmmmmmmmmmmmmmmmmmmk.",
-      ".kkkkkkkkkkkkkkkkkkkkkk.",
-      ".kttttTTttttttttTTttttk.",
-      ".kttttTTttttttttTTttttk.",
-      ".kttttTTttttttttTTttttk.",
-      ".kttttTTttttttttTTttttk.",
-      ".kttttTTttttttttTTttttk.",
-      "..kkkkkkkkkkkkkkkkkkkk.."
-    ]);
-
-    SPRITES.heart = bake([
-      "..kkkk..kkkk..",
-      ".kwwwwkkwwwwk.",
-      "kwrrrrwwrrrrwk",
-      "krrrrrrrrrrrrk",
-      "krrwwrrrrrrrrk",
-      "krrrrrrrrrrrrk",
-      ".krrrrrrrrrrk.",
-      "..krrrrrrrrk..",
-      "...krrrrrrk...",
-      "....krrrrk....",
-      ".....krrk.....",
-      "......kk......"
-    ]);
-
-    SPRITES._initialized = true;
-    return SPRITES;
+    Object.keys(RAW_SVGS).forEach(function(k) {
+      if (!IMG_ELEMENTS[k]) {
+        const img = new Image();
+        img.src = RAW_SVGS[k];
+        IMG_ELEMENTS[k] = img;
+      }
+    });
+    return IMG_ELEMENTS;
   }
 
   window.Aetheria.Data.Sprites = {
     init: initAllSprites,
     get: function(key) {
-      if (!SPRITES._initialized) initAllSprites();
-      return SPRITES[key];
+      if (!IMG_ELEMENTS[key]) initAllSprites();
+      return IMG_ELEMENTS[key] || IMG_ELEMENTS.crate;
     },
     getDataURL: function(key) {
-      if (!SPRITES._initialized) initAllSprites();
-      if (!DATA_URLS[key] && SPRITES[key]) {
-        DATA_URLS[key] = SPRITES[key].toDataURL("image/png");
-      }
-      return DATA_URLS[key] || "";
+      return RAW_SVGS[key] || RAW_SVGS.crate;
     },
-    // 生成像素小圖標 HTML <img> 標籤 (代替 Emoji)
-    iconHtml: function(key, large = false) {
+    iconHtml: function(key, large) {
       const url = this.getDataURL(key);
       if (!url) return "";
-      return `<img src="${url}" class="${large ? "px-icon-lg" : "px-icon"}" alt="">`;
+      return '<img src="' + url + '" class="' + (large ? "px-icon-lg" : "px-icon") + '" alt="">';
     }
   };
 })();
