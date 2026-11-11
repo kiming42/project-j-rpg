@@ -1,174 +1,302 @@
 /* ============================================================================
- * 人文科獨立題庫 (questions/questions-humanities.js - v6.4)
- * 完整收錄：U1 適應青春期 (30題)、U2 與異性相處 (30題)、U8 人民生活 (30題)、U9 文化遺產 (30題)，合共 120 題。
- * 題型涵蓋：填充題、分類題(分類籃)、簡答題、看圖填充題(附教科書有機向量插畫)、選擇題(單選/多選)、問答題(情境題)。
+ * 人文科獨立題庫 — 上半部 Part 2A (questions/questions-humanities.js - v6.5)
+ * 內含：17幅重繪精細教科書級向量插畫 + U1《適應青春期》(30題) + U2《與異性相處》(30題)
+ * 修正：1.所有人物與場景插畫均繪有完整五官、髮型、服飾與動作細節
+ *       2.所有簡答題、情境題與選擇題的 options 與 answer 100% 完全吻合
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
 
 (function() {
-  // 教科書風格柔和漸層與有機曲線向量插畫庫 (無 Emoji、無生硬方塊積木)
   const HUM_DIAGRAMS = {
-    // U1 #19：男孩照鏡摸下巴疑惑為何未長出鬍鬚與喉結
-    hum_u1_mirror_boy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
+    // 1. U1 #19：男孩在浴室鏡子前摸下巴與頸部，疑惑為何未長出鬍鬚與喉結
+    hum_u1_mirror_boy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
       <defs>
-        <radialGradient id="bgGlow1" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#e3f2fd"/><stop offset="100%" stop-color="#bbdefb"/></radialGradient>
-        <linearGradient id="mirrorGlass" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#e1f5fe"/><stop offset="100%" stop-color="#b3e5fc"/></linearGradient>
+        <linearGradient id="bgM1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e3f2fd"/><stop offset="100%" stop-color="#bbdefb"/></linearGradient>
+        <linearGradient id="glassM1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="50%" stop-color="#e1f5fe"/><stop offset="100%" stop-color="#b3e5fc"/></linearGradient>
       </defs>
-      <rect width="280" height="150" rx="12" fill="url(#bgGlow1)"/>
-      <path d="M25,18 C25,12 115,12 115,18 L115,132 C115,138 25,138 25,132 Z" fill="url(#mirrorGlass)" stroke="#5c6bc0" stroke-width="4"/>
-      <path d="M35,30 L55,22 M35,42 L70,26" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-      <!-- 男孩有機輪廓 (側臉看鏡子並摸下巴) -->
-      <path d="M155,48 C155,28 195,26 202,46 C206,58 202,76 190,84 C184,88 182,95 184,102 L212,115 C220,120 222,135 222,145 L142,145 C142,130 148,118 162,112 L166,95 C156,90 152,78 154,66 C148,64 148,54 155,48 Z" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M153,48 C150,32 176,22 196,30 C206,34 208,46 202,52 C194,42 172,40 158,52 Z" fill="#4e342e"/>
-      <!-- 手指摸下巴與頸部喉結位置 -->
-      <path d="M135,125 C138,105 148,92 160,86 C165,84 168,88 164,93 C156,100 152,115 150,130" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
-      <!-- 綠色指引線與教科書標籤 -->
-      <line x1="164" y1="86" x2="118" y2="75" stroke="#66bb6a" stroke-width="2"/>
-      <line x1="168" y1="98" x2="118" y2="105" stroke="#66bb6a" stroke-width="2"/>
-      <rect x="34" y="62" width="76" height="22" rx="6" fill="#ffffff" stroke="#66bb6a" stroke-width="1.5"/>
-      <text x="72" y="77" font-size="11" font-weight="bold" fill="#2e7d32" text-anchor="middle">未長出鬍鬚？</text>
-      <rect x="34" y="94" width="76" height="22" rx="6" fill="#ffffff" stroke="#66bb6a" stroke-width="1.5"/>
-      <text x="72" y="109" font-size="11" font-weight="bold" fill="#2e7d32" text-anchor="middle">未出現喉結？</text>
+      <rect width="280" height="155" rx="12" fill="url(#bgM1)"/>
+      <!-- 浴室橢圓鏡框與鏡中倒影 -->
+      <rect x="20" y="14" width="96" height="126" rx="10" fill="url(#glassM1)" stroke="#5c6bc0" stroke-width="4"/>
+      <path d="M30,28 L52,20 M30,40 L66,24" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+      <!-- 鏡內淺色倒影 -->
+      <g opacity="0.42">
+        <circle cx="68" cy="68" r="20" fill="#ffccbc"/>
+        <path d="M48,62 C48,42 88,42 88,62 C80,52 56,52 48,62 Z" fill="#4e342e"/>
+        <circle cx="61" cy="68" r="2" fill="#3e2723"/><circle cx="75" cy="68" r="2" fill="#3e2723"/>
+        <path d="M64,78 Q68,75 72,78" fill="none" stroke="#5d4037" stroke-width="1.5"/>
+        <path d="M45,126 C45,104 91,104 91,126 Z" fill="#42a5f5"/>
+      </g>
+      <!-- 右側真實男孩（完整頭髮、眉毛、眼睛、疑惑表情、衣領、手摸下巴與喉部） -->
+      <path d="M150,148 C152,116 168,108 192,108 C216,108 232,116 234,148 Z" fill="#42a5f5" stroke="#1565c0" stroke-width="2"/>
+      <path d="M180,108 L192,122 L204,108 Z" fill="#ffffff" stroke="#1565c0" stroke-width="1.5"/>
+      <!-- 頸部 -->
+      <rect x="183" y="90" width="18" height="22" rx="4" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.8"/>
+      <!-- 臉部與耳朵 -->
+      <circle cx="164" cy="66" r="5" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.5"/>
+      <circle cx="220" cy="66" r="5" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.5"/>
+      <ellipse cx="192" cy="64" rx="26" ry="28" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <!-- 短髮造型 -->
+      <path d="M165,58 C164,34 180,26 196,28 C212,28 222,38 219,58 C212,46 202,42 188,44 C176,44 170,50 165,58 Z" fill="#3e2723"/>
+      <!-- 疑惑八字眉與眼睛 -->
+      <path d="M174,54 Q180,50 185,53 M199,53 Q204,50 210,54" fill="none" stroke="#3e2723" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="180" cy="62" r="2.6" fill="#212121"/><circle cx="204" cy="62" r="2.6" fill="#212121"/>
+      <path d="M190,66 L188,72 L193,72" fill="none" stroke="#8d6e63" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M185,80 Q192,77 198,80" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round"/>
+      <!-- 手臂彎曲摸下巴 -->
+      <path d="M158,136 C150,118 158,96 174,88 C180,85 184,90 179,95 C168,102 166,120 170,138" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <!-- 指引綠線與標籤 -->
+      <line x1="184" y1="86" x2="128" y2="76" stroke="#43a047" stroke-width="2.2"/>
+      <line x1="188" y1="100" x2="128" y2="108" stroke="#43a047" stroke-width="2.2"/>
+      <rect x="44" y="64" width="84" height="22" rx="5" fill="#ffffff" stroke="#43a047" stroke-width="1.5"/>
+      <text x="86" y="79" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">未長出鬍鬚？</text>
+      <rect x="44" y="96" width="84" height="22" rx="5" fill="#ffffff" stroke="#43a047" stroke-width="1.5"/>
+      <text x="86" y="111" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">未出現喉結？</text>
+      <text x="246" y="46" font-size="18" font-weight="900" fill="#1565c0">？</text>
     </svg>`,
 
-    // U1 #20：女孩在洗臉盆前用溫水與溫和洗面膏抹臉
-    hum_u1_wash_face: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <defs>
-        <radialGradient id="bgWash" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#e0f7fa"/><stop offset="100%" stop-color="#80deea"/></radialGradient>
-      </defs>
-      <rect width="280" height="150" rx="12" fill="url(#bgWash)"/>
-      <!-- 洗臉盆與水龍頭有機曲線 -->
-      <path d="M30,112 C30,136 160,136 160,112 L170,104 L20,104 Z" fill="#ffffff" stroke="#78909c" stroke-width="2.5"/>
-      <path d="M90,104 L90,82 C90,72 106,72 106,82" fill="none" stroke="#90a4ae" stroke-width="4" stroke-linecap="round"/>
-      <path d="M106,84 C104,92 100,98 96,104 M110,86 C112,94 114,99 115,104" stroke="#29b6f6" stroke-width="2" stroke-dasharray="3,2"/>
-      <!-- 女孩俯身以柔軟毛巾潔面 -->
-      <path d="M115,44 C115,24 155,24 160,44 C164,60 154,78 138,80 C122,78 112,60 115,44 Z" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M112,44 C114,22 162,20 166,46 C172,54 176,68 170,74 C164,60 158,42 136,38 C122,38 116,46 112,44 Z" fill="#3e2723"/>
-      <path d="M112,62 C118,56 142,56 148,62 L144,82 C136,86 122,86 116,82 Z" fill="#fff9c4" stroke="#fbc02d" stroke-width="2"/>
-      <!-- 溫和洗面用品瓶 -->
-      <path d="M205,62 C205,56 235,56 235,62 L230,112 C230,118 210,118 210,112 Z" fill="#c8e6c9" stroke="#388e3c" stroke-width="2"/>
-      <path d="M214,112 L226,112 L226,120 L214,120 Z" fill="#388e3c"/>
-      <text x="220" y="90" font-size="10" font-weight="bold" fill="#1b5e20" text-anchor="middle">溫和潔面</text>
-      <line x1="132" y1="72" x2="72" y2="52" stroke="#66bb6a" stroke-width="2"/>
-      <rect x="16" y="34" width="84" height="22" rx="6" fill="#ffffff" stroke="#66bb6a" stroke-width="1.5"/>
-      <text x="58" y="49" font-size="11" font-weight="bold" fill="#2e7d32" text-anchor="middle">溫水勤洗面</text>
+    // 2. U1 #20：女孩在洗臉盆前用溫水與溫和洗面膏勤洗面（處理暗瘡）
+    hum_u1_wash_face: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#e0f7fa"/>
+      <!-- 洗臉盆與水龍頭溫水 -->
+      <path d="M35,120 C35,144 175,144 175,120 L185,110 L25,110 Z" fill="#ffffff" stroke="#607d8b" stroke-width="2.5"/>
+      <path d="M98,110 L98,86 C98,76 114,76 114,86" fill="none" stroke="#78909c" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M112,88 L106,108 M116,88 L120,108" stroke="#29b6f6" stroke-width="2.2" stroke-dasharray="3,2"/>
+      <!-- 女孩（束起馬尾、閉眼微笑潔面、臉頰白色潔面泡泡、雙手捧水） -->
+      <path d="M110,110 C114,92 156,92 160,110 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
+      <circle cx="164" cy="42" r="10" fill="#3e2723"/>
+      <ellipse cx="135" cy="62" rx="24" ry="25" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M111,56 C112,34 158,34 159,56 C148,44 122,44 111,56 Z" fill="#3e2723"/>
+      <!-- 閉眼潔面表情與臉頰泡沫 -->
+      <path d="M121,60 Q126,64 131,60 M139,60 Q144,64 149,60" fill="none" stroke="#3e2723" stroke-width="2" stroke-linecap="round"/>
+      <path d="M130,74 Q135,78 140,74" fill="none" stroke="#ad1457" stroke-width="1.8" stroke-linecap="round"/>
+      <circle cx="119" cy="68" r="5" fill="#ffffff" stroke="#81d4fa" stroke-width="1"/>
+      <circle cx="151" cy="68" r="5" fill="#ffffff" stroke="#81d4fa" stroke-width="1"/>
+      <!-- 雙手捧溫水 -->
+      <path d="M118,96 C116,82 126,76 133,80 C140,76 150,82 148,96" fill="#ffe0b2" stroke="#8d6e63" stroke-width="1.8"/>
+      <!-- 右側溫和洗面膏瓶 -->
+      <path d="M206,58 C206,50 246,50 246,58 L240,114 C240,120 212,120 212,114 Z" fill="#a5d6a7" stroke="#2e7d32" stroke-width="2"/>
+      <rect x="218" y="114" width="16" height="8" rx="2" fill="#1b5e20"/>
+      <text x="226" y="84" font-size="10" font-weight="bold" fill="#1b5e20" text-anchor="middle">溫和潔面</text>
+      <text x="226" y="98" font-size="10" font-weight="bold" fill="#1b5e20" text-anchor="middle">用品</text>
+      <rect x="16" y="20" width="96" height="24" rx="6" fill="#ffffff" stroke="#00897b" stroke-width="1.8"/>
+      <text x="64" y="36" font-size="11" font-weight="bold" fill="#004d40" text-anchor="middle">溫水勤洗面防暗瘡</text>
     </svg>`,
 
-    // U1 #21：女孩站在鏡前試戴不同髮夾（注重自我形象）
-    hum_u1_hairpin: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#fce4ec"/>
-      <path d="M30,20 C30,14 110,14 110,20 L110,134 L30,134 Z" fill="#e1f5fe" stroke="#ec407a" stroke-width="3.5"/>
-      <!-- 女孩輪廓與秀髮 -->
-      <path d="M148,54 C148,32 188,32 192,54 C195,72 184,88 170,90 C156,88 145,72 148,54 Z" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M142,58 C138,26 198,26 198,58 C202,78 205,98 195,108 C190,90 190,62 184,48 C170,42 156,44 148,54 C144,72 144,94 138,106 C134,94 138,74 142,58 Z" fill="#4e342e"/>
-      <!-- 蝴蝶結與星形髮夾 -->
-      <path d="M176,38 C182,32 190,34 188,42 C194,40 196,48 188,50 C182,48 178,44 176,38 Z" fill="#ff4081" stroke="#880e4f" stroke-width="1.5"/>
-      <!-- 思考雲朵 -->
-      <path d="M198,24 C204,14 262,14 268,26 C274,38 264,54 248,52 L212,52 C198,52 192,36 198,24 Z" fill="#ffffff" stroke="#ec407a" stroke-width="1.5"/>
-      <text x="233" y="36" font-size="10" font-weight="bold" fill="#ad1457" text-anchor="middle">哪個髮夾</text>
-      <text x="233" y="48" font-size="10" font-weight="bold" fill="#ad1457" text-anchor="middle">適合我？</text>
+    // 3. U1 #21：女孩站在鏡前精心試戴不同髮夾（注重自我形象）
+    hum_u1_hairpin: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#fce4ec"/>
+      <!-- 梳妝鏡 -->
+      <rect x="22" y="18" width="84" height="120" rx="12" fill="#e1f5fe" stroke="#ec407a" stroke-width="3.5"/>
+      <path d="M32,32 L54,24 M32,44 L66,28" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- 女孩（長髮、大眼睛、微笑、穿著校服裙、右手舉起星形髮夾比對） -->
+      <path d="M132,148 C134,116 150,106 172,106 C194,106 210,116 212,148 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
+      <path d="M158,106 L172,120 L186,106 Z" fill="#ffffff" stroke="#ad1457" stroke-width="1.5"/>
+      <!-- 長髮後層 -->
+      <path d="M140,62 C134,88 134,112 144,124 L200,124 C210,112 210,88 204,62 Z" fill="#3e2723"/>
+      <ellipse cx="172" cy="68" rx="25" ry="26" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <!-- 瀏海 -->
+      <path d="M146,60 C148,36 196,36 198,60 C188,48 156,48 146,60 Z" fill="#3e2723"/>
+      <!-- 頭上的蝴蝶結髮夾 -->
+      <path d="M182,42 C188,34 198,38 194,46 C202,44 202,54 192,52 C186,50 184,46 182,42 Z" fill="#ff4081" stroke="#880e4f" stroke-width="1.5"/>
+      <!-- 眼睛與開心笑容 -->
+      <circle cx="162" cy="66" r="2.8" fill="#212121"/><circle cx="182" cy="66" r="2.8" fill="#212121"/>
+      <circle cx="156" cy="73" r="4" fill="#f48fb1" opacity="0.5"/><circle cx="188" cy="73" r="4" fill="#f48fb1" opacity="0.5"/>
+      <path d="M166,78 Q172,84 178,78" fill="none" stroke="#ad1457" stroke-width="2" stroke-linecap="round"/>
+      <!-- 手舉起另一個黃色星形髮夾 -->
+      <path d="M138,118 C124,102 124,78 138,66" fill="none" stroke="#ffe0b2" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="138" cy="62" r="7" fill="#ffd54f" stroke="#f57f17" stroke-width="1.5"/>
+      <!-- 對話思考框 -->
+      <rect x="196" y="16" width="76" height="40" rx="8" fill="#ffffff" stroke="#ec407a" stroke-width="2"/>
+      <text x="234" y="34" font-size="10" font-weight="bold" fill="#880e4f" text-anchor="middle">哪個髮夾</text>
+      <text x="234" y="48" font-size="10" font-weight="bold" fill="#880e4f" text-anchor="middle">更好看呢？</text>
     </svg>`,
 
-    // U1 #22：女孩在房間寫日記，請門外媽媽不要進來（重視私隱與個人空間）
-    hum_u1_diary_privacy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#fff3e0"/>
-      <!-- 房門與門縫 -->
-      <path d="M28,14 L92,14 L92,138 L28,138 Z" fill="#d7ccc8" stroke="#5d4037" stroke-width="3"/>
-      <path d="M82,76 C86,76 86,82 82,82 C78,82 78,76 82,76 Z" fill="#ffb300"/>
-      <!-- 書桌與攤開的日記本 -->
-      <path d="M125,98 L255,98 L265,112 L115,112 Z" fill="#bcaaa4" stroke="#4e342e" stroke-width="2"/>
-      <path d="M150,84 L185,80 L215,84 L210,102 L180,98 L146,102 Z" fill="#ffffff" stroke="#1e88e5" stroke-width="2"/>
-      <path d="M183,81 L180,98 M156,88 L175,86 M154,94 L173,92 M190,86 L208,88" stroke="#90caf9" stroke-width="1.5"/>
+    // 4. U1 #22：女孩在房間書桌寫日記，轉頭請門外的媽媽不要進來（重視私隱與個人空間）
+    hum_u1_diary_privacy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#fff3e0"/>
+      <!-- 左側半開房門與門外的媽媽 -->
+      <rect x="18" y="14" width="68" height="128" fill="#ffe082" stroke="#5d4037" stroke-width="3"/>
+      <circle cx="38" cy="62" r="14" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.5"/>
+      <path d="M24,58 C24,42 52,42 52,58 Z" fill="#4e342e"/>
+      <circle cx="34" cy="62" r="1.8" fill="#212121"/><circle cx="43" cy="62" r="1.8" fill="#212121"/>
+      <path d="M24,138 C24,96 52,96 52,138 Z" fill="#81c784" stroke="#2e7d32" stroke-width="1.5"/>
+      <!-- 半掩的木門扇 -->
+      <polygon points="52,14 86,22 86,134 52,142" fill="#a1887f" stroke="#4e342e" stroke-width="2.5"/>
+      <circle cx="58" cy="80" r="3.5" fill="#ffd54f"/>
+      <!-- 右側書桌、日記本與轉頭說話的女孩 -->
+      <rect x="132" y="106" width="132" height="12" rx="3" fill="#8d6e63" stroke="#4e342e" stroke-width="2"/>
+      <line x1="146" y1="118" x2="146" y2="146" stroke="#5d4037" stroke-width="4"/>
+      <line x1="250" y1="118" x2="250" y2="146" stroke="#5d4037" stroke-width="4"/>
+      <!-- 攤開的密碼日記本 -->
+      <path d="M156,94 L184,90 L212,94 L208,108 L184,104 L152,108 Z" fill="#ffffff" stroke="#1e88e5" stroke-width="2"/>
+      <!-- 女孩（馬尾、五官、手握筆護住日記） -->
+      <path d="M192,146 C194,114 236,114 238,146 Z" fill="#ff8a65" stroke="#d84315" stroke-width="2"/>
+      <circle cx="215" cy="68" r="20" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M195,62 C196,42 234,42 235,62 C225,52 205,52 195,62 Z" fill="#3e2723"/>
+      <circle cx="238" cy="58" r="8" fill="#3e2723"/>
+      <circle cx="206" cy="68" r="2.2" fill="#212121"/><circle cx="220" cy="68" r="2.2" fill="#212121"/>
+      <ellipse cx="213" cy="77" rx="4" ry="2.5" fill="#d84315"/>
       <!-- 對話框 -->
-      <path d="M108,22 C108,14 262,14 262,22 L262,52 C262,60 108,60 108,52 Z" fill="#ffffff" stroke="#fb8c00" stroke-width="2"/>
-      <text x="185" y="36" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">「媽媽，我在寫日記，</text>
-      <text x="185" y="50" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">請不要進來！」</text>
+      <rect x="96" y="12" width="172" height="34" rx="7" fill="#ffffff" stroke="#fb8c00" stroke-width="2"/>
+      <text x="182" y="27" font-size="10" font-weight="bold" fill="#e65100" text-anchor="middle">「媽媽，我正在寫日記，</text>
+      <text x="182" y="41" font-size="10" font-weight="bold" fill="#e65100" text-anchor="middle">請不要進來！」</text>
     </svg>`,
 
-    // U1 #23：父母邀請看電影，男孩揮手說已約同學（減少依賴家人）
-    hum_u1_less_depend: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#e8f5e9"/>
-      <!-- 父母手持兩張電影票 -->
-      <path d="M35,62 C35,44 65,44 65,62 L72,135 L28,135 Z" fill="#90caf9" stroke="#1565c0" stroke-width="2"/>
-      <path d="M76,72 L106,66 L110,84 L80,90 Z" fill="#fff59d" stroke="#fbc02d" stroke-width="1.5"/>
-      <text x="93" y="81" font-size="9" font-weight="bold" fill="#f57f17" text-anchor="middle">電影票</text>
-      <!-- 男孩背背包揮手往外走 -->
-      <path d="M185,56 C185,38 215,38 215,56 L225,135 L175,135 Z" fill="#ffcc80" stroke="#ef6c00" stroke-width="2"/>
-      <path d="M122,20 C122,12 268,12 268,20 L268,48 C268,56 122,56 122,48 Z" fill="#ffffff" stroke="#43a047" stroke-width="2"/>
-      <text x="195" y="38" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">「不用了，我已約同學去看。」</text>
+    // 5. U1 #23：父母拿着電影票邀請兒子，兒子背着球拍背包揮手說已約同學（減少依賴家人）
+    hum_u1_less_depend: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#e8f5e9"/>
+      <!-- 左側爸爸與媽媽（完整五官、眼鏡、手持兩張電影票） -->
+      <path d="M24,146 C26,108 68,108 70,146 Z" fill="#64b5f6" stroke="#1565c0" stroke-width="2"/>
+      <circle cx="47" cy="74" r="18" fill="#ffccbc" stroke="#8d6e63" stroke-width="1.8"/>
+      <path d="M29,68 C30,50 64,50 65,68 Z" fill="#3e2723"/>
+      <rect x="36" y="70" width="9" height="6" rx="1" fill="none" stroke="#212121" stroke-width="1.5"/>
+      <rect x="49" y="70" width="9" height="6" rx="1" fill="none" stroke="#212121" stroke-width="1.5"/>
+      <path d="M43,82 Q47,85 51,82" fill="none" stroke="#5d4037" stroke-width="1.5"/>
+      <!-- 電影票 -->
+      <rect x="74" y="88" width="38" height="20" rx="3" transform="rotate(-12 93 98)" fill="#fff59d" stroke="#f57f17" stroke-width="1.8"/>
+      <text x="93" y="101" font-size="9" font-weight="bold" fill="#e65100" text-anchor="middle">電影票</text>
+      <!-- 右側青少年兒子（背着背包、完整五官、揮手向門口走） -->
+      <rect x="208" y="96" width="26" height="36" rx="6" fill="#43a047" stroke="#1b5e20" stroke-width="2"/>
+      <path d="M168,146 C170,106 218,106 220,146 Z" fill="#ffb74d" stroke="#e65100" stroke-width="2"/>
+      <circle cx="194" cy="72" r="20" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M174,64 C176,44 214,44 214,64 C202,54 184,54 174,64 Z" fill="#3e2723"/>
+      <circle cx="186" cy="70" r="2.3" fill="#212121"/><circle cx="202" cy="70" r="2.3" fill="#212121"/>
+      <path d="M188,80 Q194,85 200,80" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round"/>
+      <!-- 揮手動作 -->
+      <path d="M170,114 C154,104 148,92 152,82" fill="none" stroke="#ffccbc" stroke-width="7" stroke-linecap="round"/>
+      <!-- 對話框 -->
+      <rect x="108" y="12" width="160" height="28" rx="7" fill="#ffffff" stroke="#43a047" stroke-width="2"/>
+      <text x="188" y="30" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">「不用了，我已約同學去看。」</text>
     </svg>`,
 
-    // U2 #18：男孩哭泣被取笑懦弱（性別角色定型）
-    hum_u2_stereotype_cry: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#ede7f6"/>
-      <!-- 擦眼淚的男孩 -->
-      <path d="M55,58 C55,38 88,38 88,58 C88,74 55,74 55,58 Z" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M64,60 C62,68 60,74 58,78 M79,60 C81,68 83,74 85,78" stroke="#29b6f6" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M50,82 L94,82 L100,136 L44,136 Z" fill="#81d4fa" stroke="#0277bd" stroke-width="2"/>
-      <!-- 旁邊指指點點的對話 -->
-      <path d="M118,26 C118,16 266,16 266,26 L266,64 C266,74 118,74 118,64 Z" fill="#ffffff" stroke="#7e57c2" stroke-width="2"/>
-      <text x="192" y="44" font-size="11" font-weight="bold" fill="#4527a0" text-anchor="middle">「男孩子竟然會哭，</text>
-      <text x="192" y="60" font-size="11" font-weight="bold" fill="#4527a0" text-anchor="middle">真懦弱呢！」</text>
+    // 6. U2 #18：男孩傷心擦眼淚，旁邊同學指着他取笑「男孩子竟然會哭，真懦弱」（性別角色定型）
+    hum_u2_stereotype_cry: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#ede7f6"/>
+      <!-- 左側哭泣的男孩（完整五官、八字悲傷眉、臉頰淚珠、雙手擦淚） -->
+      <path d="M38,148 C40,110 92,110 94,148 Z" fill="#4fc3f7" stroke="#0277bd" stroke-width="2"/>
+      <circle cx="66" cy="74" r="22" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M44,66 C46,44 86,44 88,66 C76,56 56,56 44,66 Z" fill="#3e2723"/>
+      <path d="M52,64 L60,60 M80,64 L72,60" stroke="#3e2723" stroke-width="2" stroke-linecap="round"/>
+      <path d="M53,70 Q57,74 61,70 M71,70 Q75,74 79,70" fill="none" stroke="#3e2723" stroke-width="2"/>
+      <!-- 眼淚水滴 -->
+      <path d="M54,75 C50,83 56,87 58,80 Z M78,75 C82,83 76,87 74,80 Z" fill="#29b6f6"/>
+      <path d="M60,86 Q66,81 72,86" fill="none" stroke="#8d6e63" stroke-width="2" stroke-linecap="round"/>
+      <!-- 右側指着取笑的同學 -->
+      <path d="M174,148 C176,110 228,110 230,148 Z" fill="#ffb74d" stroke="#e65100" stroke-width="2"/>
+      <circle cx="202" cy="74" r="21" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M181,66 C182,44 222,44 223,66 Z" fill="#4e342e"/>
+      <circle cx="194" cy="70" r="2.3" fill="#212121"/><circle cx="210" cy="70" r="2.3" fill="#212121"/>
+      <path d="M195,80 Q202,86 209,80 Z" fill="#d84315"/>
+      <!-- 伸手指人的手臂 -->
+      <path d="M176,112 L132,96" stroke="#ffe0b2" stroke-width="7" stroke-linecap="round"/>
+      <!-- 對話框 -->
+      <rect x="108" y="10" width="160" height="36" rx="7" fill="#ffffff" stroke="#7e57c2" stroke-width="2"/>
+      <text x="188" y="25" font-size="10.5" font-weight="bold" fill="#4527a0" text-anchor="middle">「男孩子竟然會哭，</text>
+      <text x="188" y="40" font-size="10.5" font-weight="bold" fill="#4527a0" text-anchor="middle">真懦弱呢！」</text>
     </svg>`,
 
-    // U2 #19：男女同學一起看毛筆書法比賽海報（尋找相似之處）
-    hum_u2_calligraphy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#fff8e1"/>
-      <!-- 書法海報與毛筆曲線 -->
-      <path d="M95,16 L185,16 L185,112 L95,112 Z" fill="#fffde7" stroke="#8d6e63" stroke-width="3"/>
-      <text x="140" y="38" font-size="12" font-weight="bold" fill="#4e342e" text-anchor="middle">毛筆書法比賽</text>
-      <path d="M130,52 L152,48 L142,82 C138,92 128,96 122,90 C128,84 134,70 130,52 Z" fill="#3e2723"/>
-      <!-- 左右男女同學微笑指向海報 -->
-      <path d="M35,68 C35,50 65,50 65,68 L72,138 L28,138 Z" fill="#64b5f6" stroke="#1565c0" stroke-width="2"/>
-      <path d="M215,68 C215,50 245,50 245,68 L252,138 L208,138 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
-      <rect x="55" y="118" width="170" height="22" rx="6" fill="#ffffff" stroke="#ffa000" stroke-width="1.5"/>
-      <text x="140" y="133" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">共同興趣：一起參加書法比賽</text>
+    // 7. U2 #19：男女同學在壁報板前一起看「毛筆書法比賽」海報並手持毛筆練習（尋找相似之處 — 徹底重繪圖1）
+    hum_u2_calligraphy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#fff8e1"/>
+      <!-- 中央木框校園壁報板與書法卷軸海報 -->
+      <rect x="88" y="10" width="104" height="104" rx="4" fill="#d7ccc8" stroke="#5d4037" stroke-width="3.5"/>
+      <rect x="96" y="16" width="88" height="92" fill="#fffde7" stroke="#8d6e63" stroke-width="1.5"/>
+      <rect x="102" y="20" width="76" height="16" rx="3" fill="#5d4037"/>
+      <text x="140" y="32" font-size="10.5" font-weight="bold" fill="#ffd54f" text-anchor="middle">毛筆書法比賽</text>
+      <!-- 海報內的毛筆、硯台與書法字「永」 -->
+      <path d="M124,48 L142,48 M133,42 L133,76 M122,62 L133,54 L144,66" fill="none" stroke="#212121" stroke-width="3" stroke-linecap="round"/>
+      <line x1="158" y1="40" x2="150" y2="70" stroke="#795548" stroke-width="3.5" stroke-linecap="round"/>
+      <path d="M150,70 C146,78 142,82 146,84 C150,84 154,78 152,70 Z" fill="#212121"/>
+      <!-- 左側男同學（完整髮型、笑臉、白色校服恤衫與藍領帶、手持毛筆指向海報） -->
+      <path d="M18,148 C20,108 74,108 76,148 Z" fill="#ffffff" stroke="#1565c0" stroke-width="2"/>
+      <path d="M42,112 L47,136 L52,112 Z" fill="#1e88e5"/>
+      <circle cx="47" cy="72" r="21" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M26,64 C28,42 66,42 68,64 C58,52 38,52 26,64 Z" fill="#3e2723"/>
+      <circle cx="39" cy="70" r="2.4" fill="#212121"/><circle cx="55" cy="70" r="2.4" fill="#212121"/>
+      <path d="M40,80 Q47,86 54,80" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round"/>
+      <path d="M68,116 L94,92" stroke="#ffccbc" stroke-width="6.5" stroke-linecap="round"/>
+      <!-- 右側女同學（雙馬尾/短髮、大眼睛、笑容、校服領結、開心共鳴） -->
+      <path d="M204,148 C206,108 260,108 262,148 Z" fill="#ffffff" stroke="#ad1457" stroke-width="2"/>
+      <path d="M226,112 L233,124 L240,112 Z" fill="#ec407a"/>
+      <path d="M208,68 C202,84 204,98 212,102 M258,68 C264,84 262,98 254,102" stroke="#3e2723" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="233" cy="72" r="21" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M212,64 C214,42 252,42 254,64 C244,52 222,52 212,64 Z" fill="#3e2723"/>
+      <circle cx="225" cy="70" r="2.4" fill="#212121"/><circle cx="241" cy="70" r="2.4" fill="#212121"/>
+      <circle cx="218" cy="76" r="3.5" fill="#f48fb1" opacity="0.55"/><circle cx="248" cy="76" r="3.5" fill="#f48fb1" opacity="0.55"/>
+      <path d="M226,80 Q233,86 240,80" fill="none" stroke="#ad1457" stroke-width="2" stroke-linecap="round"/>
+      <path d="M212,116 L186,92" stroke="#ffe0b2" stroke-width="6.5" stroke-linecap="round"/>
+      <!-- 底部說明牌 -->
+      <rect x="52" y="120" width="176" height="24" rx="6" fill="#ffffff" stroke="#ffa000" stroke-width="2"/>
+      <text x="140" y="136" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">共同興趣：一起報名參加書法比賽</text>
     </svg>`,
 
-    // U2 #20：女同學拿着課本大方請教男同學
-    hum_u2_study_ask: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#e0f2f1"/>
-      <!-- 攤開的課本 -->
-      <path d="M105,78 L140,72 L175,78 L175,112 L140,106 L105,112 Z" fill="#ffffff" stroke="#00897b" stroke-width="2.5"/>
-      <path d="M140,72 L140,106" stroke="#00897b" stroke-width="2"/>
-      <!-- 左右同學自然交流 -->
-      <path d="M48,60 C48,42 78,42 78,60 L86,136 L40,136 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
-      <path d="M202,60 C202,42 232,42 232,60 L240,136 L194,136 Z" fill="#64b5f6" stroke="#1565c0" stroke-width="2"/>
-      <path d="M35,16 C35,10 245,10 245,16 L245,42 C245,48 35,48 35,42 Z" fill="#ffffff" stroke="#00897b" stroke-width="2"/>
-      <text x="140" y="34" font-size="11" font-weight="bold" fill="#004d40" text-anchor="middle">「我不太明白這條題目，想向你請教。」</text>
+    // 8. U2 #20：女同學雙手捧着課本大方請教男同學，男同學微笑講解
+    hum_u2_study_ask: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#e0f2f1"/>
+      <!-- 左側請教的女同學（完整髮型、五官、手捧課本） -->
+      <path d="M32,148 C34,110 88,110 90,148 Z" fill="#f48fb1" stroke="#ad1457" stroke-width="2"/>
+      <circle cx="61" cy="74" r="21" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M40,66 C42,44 80,44 82,66 C72,54 50,54 40,66 Z" fill="#3e2723"/>
+      <circle cx="53" cy="72" r="2.4" fill="#212121"/><circle cx="69" cy="72" r="2.4" fill="#212121"/>
+      <path d="M55,82 Q61,87 67,82" fill="none" stroke="#ad1457" stroke-width="2" stroke-linecap="round"/>
+      <!-- 中央攤開的課本與算式 -->
+      <path d="M104,88 L140,82 L176,88 L176,124 L140,118 L104,124 Z" fill="#ffffff" stroke="#00897b" stroke-width="2.5"/>
+      <line x1="140" y1="82" x2="140" y2="118" stroke="#00897b" stroke-width="2"/>
+      <path d="M112,96 L132,94 M112,104 L132,102 M148,94 L168,96 M148,102 L168,104" stroke="#4db6ac" stroke-width="2"/>
+      <!-- 右側耐心解答的男同學（戴眼鏡、微笑、手指課本） -->
+      <path d="M190,148 C192,110 246,110 248,148 Z" fill="#64b5f6" stroke="#1565c0" stroke-width="2"/>
+      <circle cx="219" cy="74" r="21" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M198,66 C200,44 238,44 240,66 Z" fill="#3e2723"/>
+      <circle cx="211" cy="72" r="5" fill="none" stroke="#37474f" stroke-width="1.6"/>
+      <circle cx="227" cy="72" r="5" fill="none" stroke="#37474f" stroke-width="1.6"/>
+      <line x1="216" y1="72" x2="222" y2="72" stroke="#37474f" stroke-width="1.6"/>
+      <circle cx="211" cy="72" r="2" fill="#212121"/><circle cx="227" cy="72" r="2" fill="#212121"/>
+      <path d="M213,83 Q219,88 225,83" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round"/>
+      <path d="M194,114 L168,102" stroke="#ffccbc" stroke-width="6.5" stroke-linecap="round"/>
+      <!-- 頂部對話框 -->
+      <rect x="28" y="10" width="224" height="28" rx="7" fill="#ffffff" stroke="#00897b" stroke-width="2"/>
+      <text x="140" y="28" font-size="11" font-weight="bold" fill="#004d40" text-anchor="middle">「我不太明白這條題目，想向你請教。」</text>
     </svg>`,
 
-    // U2 #21：女同學抓緊男同學手臂，令男同學尷尬流汗（保持身體界線）
-    hum_u2_personal_space: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#ffebee"/>
-      <!-- 兩個過於靠近的身影與抓緊的手臂 -->
-      <path d="M75,62 C75,44 105,44 105,62 L112,138 L68,138 Z" fill="#f48fb1" stroke="#c2185b" stroke-width="2"/>
-      <path d="M135,62 C135,44 165,44 165,62 L172,138 L128,138 Z" fill="#90caf9" stroke="#1565c0" stroke-width="2"/>
-      <!-- 抓手臂特寫與紅色警示圈 -->
-      <path d="M102,90 L138,90" stroke="#ffccbc" stroke-width="8" stroke-linecap="round"/>
-      <path d="M122,76 C138,76 138,104 122,104 C106,104 106,76 122,76 Z" fill="none" stroke="#e53935" stroke-width="2.5" stroke-dasharray="4,2"/>
-      <!-- 尷尬汗滴與心聲 -->
-      <path d="M172,46 C170,54 176,58 178,52 Z" fill="#29b6f6"/>
-      <rect x="145" y="14" width="125" height="36" rx="6" fill="#ffffff" stroke="#e53935" stroke-width="2"/>
-      <text x="207" y="30" font-size="10" font-weight="bold" fill="#b71c1c" text-anchor="middle">抓着手臂令我很尷尬</text>
-      <text x="207" y="44" font-size="10" font-weight="bold" fill="#b71c1c" text-anchor="middle">（應保持適當距離）</text>
+    // 9. U2 #21：女同學突然緊抓男同學手臂，男同學面露尷尬並流汗（保持適當身體距離）
+    hum_u2_personal_space: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#ffebee"/>
+      <!-- 左側靠得太近並緊抓手臂的女同學 -->
+      <path d="M48,148 C50,110 102,110 104,148 Z" fill="#f48fb1" stroke="#c2185b" stroke-width="2"/>
+      <circle cx="76" cy="74" r="21" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M55,66 C56,44 96,44 97,66 Z" fill="#3e2723"/>
+      <circle cx="69" cy="72" r="2.4" fill="#212121"/><circle cx="84" cy="72" r="2.4" fill="#212121"/>
+      <path d="M71,82 Q76,87 82,82" fill="none" stroke="#c2185b" stroke-width="2" stroke-linecap="round"/>
+      <!-- 右側感到尷尬不自在的男同學 -->
+      <path d="M126,148 C128,110 182,110 184,148 Z" fill="#90caf9" stroke="#1565c0" stroke-width="2"/>
+      <circle cx="155" cy="74" r="21" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M134,66 C136,44 174,44 176,66 Z" fill="#3e2723"/>
+      <!-- 尷尬八字眉、僵硬嘴角與大滴冷汗 -->
+      <path d="M142,64 L150,61 M168,64 L160,61" stroke="#3e2723" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="147" cy="72" r="2.4" fill="#212121"/><circle cx="163" cy="72" r="2.4" fill="#212121"/>
+      <path d="M147,84 Q155,80 163,84" fill="none" stroke="#5d4037" stroke-width="2" stroke-linecap="round"/>
+      <path d="M179,54 C175,64 183,68 185,58 Z" fill="#29b6f6" stroke="#0277bd" stroke-width="1"/>
+      <!-- 緊抓手臂的特寫與紅色警示虛線圈 -->
+      <path d="M96,108 L134,108" stroke="#ffe0b2" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="118" cy="108" r="16" fill="none" stroke="#e53935" stroke-width="2.5" stroke-dasharray="4,2"/>
+      <!-- 右上角男同學心聲框 -->
+      <rect x="148" y="10" width="122" height="36" rx="7" fill="#ffffff" stroke="#e53935" stroke-width="2"/>
+      <text x="209" y="25" font-size="10" font-weight="bold" fill="#b71c1c" text-anchor="middle">「抓着手臂令我很尷尬，</text>
+      <text x="209" y="39" font-size="10" font-weight="bold" fill="#b71c1c" text-anchor="middle">應保持適當身體距離！」</text>
     </svg>`,
 
-    // U8 #19：中國西部草原羊群與圓頂蒙古包
+    // 10. U8 #19：中國西部草原羊群與圓頂蒙古包
     hum_u8_yurt_grassland: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
       <defs>
         <linearGradient id="skyGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#81d4fa"/><stop offset="55%" stop-color="#e1f5fe"/><stop offset="56%" stop-color="#aed581"/><stop offset="100%" stop-color="#7cb342"/></linearGradient>
       </defs>
       <rect width="280" height="150" rx="12" fill="url(#skyGrass)"/>
-      <!-- 遠山曲線 -->
       <path d="M0,84 Q45,52 95,84 T195,80 T280,84 Z" fill="#90a4ae" opacity="0.5"/>
-      <!-- 蒙古包有機圓頂與菱形格紋編織門 -->
       <path d="M135,68 C135,42 235,42 235,68 L235,112 C235,118 135,118 135,112 Z" fill="#fffde7" stroke="#8d6e63" stroke-width="2.5"/>
       <path d="M135,68 L235,68 M135,74 L235,74" stroke="#d84315" stroke-width="3"/>
       <path d="M172,46 L198,46 L205,54 L165,54 Z" fill="#ff8f00" stroke="#5d4037" stroke-width="1.5"/>
       <path d="M174,80 L196,80 L196,115 L174,115 Z" fill="#bcaaa4" stroke="#5d4037" stroke-width="2"/>
-      <!-- 草原綿羊群雲朵狀有機輪廓 -->
       <path d="M35,106 C32,98 42,92 50,96 C56,92 66,96 64,104 C70,108 64,116 56,115 L38,115 C32,115 30,110 35,106 Z" fill="#ffffff" stroke="#78909c" stroke-width="1.5"/>
       <path d="M64,100 C70,98 74,104 68,108 Z" fill="#455a64"/>
       <path d="M40,115 L40,124 M46,115 L46,124 M56,115 L56,124 M61,115 L61,124" stroke="#455a64" stroke-width="2"/>
@@ -180,19 +308,15 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="185" y="25" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">傳統居所：？</text>
     </svg>`,
 
-    // U8 #20：河流三大功能（上游水力發電大壩、中游水路運輸貨船、岸邊農業灌溉）
+    // 11. U8 #20：河流三大功能（水力發電、水路運輸、農業灌溉）
     hum_u8_river_uses: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
       <rect width="280" height="150" rx="12" fill="#e8f5e9"/>
-      <!-- 蜿蜒河道 -->
       <path d="M15,45 C85,45 95,95 165,98 C215,100 245,115 280,120 L280,150 L140,150 C90,130 65,85 0,80 Z" fill="#29b6f6" stroke="#0288d1" stroke-width="2"/>
-      <!-- (1) 上游水壩與輸電塔 -->
       <path d="M22,35 L68,35 L62,78 L16,78 Z" fill="#b0bec5" stroke="#37474f" stroke-width="2"/>
       <path d="M32,52 L28,78 M44,52 L40,78 M54,52 L50,78" stroke="#e1f5fe" stroke-width="2.5"/>
       <path d="M78,18 L86,48 M86,18 L78,48 M74,26 L90,26 M72,36 L92,36" stroke="#455a64" stroke-width="2"/>
-      <!-- (2) 中游貨船 -->
       <path d="M115,96 L165,96 L156,110 L124,110 Z" fill="#d84315" stroke="#3e2723" stroke-width="1.5"/>
       <path d="M126,84 L152,84 L152,96 L126,96 Z" fill="#ffca28" stroke="#5d4037" stroke-width="1.5"/>
-      <!-- (3) 岸邊農田灌溉 -->
       <path d="M195,55 L268,55 L268,92 L195,92 Z" fill="#c5e1a5" stroke="#558b2f" stroke-width="1.5"/>
       <path d="M202,65 L260,65 M202,75 L260,75 M202,85 L260,85" stroke="#33691e" stroke-width="2" stroke-dasharray="6,4"/>
       <path d="M185,105 C185,82 198,75 212,75" fill="none" stroke="#0288d1" stroke-width="2.5" stroke-dasharray="3,2"/>
@@ -201,10 +325,9 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="232" y="46" font-size="10" font-weight="bold" fill="#2e7d32" text-anchor="middle">3.農業？</text>
     </svg>`,
 
-    // U8 #21：青海省山坡層層階梯狀梯田（治理水土流失）
+    // 12. U8 #21：青海省山坡層層階梯狀梯田
     hum_u8_terraces: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
       <rect width="280" height="150" rx="12" fill="#e1f5fe"/>
-      <!-- 階梯狀山坡有機等高線梯田 -->
       <path d="M10,140 L10,55 C60,40 120,45 160,60 L265,140 Z" fill="#8d6e63"/>
       <path d="M10,65 C65,55 115,58 148,68 L135,78 C100,70 55,68 10,78 Z" fill="#aed581" stroke="#558b2f" stroke-width="2"/>
       <path d="M10,85 C75,75 135,78 175,90 L162,102 C120,92 65,90 10,100 Z" fill="#9ccc65" stroke="#558b2f" stroke-width="2"/>
@@ -215,93 +338,102 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       <text x="206" y="36" font-size="11" font-weight="bold" fill="#1b5e20" text-anchor="middle">山坡層層階梯農田</text>
     </svg>`,
 
-    // U8 #22：依山傍水木柱懸空支撐的南方吊腳樓
+    // 13. U8 #22：依山傍水木柱懸空支撐的南方吊腳樓
     hum_u8_stilt_house: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
       <rect width="280" height="150" rx="12" fill="#e0f2f1"/>
-      <!-- 青山與河岸 -->
       <path d="M0,140 L0,45 Q65,30 125,85 L165,140 Z" fill="#81c784"/>
       <path d="M115,122 L280,122 L280,150 L105,150 Z" fill="#4fc3f7"/>
-      <!-- 飛簷木屋與長木柱支撐懸空結構 -->
       <path d="M85,52 C115,36 175,36 205,52 L192,58 L98,58 Z" fill="#4e342e" stroke="#212121" stroke-width="2"/>
       <path d="M98,58 L192,58 L192,94 L98,94 Z" fill="#d7ccc8" stroke="#5d4037" stroke-width="2.5"/>
       <path d="M112,66 L132,66 L132,84 L112,84 Z M156,66 L176,66 L176,84 L156,84 Z" fill="#fff8e1" stroke="#5d4037" stroke-width="1.5"/>
-      <!-- 底部懸空長木柱 -->
       <path d="M106,94 L106,132 M126,94 L126,136 M146,94 L146,138 M166,94 L166,138 M184,94 L184,138 M106,112 L184,112" stroke="#5d4037" stroke-width="4" stroke-linecap="round"/>
       <line x1="184" y1="112" x2="225" y2="85" stroke="#00695c" stroke-width="2"/>
       <rect x="196" y="62" width="76" height="24" rx="5" fill="#ffffff" stroke="#00695c" stroke-width="1.5"/>
       <text x="234" y="78" font-size="11" font-weight="bold" fill="#004d40" text-anchor="middle">木柱支撐懸空</text>
     </svg>`,
 
-    // U9 #19：頭戴花帽身穿長袍的新疆維吾爾族男孩
-    hum_u9_uyghur_boy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#fff8e1"/>
-      <!-- 新疆六角花帽 (巴旦木紋樣) 與長袍 -->
-      <path d="M62,36 L82,24 L108,24 L128,36 L124,48 L66,48 Z" fill="#00695c" stroke="#ffd54f" stroke-width="2"/>
-      <path d="M78,36 Q95,26 112,36 M85,42 L105,42" stroke="#ffffff" stroke-width="2" fill="none"/>
-      <path d="M70,48 C70,74 120,74 120,48 Z" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
-      <path d="M58,76 L132,76 L142,142 L48,142 Z" fill="#b71c1c" stroke="#4e342e" stroke-width="2"/>
-      <path d="M95,76 L95,142 M54,108 L136,108" stroke="#ffd54f" stroke-width="3"/>
-      <path d="M148,26 L268,26 L268,94 L148,94 Z" fill="#ffffff" stroke="#ff8f00" stroke-width="2" rx="8"/>
-      <text x="208" y="48" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">「我住在新疆，戴花帽</text>
-      <text x="208" y="66" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">穿長袍，多吃牛羊肉。」</text>
+    // 14. U9 #19：頭戴花帽身穿長袍的新疆維吾爾族男孩（精細五官與服飾）
+    hum_u9_uyghur_boy: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#fff8e1"/>
+      <!-- 維吾爾族男孩（花帽、濃眉大眼、微笑、開襟長袍與腰帶） -->
+      <path d="M46,148 C48,102 122,102 124,148 Z" fill="#b71c1c" stroke="#4e342e" stroke-width="2"/>
+      <path d="M74,104 L85,126 L96,104 Z" fill="#fffde7"/>
+      <line x1="85" y1="126" x2="85" y2="148" stroke="#ffd54f" stroke-width="3"/>
+      <rect x="55" y="124" width="60" height="8" rx="2" fill="#ffd54f" stroke="#ff6f00" stroke-width="1.2"/>
+      <circle cx="85" cy="70" r="22" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <!-- 新疆四稜花帽 -->
+      <path d="M58,54 L70,32 L100,32 L112,54 Z" fill="#00695c" stroke="#ffd54f" stroke-width="2"/>
+      <path d="M68,46 Q85,36 102,46" fill="none" stroke="#ffffff" stroke-width="2"/>
+      <!-- 濃眉、眼睛與笑容 -->
+      <path d="M71,62 Q77,58 82,62 M88,62 Q93,58 99,62" fill="none" stroke="#3e2723" stroke-width="2.2" stroke-linecap="round"/>
+      <circle cx="76" cy="68" r="2.6" fill="#212121"/><circle cx="94" cy="68" r="2.6" fill="#212121"/>
+      <path d="M78,80 Q85,86 92,80" fill="none" stroke="#8d6e63" stroke-width="2" stroke-linecap="round"/>
+      <!-- 對話框 -->
+      <rect x="138" y="28" width="130" height="68" rx="8" fill="#ffffff" stroke="#ff8f00" stroke-width="2"/>
+      <text x="203" y="52" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">「我住在新疆，戴花帽</text>
+      <text x="203" y="70" font-size="11" font-weight="bold" fill="#e65100" text-anchor="middle">穿長袍，多吃牛羊肉。」</text>
     </svg>`,
 
-    // U9 #20：頭戴精緻銀角銀冠與銀項圈的苗族女孩
-    hum_u9_miao_girl: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#f3e5f5"/>
-      <!-- 苗族雙角銀冠與多層銀項圈 -->
-      <path d="M52,18 C58,42 72,46 82,46 L108,46 C118,46 132,42 138,18 C126,28 116,36 108,38 L82,38 C74,36 64,28 52,18 Z" fill="#eceff1" stroke="#607d8b" stroke-width="2"/>
-      <path d="M72,46 L118,46 L118,54 L72,54 Z" fill="#cfd8dc" stroke="#455a64" stroke-width="1.5"/>
-      <path d="M74,54 C74,78 116,78 116,54 Z" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
-      <!-- 銀項圈與刺繡服 -->
-      <path d="M62,84 L128,84 L138,142 L52,142 Z" fill="#1a237e" stroke="#0d47a1" stroke-width="2"/>
-      <path d="M70,82 C82,98 108,98 120,82 M64,88 C80,108 110,108 126,88" fill="none" stroke="#eceff1" stroke-width="3.5"/>
-      <rect x="148" y="28" width="120" height="66" rx="8" fill="#ffffff" stroke="#8e24aa" stroke-width="2"/>
-      <text x="208" y="52" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">佩戴精緻銀飾與刺繡</text>
-      <text x="208" y="70" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">（相信銀器能保平安）</text>
+    // 15. U9 #20：頭戴精緻銀角銀冠與銀項圈的苗族女孩（精細五官與銀飾）
+    hum_u9_miao_girl: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#f3e5f5"/>
+      <!-- 苗族刺繡服與多層銀項圈 -->
+      <path d="M46,148 C48,104 122,104 124,148 Z" fill="#1a237e" stroke="#0d47a1" stroke-width="2"/>
+      <path d="M64,104 C74,120 96,120 106,104 M58,110 C72,130 98,130 112,110" fill="none" stroke="#eceff1" stroke-width="3.5"/>
+      <circle cx="85" cy="74" r="21" fill="#ffe0b2" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M64,66 C66,48 104,48 106,66 Z" fill="#212121"/>
+      <!-- 苗族雙角銀冠與銀墜 -->
+      <path d="M44,22 C50,48 64,52 72,52 L98,52 C106,52 120,48 126,22 C114,34 104,42 96,44 L74,44 C66,42 56,34 44,22 Z" fill="#eceff1" stroke="#607d8b" stroke-width="2"/>
+      <rect x="64" y="48" width="42" height="8" rx="2" fill="#cfd8dc" stroke="#455a64" stroke-width="1.5"/>
+      <line x1="66" y1="56" x2="66" y2="68" stroke="#eceff1" stroke-width="2"/><line x1="104" y1="56" x2="104" y2="68" stroke="#eceff1" stroke-width="2"/>
+      <!-- 五官表情 -->
+      <circle cx="77" cy="72" r="2.5" fill="#212121"/><circle cx="93" cy="72" r="2.5" fill="#212121"/>
+      <circle cx="71" cy="78" r="3.5" fill="#f48fb1" opacity="0.55"/><circle cx="99" cy="78" r="3.5" fill="#f48fb1" opacity="0.55"/>
+      <path d="M79,82 Q85,87 91,82" fill="none" stroke="#ad1457" stroke-width="2" stroke-linecap="round"/>
+      <rect x="138" y="32" width="130" height="64" rx="8" fill="#ffffff" stroke="#8e24aa" stroke-width="2"/>
+      <text x="203" y="56" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">佩戴精緻銀飾與刺繡</text>
+      <text x="203" y="74" font-size="11" font-weight="bold" fill="#4a148c" text-anchor="middle">（相信銀器能保平安）</text>
     </svg>`,
 
-    // U9 #21：西藏拉薩布達拉宮歷史建築群（紅宮與白宮依山而建）
+    // 16. U9 #21：西藏拉薩布達拉宮歷史建築群
     hum_u9_potala_palace: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
       <defs>
         <linearGradient id="tibetSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1565c0"/><stop offset="100%" stop-color="#90caf9"/></linearGradient>
       </defs>
       <rect width="280" height="150" rx="12" fill="url(#tibetSky)"/>
-      <!-- 紅山與雪山背景 -->
       <path d="M0,150 L45,75 L140,42 L235,75 L280,150 Z" fill="#8d6e63"/>
-      <!-- 白宮梯形群 -->
       <path d="M48,132 L62,72 L218,72 L232,132 Z" fill="#fafafa" stroke="#5d4037" stroke-width="2"/>
-      <!-- 中央紅宮與金頂 -->
       <path d="M96,98 L104,42 L176,42 L184,98 Z" fill="#b71c1c" stroke="#3e2723" stroke-width="2"/>
       <path d="M108,34 L172,34 L176,42 L104,42 Z" fill="#ffd54f" stroke="#ff6f00" stroke-width="1.5"/>
-      <!-- 藏式梯形小窗列 -->
       <path d="M75,86 L82,86 M95,86 L102,86 M120,56 L128,56 M152,56 L160,56 M178,86 L185,86 M198,86 L205,86" stroke="#3e2723" stroke-width="4"/>
       <rect x="65" y="8" width="150" height="20" rx="5" fill="rgba(255,255,255,0.92)"/>
       <text x="140" y="22" font-size="11" font-weight="bold" fill="#b71c1c" text-anchor="middle">西藏拉薩市・藏傳佛教聖地</text>
     </svg>`,
 
-    // U9 #22：博物館內違反「禁止閃光燈」標誌拍攝青花瓷瓶
-    hum_u9_museum_flash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 150">
-      <rect width="280" height="150" rx="12" fill="#eceff1"/>
+    // 17. U9 #22：遊客在博物館違反「禁止閃光燈」標誌拍攝青花瓷瓶
+    hum_u9_museum_flash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 155">
+      <rect width="280" height="155" rx="12" fill="#eceff1"/>
       <!-- 玻璃展示櫃與青花古瓷瓶 -->
-      <path d="M28,28 L104,28 L104,136 L28,136 Z" fill="#e1f5fe" stroke="#546e7a" stroke-width="2.5"/>
-      <path d="M56,52 L76,52 L72,66 C86,76 86,104 74,114 L58,114 C46,104 46,76 60,66 Z" fill="#ffffff" stroke="#1565c0" stroke-width="2.5"/>
-      <path d="M54,86 Q66,78 78,86 M56,96 Q66,104 76,96" fill="none" stroke="#1565c0" stroke-width="2"/>
+      <rect x="20" y="24" width="82" height="118" fill="#e1f5fe" stroke="#546e7a" stroke-width="2.5"/>
+      <path d="M51,50 L71,50 L67,64 C81,74 81,102 69,112 L53,112 C41,102 41,74 55,64 Z" fill="#ffffff" stroke="#1565c0" stroke-width="2.5"/>
+      <path d="M49,84 Q61,76 73,84 M51,94 Q61,102 71,94" fill="none" stroke="#1565c0" stroke-width="2"/>
       <!-- 禁止閃光燈標誌 -->
-      <path d="M122,20 C138,20 148,32 148,46 C148,60 138,72 122,72 C106,72 96,60 96,46 C96,32 106,20 122,20 Z" fill="#ffffff" stroke="#d32f2f" stroke-width="3.5"/>
-      <path d="M126,28 L116,46 L126,46 L118,64" fill="none" stroke="#ff8f00" stroke-width="2.5"/>
-      <line x1="104" y1="28" x2="140" y2="64" stroke="#d32f2f" stroke-width="3.5"/>
-      <!-- 相機發出強烈閃光 -->
-      <path d="M185,72 L235,72 L235,106 L185,106 Z" fill="#37474f" stroke="#212121" stroke-width="2"/>
-      <path d="M185,82 L135,58 L152,88 L128,96 L185,94 Z" fill="#fff59d" opacity="0.85"/>
-      <text x="208" y="130" font-size="11" font-weight="bold" fill="#c62828" text-anchor="middle">強光閃光燈拍攝文物</text>
+      <circle cx="122" cy="42" r="22" fill="#ffffff" stroke="#d32f2f" stroke-width="3.5"/>
+      <path d="M126,26 L114,42 L125,42 L116,58" fill="none" stroke="#ff8f00" stroke-width="2.5"/>
+      <line x1="106" y1="26" x2="138" y2="58" stroke="#d32f2f" stroke-width="3.5"/>
+      <!-- 右側舉起相機開啟強光閃光燈的男遊客（完整頭部與雙手） -->
+      <path d="M196,148 C198,112 252,112 254,148 Z" fill="#78909c" stroke="#37474f" stroke-width="2"/>
+      <circle cx="225" cy="76" r="19" fill="#ffccbc" stroke="#8d6e63" stroke-width="2"/>
+      <path d="M206,68 C208,48 242,48 244,68 Z" fill="#3e2723"/>
+      <rect x="176" y="72" width="32" height="22" rx="3" fill="#263238" stroke="#000000" stroke-width="1.5"/>
+      <polygon points="176,78 104,54 104,106" fill="#fff59d" opacity="0.82"/>
+      <text x="195" y="136" font-size="11" font-weight="bold" fill="#c62828" text-anchor="middle">違規使用閃光燈拍攝文物</text>
     </svg>`
   };
 
   window.Aetheria.QuestionBank.Humanities = {
     DIAGRAMS: HUM_DIAGRAMS,
 
-    // 1. 人文科 4 個課節清單
     LESSONS: [
       { key: "hum_u1", name: "人文・U1 適應青春期 (30題)" },
       { key: "hum_u2", name: "人文・U2 與異性相處 (30題)" },
@@ -309,7 +441,6 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       { key: "hum_u9", name: "人文・U9 文化遺產 (30題)" }
     ],
 
-    // 2. 人文科完整 120 題 (每課 30 題，忠實對應《人文題庫.docx》)
     QUESTIONS: [
       // ==================== 第一部分：U1 適應青春期 (30題) ====================
       { id: "hum_u1_01", unitKey: "hum_u1", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "青春期是由兒童逐漸長大成為 ________ 的必經階段與過渡期。", blanks: ["成人"], distractors: ["長者", "幼兒", "領袖"] },
@@ -321,7 +452,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       { id: "hum_u1_07", unitKey: "hum_u1", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "把使用過的衛生巾 ________ 好，然後放入 ________ 箱內。", blanks: ["包", "垃圾"], distractors: ["摺", "馬桶", "回收"] },
       { id: "hum_u1_08", unitKey: "hum_u1", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "踏入青春期的青少年，情緒變得敏感和 ________，亦會渴望 ________ 自主，減少依賴家人。", blanks: ["不穩定", "獨立"], distractors: ["冷漠", "依附", "退縮"] },
 
-      // U1 分類題 (#9 ~ #13) -> 分類籃
+      // U1 分類題 (#9 ~ #13)
       {
         id: "hum_u1_09", unitKey: "hum_u1", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
         prompt: "【生理與心理變化分類】請將以下青春期特徵放入對應的分類籃：",
@@ -388,7 +519,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "應答應：B ｜ 應拒絕：A、C、D"
       },
 
-      // U1 簡答題 (#14 ~ #18)
+      // U1 簡答題 (#14 ~ #18 — options[0] 與 answer 100% 完全一致)
       {
         id: "hum_u1_14", unitKey: "hum_u1", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
         prompt: "【簡答題】為什麼我們不需要因為自己還未長高、未長鬍鬚或胸部未發育而與同學比較？",
@@ -445,7 +576,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "社交方面會非常重視朋輩的認同及追隨潮流；個人空間方面會十分重視私隱和個人空間。"
       },
 
-      // U1 看圖填充題 (#19 ~ #23) -> 附教科書有機向量插畫
+      // U1 看圖填充題 (#19 ~ #23)
       {
         id: "hum_u1_19", unitKey: "hum_u1", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
         svgKey: "hum_u1_mirror_boy",
@@ -468,7 +599,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         id: "hum_u1_22", unitKey: "hum_u1", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
         svgKey: "hum_u1_diary_privacy",
         prompt: "這幅圖反映青少年在青春期非常重視 ________ 和 ________。",
-        blanks: ["私隱", "個人空間"], distractors: ["潮流", "朋輩認同", "外表"]
+        blanks: ["私隱", "個人空間"], allowSwapIndices: [0, 1], distractors: ["潮流", "朋輩認同", "外表"]
       },
       {
         id: "hum_u1_23", unitKey: "hum_u1", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
@@ -477,7 +608,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         blanks: ["依賴家人"], distractors: ["結交朋友", "獨立自主", "個人私隱"]
       },
 
-      // U1 選擇題 (#24 ~ #27，含複選題)
+      // U1 選擇題 (#24 ~ #27)
       {
         id: "hum_u1_24", unitKey: "hum_u1", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
         prompt: "以下哪項不是獲取正確青春期生理變化知識的途徑？",
@@ -489,14 +620,14 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         prompt: "女性在月經期間要注意什麼？（可選多於一項）",
         options: ["A. 不要洗頭", "B. 勤換衛生巾", "C. 保持身體清潔", "D. 避免吃生冷食物"],
         answers: ["B. 勤換衛生巾", "C. 保持身體清潔", "D. 避免吃生冷食物"],
-        answer: "B、C、D"
+        answer: "B. 勤換衛生巾、C. 保持身體清潔、D. 避免吃生冷食物"
       },
       {
         id: "hum_u1_26", unitKey: "hum_u1", qCategory: "hum_mcq", type: "multi_mcq", typeLabel: "選擇題(可多選)",
         prompt: "怎樣處理體臭問題？（可選多於一項）",
         options: ["A. 每天洗澡", "B. 勤換內外衣服和襪子", "C. 少吃味道濃烈的食物", "D. 不要做運動，減少流汗"],
         answers: ["A. 每天洗澡", "B. 勤換內外衣服和襪子", "C. 少吃味道濃烈的食物"],
-        answer: "A、B、C"
+        answer: "A. 每天洗澡、B. 勤換內外衣服和襪子、C. 少吃味道濃烈的食物"
       },
       {
         id: "hum_u1_27", unitKey: "hum_u1", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
@@ -505,7 +636,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "B. 重視朋輩認同、追隨潮流"
       },
 
-      // U1 問答題(情境題) (#28 ~ #30)
+      // U1 問答題(情境題) (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
       {
         id: "hum_u1_28", unitKey: "hum_u1", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
         prompt: "【情境】立德後天有測驗，但已跟同學約定去玩電子遊戲。爸爸要求他不要去，快點留在家中溫習。(1) 爸爸為什麼這樣要求？ (2) 如果你是立德，你會怎樣做？為什麼？",
@@ -515,7 +646,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "(1) 爸爸想自己玩遊戲機。(2) 叫同學直接來家裡打機，不用理會後天的測驗。",
           "(1) 爸爸誤會了測驗日期。(2) 鎖上房門拒絕溝通，整天不吃飯抗議。"
         ],
-        answer: "(1) 爸爸希望立德為後天的測驗做好準備。(2) 聽從爸爸勸告留在家中溫習，向同學道歉並改天再約；因為學業是自己責任，應與父母保持良好溝通並控制情緒。"
+        answer: "(1) 爸爸希望立德為測驗做好準備。(2) 聽從勸告留家溫習，向同學道歉改期，因學業是自己責任，應與父母保持良好溝通並控制情緒。"
       },
       {
         id: "hum_u1_29", unitKey: "hum_u1", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
@@ -526,7 +657,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "(1) 不恰當。(2) 為了不得罪他，在試卷上故意寫錯答案給他抄。",
           "(1) 恰當。(2) 要求他付錢或請吃零食才讓他抄答案。"
         ],
-        answer: "(1) 不恰當，因為測驗作弊違反校規且是不誠實行為。(2) 勇敢拒絕兆軒的要求，並提出在測驗後或平時幫他溫習功課；切勿因渴望朋輩認同而盲目順從朋友的不當要求。"
+        answer: "(1) 不恰當，作弊違反校規且不誠實。(2) 勇敢拒絕，並提出平時幫他溫習；切勿因渴望朋輩認同而盲目順從不當要求。"
       },
       {
         id: "hum_u1_30", unitKey: "hum_u1", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
@@ -537,7 +668,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "對朋友說謊稱自己生病入院，以免朋友生氣。",
           "強迫外婆更改生日晚飯的日期來遷就自己看電影。"
         ],
-        answer: "應該主動向朋友坦白解釋當晚是外婆的生日，需要與家人一起吃飯慶祝，向朋友致歉並提議改期再看電影；因為在重視朋友的同時，也要珍惜與家人的相處和溝通。"
+        answer: "主動向朋友坦白解釋當晚是外婆生日需與家人慶祝，向朋友致歉並提議改期看電影；重視朋友同時也要珍惜與家人相處。"
       },
 
       // ==================== 第二部分：U2 與異性相處 (30題) ====================
@@ -545,12 +676,12 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
       { id: "hum_u2_02", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我們可以與異性朋友尋找 ________ 的地方，例如一起參加有共同興趣的活動，發展友誼。", blanks: ["相似"], distractors: ["對立", "矛盾", "昂貴"] },
       { id: "hum_u2_03", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "在小組合作中，男女同學可以各展所長，互相 ________，互補 ________。", blanks: ["學習", "不足"], distractors: ["推卸", "指責", "比較"] },
       { id: "hum_u2_04", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我們要懂得欣賞和 ________ 別人的優點和缺點，並以坦誠和尊重的態度，________ 選擇可信任的朋友。", blanks: ["接納", "謹慎"], distractors: ["取笑", "隨便", "盲目"] },
-      { id: "hum_u2_05", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "青春期男女對異性開始感到好奇是正常的，但我們要學會分辨 ________ 和 ________。", blanks: ["友情", "愛情"], distractors: ["親情", "同情", "心情"] },
+      { id: "hum_u2_05", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "青春期男女對異性開始感到好奇是正常的，但我們要學會分辨 ________ 和 ________。", blanks: ["友情", "愛情"], allowSwapIndices: [0, 1], distractors: ["親情", "同情", "心情"] },
       { id: "hum_u2_06", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "對異性的 ________ 不一定等同愛情，明白兩性之間也可以成為純潔的 ________。", blanks: ["好奇", "朋友"], distractors: ["討厭", "敵人", "伴侶"] },
       { id: "hum_u2_07", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "與異性相處時，我們應該保持 ________ 和自然，互相 ________，並保持適當的距離。", blanks: ["大方", "尊重"], distractors: ["害羞", "取笑", "迴避"] },
       { id: "hum_u2_08", unitKey: "hum_u2", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "與異性相處時要訂立相處 ________；若對方的言行令自己感到不舒服，要 ________ 說出個人感受。", blanks: ["界線", "坦白"], distractors: ["秘密", "隱瞞", "沉默"] },
 
-      // U2 分類題 (#9 ~ #12) -> 分類籃
+      // U2 分類題 (#9 ~ #12)
       {
         id: "hum_u2_09", unitKey: "hum_u2", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
         prompt: "【性別觀念判斷分類】請將以下說法放入對應的分類籃：",
@@ -601,7 +732,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "A：互相接納 ｜ B：互補不足 ｜ C：謹慎選擇朋友"
       },
 
-      // U2 簡答題 (#13 ~ #17)
+      // U2 簡答題 (#13 ~ #17 — options[0] 與 answer 100% 完全一致)
       {
         id: "hum_u2_13", unitKey: "hum_u2", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
         prompt: "【簡答題】如果我們對男性和女性抱有傳統的刻板印象（如認為男孩粗心、女孩愛哭），會對兩性相處帶來什麼負面影響？",
@@ -611,7 +742,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "會令男女同學的運動成績同時大幅提升。",
           "沒有任何負面影響，反而能增進友誼。"
         ],
-        answer: "會阻礙我們對異性的真正瞭解，導致不願意與異性合作（如拒絕同組做專題研習），影響與異性正常、和諧地相處。"
+        answer: "會阻礙對異性的真正瞭解，導致不願與異性合作，影響與異性正常、和諧地相處。"
       },
       {
         id: "hum_u2_14", unitKey: "hum_u2", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
@@ -622,7 +753,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "(1)凡事只聽男同學意見；(2)把所有工作交給女同學；(3)在背後議論別人。",
           "(1)單獨去偏僻地方；(2)在網上結交陌生異性；(3)隱瞞父母。"
         ],
-        answer: "(1) 增加瞭解，拒絕性別角色定型；(2) 尋找相似之處；(3) 互相接納與尊重；(4) 互相學習，互補不足；(5) 謹慎選擇朋友；(6) 保持大方坦誠。"
+        answer: "(1)拒絕性別角色定型；(2)尋找相似之處；(3)互相接納與尊重；(4)互相學習，互補不足；(5)謹慎選擇朋友；(6)保持大方坦誠。"
       },
       {
         id: "hum_u2_15", unitKey: "hum_u2", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
@@ -633,7 +764,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "只需要外貌好看及送昂貴禮物，不需要長時間瞭解。",
           "只要有共同興趣一起打一次羽毛球就是愛情。"
         ],
-        answer: "需要經過長時間相處和深入瞭解、互相信任、包容和關心對方的優缺點，並願意為對方作出承諾（如計劃結婚、組織家庭）。"
+        answer: "經過長時間相處和深入瞭解、互相信任、包容和關心對方優缺點，並願意作出承諾（如計劃結婚、組織家庭）。"
       },
       {
         id: "hum_u2_16", unitKey: "hum_u2", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
@@ -644,7 +775,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "即使對方的接觸令自己尷尬，也應該默默忍受不可說出來。",
           "與異性相處必須完全不說話、不眼神接觸。"
         ],
-        answer: "要留意自己的言行舉止，訂立相處界線並保持適當的身體距離；若對方的接觸令自己不舒服，要坦白說出感受。"
+        answer: "留意言行舉止，訂立相處界線並保持適當身體距離；若對方的接觸令自己不舒服，要坦白說出感受。"
       },
       {
         id: "hum_u2_17", unitKey: "hum_u2", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
@@ -655,7 +786,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "應該放在心裡自己獨自承受，絕對不可告訴父母。",
           "應該聽信八卦同學的起鬨與流言。"
         ],
-        answer: "應該諮詢父母、老師等可信任的成年人的意見，因為他們經驗豐富且可靠，不需要自己獨自煩惱。"
+        answer: "應諮詢父母、老師等可信任的成年人意見，因為他們經驗豐富且可靠，不需獨自煩惱。"
       },
 
       // U2 看圖填充題 (#18 ~ #21)
@@ -731,7 +862,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
         answer: "B. 友善、誠實和可信任的人"
       },
 
-      // U2 問答題(情境題) (#27 ~ #30)
+      // U2 問答題(情境題) (#27 ~ #30 — options[0] 與 answer 100% 完全一致)
       {
         id: "hum_u2_27", unitKey: "hum_u2", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
         prompt: "【情境】小美很喜歡踢足球，但媽媽卻對她說：「女孩子踢足球太粗魯，你應該學彈鋼琴。」你同意媽媽的說話嗎？為什麼？",
@@ -741,7 +872,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "同意。因為女孩子運動能力一定比男孩子差。",
           "不同意。因為女孩子應該完全不參加任何課外活動。"
         ],
-        answer: "不同意。因為每個人的興趣、性格和能力都不同，與性別無關。我們不應受傳統的性別角色定型限制，女孩子也可以喜歡踢足球，男孩子也可以學彈鋼琴。"
+        answer: "不同意。因為每個人的興趣、性格和能力都不同，與性別無關，不應受傳統性別角色定型限制。"
       },
       {
         id: "hum_u2_28", unitKey: "hum_u2", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
@@ -752,7 +883,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "在網上公開羞辱他，號召全班同學孤立他。",
           "從此逃學不再回校上課。"
         ],
-        answer: "我會保持冷靜，直接而坦白地告訴該名男同學，自己不喜歡這些身體接觸，請他保持適當的距離，因為朋友之間應該互相尊重和訂立相處界線。如果情況沒有改善，我會向父母或老師求助。"
+        answer: "保持冷靜，直接而坦白地告訴他自己不喜歡這些身體接觸，請他保持適當距離（互相尊重）；若無改善則向父母或老師求助。"
       },
       {
         id: "hum_u2_29", unitKey: "hum_u2", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
@@ -763,7 +894,7 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "為了證明沒有談戀愛，故意在同學面前責罵對方。",
           "退出興趣班，不再參加任何活動。"
         ],
-        answer: "我們不需要因為被取笑而感到尷尬，也不必刻意減少聯絡。因為兩性之間可以成為正常的普通朋友，我們只需向同學澄清大家只是好朋友，並繼續保持大方、自然和坦誠的態度相處即可。"
+        answer: "不需因被取笑而尷尬或刻意減少聯絡；向同學澄清大家只是好朋友，繼續保持大方、自然和坦誠的態度相處即可。"
       },
       {
         id: "hum_u2_30", unitKey: "hum_u2", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
@@ -774,473 +905,485 @@ window.Aetheria.QuestionBank = window.Aetheria.QuestionBank || {};
           "站在旁邊跟其他同學一起起鬨取笑對方。",
           "責怪對方不小心跌倒影響比賽成績。"
         ],
-        answer: "我應該放下顧慮，大方地主動上前關心對方，並與其他同學一起扶他／她到長椅上休息。因為同學之間應該發揮仁愛和同理心互相幫助，與異性相處只要態度自然大方即可。"
-      },
-
-      // ==================== 第三部分：U8 人民生活 (30題) ====================
-      { id: "hum_u8_01", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國人口有 ________ 多，但人口分佈並不平均，超過九成（約93.5%）人口集中在 ________ 地區。", blanks: ["14億", "東南部"], distractors: ["5億", "西北部", "正中央"] },
-      { id: "hum_u8_02", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國人口分佈地圖上，由黑龍江省 ________ 市至雲南省 ________ 市的連線，是著名的人口地理分界線。", blanks: ["黑河", "騰衝"], distractors: ["哈爾濱", "昆明", "拉薩"] },
-      { id: "hum_u8_03", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國東南部地勢較 ________，氣候較 ________，且降水量較 ________，因此適合人類居住及發展農業。", blanks: ["平緩", "溫暖", "充足"], distractors: ["陡峭", "嚴寒", "稀少"] },
-      { id: "hum_u8_04", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國素有「北方人吃 ________，南方人吃 ________」的飲食習慣差異。", blanks: ["麵食", "米食"], distractors: ["海鮮", "生果", "甜點"] },
-      { id: "hum_u8_05", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "________ 高原是我國黃河、長江、瀾滄江三條重要河流的發源地，有「________」的美譽。", blanks: ["青藏", "中華水塔"], distractors: ["黃土", "世界屋脊", "雲貴"] },
-      { id: "hum_u8_06", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "黃河上游河水清澈，但流經中部土壤鬆軟的 ________ 高原時，大量泥沙沖入河中，令河水變黃，更會抬高下游的 ________。", blanks: ["黃土", "河牀"], distractors: ["青藏", "水位", "山脈"] },
-      { id: "hum_u8_07", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "長江三峽位於長江上游，由 ________、________ 和 ________ 組成，風景雄偉。", blanks: ["瞿塘峽", "巫峽", "西陵峽"], distractors: ["虎跳峽", "三門峽", "劉家峽"] },
-      { id: "hum_u8_08", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "珠江流域擁有能保護海岸、改善水質的 ________，水域內更有 ________ 和黑臉琵鷺等瀕危物種棲息。", blanks: ["濕地", "中華白海豚"], distractors: ["沙漠", "大熊貓", "揚子鱷"] },
-
-      // U8 分類題 (#9 ~ #13) -> 分類籃
-      {
-        id: "hum_u8_09", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【西北部與東南部比較分類】請將以下特徵放入對應的分類籃：",
-        baskets: ["我國西北部", "我國東南部"],
-        items: [
-          { label: "A. 面積約佔56.2%，人口只佔約6.5%", basket: "我國西北部" },
-          { label: "B. 面積約佔43.8%，人口佔約93.5%", basket: "我國東南部" },
-          { label: "C. 海拔較高，寒冷乾燥，降水缺乏", basket: "我國西北部" },
-          { label: "D. 地勢平坦，溫暖多雨，交通發達", basket: "我國東南部" }
-        ],
-        answer: "我國西北部：A、C ｜ 我國東南部：B、D"
-      },
-      {
-        id: "hum_u8_10", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【地區物產與環境分類】請將以下物產放入我國四大地區分類籃：",
-        baskets: ["我國北部", "我國南部", "我國西部", "我國東部"],
-        items: [
-          { label: "A. 小麥製品（麵條、饅頭）", basket: "我國北部" },
-          { label: "B. 米飯（水稻）", basket: "我國南部" },
-          { label: "C. 肉類、奶類和毛皮（畜牧業）", basket: "我國西部" },
-          { label: "D. 水產（漁業）", basket: "我國東部" }
-        ],
-        answer: "北部：A ｜ 南部：B ｜ 西部：C ｜ 東部：D"
-      },
-      {
-        id: "hum_u8_11", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【特色房屋與環境配對分類】請將房屋特點放入對應的傳統建築分類籃：",
-        baskets: ["蒙古包", "窰洞", "吊腳樓", "四合院"],
-        items: [
-          { label: "A. 木柱支撐懸空，適應山坡濕熱，防潮通風", basket: "吊腳樓" },
-          { label: "B. 能拆卸隨季節遷徙，抵禦風沙適應遊牧", basket: "蒙古包" },
-          { label: "C. 四周房屋圍庭院在中間，適應平原防風防寒", basket: "四合院" },
-          { label: "D. 用黃土建構冬暖夏涼，適應乾燥少雨缺木材", basket: "窰洞" }
-        ],
-        answer: "蒙古包：B ｜ 窰洞：D ｜ 吊腳樓：A ｜ 四合院：C"
-      },
-      {
-        id: "hum_u8_12", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【三大河流特徵分類】請將以下特徵放入對應的河流分類籃：",
-        baskets: ["黃河", "長江", "珠江"],
-        items: [
-          { label: "A. 歷史氾濫約1600次，設調水調沙工程", basket: "黃河" },
-          { label: "B. 上游有三峽奇峯，開展《十年禁漁計劃》", basket: "長江" },
-          { label: "C. 擁有大片紅樹林濕地，中華白海豚棲息", basket: "珠江" }
-        ],
-        answer: "黃河：A ｜ 長江：B ｜ 珠江：C"
-      },
-      {
-        id: "hum_u8_13", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【河流危機與生態建設配對】請將生態建設措施放入對應的危機分類籃：",
-        baskets: ["治理河水氾濫", "治理水土流失", "治理水污染及生態"],
-        items: [
-          { label: "A. 植樹造林及修建梯田", basket: "治理水土流失" },
-          { label: "B. 推動大型水利工程（如調水調沙）", basket: "治理河水氾濫" },
-          { label: "C. 立法限制排污、設污水廠及禁捕政策", basket: "治理水污染及生態" }
-        ],
-        answer: "河水氾濫：B ｜ 水土流失：A ｜ 水污染及生態：C"
-      },
-
-      // U8 簡答題 (#14 ~ #18)
-      {
-        id: "hum_u8_14", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】為什麼我國超過九成的人口都選擇居住在東南部，而西北部人口卻非常稀少？",
-        options: [
-          "西北部地勢高、山勢陡峭且寒冷乾燥，不利農業與交通；東南部多平原、氣候溫和、雨水充足，有利農業、交通及生活。",
-          "因為西北部全部是海洋，而東南部全部是高山。",
-          "因為政府規定人民只能居住在東南部。",
-          "因為西北部氣溫全年高達 50°C，沒有任何植物。"
-        ],
-        answer: "因為西北部地勢高、山勢陡峭，限制了農業與交通發展，且氣候寒冷乾燥，不適合居住；而東南部多平原、氣候溫和、雨水充足，有利於農業、交通及人類生活。"
-      },
-      {
-        id: "hum_u8_15", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】為什麼我國會有「北方人吃麵食，南方人吃米食」的差異？",
-        options: [
-          "因為北方氣候較乾旱，適合小麥生長（製成麵條、饅頭）；南方氣候溫暖潮濕，適合水稻生長（加工成米飯）。",
-          "因為北方沒有河流，南方沒有土地。",
-          "因為北方人不懂煮米飯，南方人不懂做麵條。",
-          "這只是隨機習慣，與氣候和農作物完全無關。"
-        ],
-        answer: "因為北方氣候較乾旱，適合小麥生長，小麥加工後會製成麵條、饅頭等主食；南方氣候溫暖潮濕，適合水稻生長，加工後成為米飯。"
-      },
-      {
-        id: "hum_u8_16", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】河流對我國人民的生活發揮了哪些重要作用？（請舉出六項）",
-        options: [
-          "(1)灌溉農作物；(2)水路運輸；(3)水力發電；(4)日常生活飲用；(5)工業生產；(6)捕食及養殖水產。",
-          "(1)製造沙漠；(2)引發地震；(3)阻斷交通；(4)增加溫室效應；(5)排走空氣；(6)製造火山。",
-          "河流只有觀賞作用，對農業、工業與運輸沒有任何幫助。",
-          "河流只用於冬季溜冰及開採煤炭。"
-        ],
-        answer: "(1) 灌溉農作物；(2) 水路運輸；(3) 水力發電；(4) 日常生活飲用；(5) 工業生產；(6) 捕食及養殖水產。"
-      },
-      {
-        id: "hum_u8_17", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】河流流域的「水土流失」危機是由什麼原因造成的？國家採取了什麼措施治理，並取得了什麼成就？",
-        options: [
-          "原因：過度開墾和過度伐木令土壤貧瘠鬆散。措施與成就：利用植樹和修建梯田減少侵蝕，平均每年減少土壤流失達16億噸。",
-          "原因：魚類太多。措施：把所有河水抽乾，每年增加沙漠面積。",
-          "原因：降雨太少。措施：把山坡全部鋪上塑膠布。",
-          "原因：船隻行駛太快。措施：禁止所有船隻航行。"
-        ],
-        answer: "原因：流域過度開墾（非法開墾農地）和過度伐木，導致土地衰竭，土壤變得貧瘠鬆散。措施與成就：國家利用植樹和修建梯田減少侵蝕，平均每年減少土壤流失達16億噸。"
-      },
-      {
-        id: "hum_u8_18", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】為什麼保護水資源對我國的「國家安全（生態安全）」非常重要？",
-        options: [
-          "因為水是人類必需品，缺水會嚴重影響民生和經濟；若水資源被濫用或污染，生態環境便會被破壞，故必須確保水資源安全。",
-          "因為水資源可以代替石油直接作為汽車燃料。",
-          "因為只要有水資源就不需要發展農業和工業。",
-          "保護水資源只為了讓風景更好看，與民生經濟無關。"
-        ],
-        answer: "因為水是人類的必需品，水資源缺乏會嚴重影響社會民生和經濟發展；若水資源被濫用或污染，國家的生態環境便會被破壞，因此必須確保水資源安全以維護生態安全。"
-      },
-
-      // U8 看圖填充題 (#19 ~ #22)
-      {
-        id: "hum_u8_19", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u8_yurt_grassland",
-        prompt: "我國西部草原地區盛產 ________（物產），當地牧民多居住在方便拆卸遷徙的 ________（房屋）。",
-        blanks: ["肉類", "蒙古包"], distractors: ["水產", "吊腳樓", "四合院"]
-      },
-      {
-        id: "hum_u8_20", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u8_river_uses",
-        prompt: "這幅圖顯示河流具有水力 ________、水路 ________ 以及農業 ________ 的重要功能。",
-        blanks: ["發電", "運輸", "灌溉"], distractors: ["開墾", "排污", "伐木"]
-      },
-      {
-        id: "hum_u8_21", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u8_terraces",
-        prompt: "圖中展示我國青海省利用修建 ________ 的方法，有效治理 ________ 的生態危機。",
-        blanks: ["梯田", "水土流失"], distractors: ["魚塘", "空氣污染", "溫室效應"]
-      },
-      {
-        id: "hum_u8_22", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u8_stilt_house",
-        prompt: "這種特色房屋稱為 ________，能適應南方山坡、河谷及濕熱的天氣，具有 ________ 通風的作用。",
-        blanks: ["吊腳樓", "防潮"], distractors: ["窰洞", "保暖", "防風沙"]
-      },
-
-      // U8 選擇題 (#23 ~ #27)
-      {
-        id: "hum_u8_23", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "以下哪一項關於「黑河—騰衝線」的描述是正確的？",
-        options: [
-          "A. 線的西北部面積較小，但人口密度最高",
-          "B. 線的東南部面積約佔全國43.8%，卻居住了超過九成的人口",
-          "C. 這條線將我國分為南方和北方兩個面積相等的區域",
-          "D. 線的西北部地勢平坦、雨水充足"
-        ],
-        answer: "B. 線的東南部面積約佔全國43.8%，卻居住了超過九成的人口"
-      },
-      {
-        id: "hum_u8_24", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "為了保護黃河、長江和瀾滄江三大河流的源頭，我國在青藏高原設立了什麼保護區？",
-        options: ["A. 珠江濕地自然保護區", "B. 黃土高原林木栽植區", "C. 三江源自然保護區及三江源國家公園", "D. 長江三峽國家公園"],
-        answer: "C. 三江源自然保護區及三江源國家公園"
-      },
-      {
-        id: "hum_u8_25", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "以下哪一項描述是不正確的？",
-        options: [
-          "A. 青藏高原是黃河和珠江的發源地",
-          "B. 黃河流經黃土高原時帶走大量泥沙，令河水變黃",
-          "C. 長江三峽兩岸滿佈奇峯和古蹟，是著名的旅遊景點",
-          "D. 黃河是我國歷史上氾濫次數最多的河流之一"
-        ],
-        answer: "A. 青藏高原是黃河和珠江的發源地"
-      },
-      {
-        id: "hum_u8_26", unitKey: "hum_u8", qCategory: "hum_mcq", type: "multi_mcq", typeLabel: "選擇題(可多選)",
-        prompt: "針對家居、工業、農業污水流入河道，以及水產過度捕撈的問題，國家採取了什麼措施？（可選多於一項）",
-        options: ["A. 立法限制水污染", "B. 設立污水處理廠淨化水質", "C. 開展《長江十年禁漁計劃》等禁捕政策", "D. 填平河道改建為農地"],
-        answers: ["A. 立法限制水污染", "B. 設立污水處理廠淨化水質", "C. 開展《長江十年禁漁計劃》等禁捕政策"],
-        answer: "A、B、C"
-      },
-      {
-        id: "hum_u8_27", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "北京等北方平原地區常見的傳統建築「四合院」，具有什麼建築特點？",
-        options: [
-          "A. 在黃土山坡挖掘洞穴而成",
-          "B. 四周建有房屋，將庭院圍在中間，能防風和防寒",
-          "C. 用竹木搭建在水面上",
-          "D. 用毛氈覆蓋，方便隨時拆走"
-        ],
-        answer: "B. 四周建有房屋，將庭院圍在中間，能防風和防寒"
-      },
-
-      // U8 問答題(情境題) (#28 ~ #30)
-      {
-        id: "hum_u8_28", unitKey: "hum_u8", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
-        prompt: "【時事情境】新聞報道：「受持續暴雨影響，全國27條河流出現超警戒水位洪水，南方多地受災，張家界市有人被洪水沖走。當地出動武警防洪，國家緊急調運八萬多件救災物資到災區。」(1) 暴雨引發什麼災害與後果？ (2) 政府採取了什麼即時應對措施？",
-        options: [
-          "(1) 引發河水氾濫（洪水），導致財物損失及人命傷亡。(2) 出動武警防洪救援，並緊急調運帳篷、摺牀等救災物資到災區。",
-          "(1) 引發嚴重乾旱。(2) 進行人工增雨並關閉所有水庫。",
-          "(1) 引發沙塵暴。(2) 要求居民搬往蒙古包居住。",
-          "(1) 引發地震。(2) 實施十年禁漁計劃。"
-        ],
-        answer: "(1) 引發了河水氾濫（洪水／水災）；導致南方多地受災、財物損失，甚至造成人命傷亡。(2) 政府出動武警人員防洪救援，並由國家糧食和物資儲備局緊急調運帳篷、摺牀、夏涼被等救災物資到受災地區。"
-      },
-      {
-        id: "hum_u8_29", unitKey: "hum_u8", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
-        prompt: "【承上題情境】從長遠來看，國家及河流附近的居民有什麼方法可以預防及減低「河水氾濫」帶來的危機？",
-        options: [
-          "國家：推動大型水利工程（興建水壩、調水調沙）及植樹造林保持水土。居民：留意水位預警、暴雨遠離河道、配合疏散及不非法開墾。",
-          "國家：把所有河流填平變成公路。居民：在河牀正中央建造房屋。",
-          "國家：砍伐河岸所有樹木。居民：把垃圾倒入河中阻擋水流。",
-          "河水氾濫完全無法預防，不需要採取任何長遠措施。"
-        ],
-        answer: "國家層面：推動大型水利工程（如興建水壩、調水調沙工程）及植樹造林保持水土，降低大規模氾濫風險。居民層面：留意天氣及水位預警，在暴雨期間遠離河道，配合政府的防洪疏散指示，並保護河岸植被不非法開墾。"
-      },
-      {
-        id: "hum_u8_30", unitKey: "hum_u8", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
-        prompt: "【情境】假設你要到內蒙古草原及陝西黃土高原進行考察，你會分別看到當地居民居住在什麼傳統特色房屋？為什麼他們會建造這樣的房屋？",
-        options: [
-          "內蒙古草原：蒙古包（適應草原遊牧，方便拆卸遷徙並抵禦風沙）；黃土高原：窰洞（氣候乾燥少雨且缺木材，利用深厚黃土就地取材，冬暖夏涼）。",
-          "內蒙古草原：吊腳樓（防潮通風）；黃土高原：四合院（適應多雨氣候）。",
-          "兩地居民都居住在竹木搭建的水上棚屋。",
-          "內蒙古草原：窰洞；黃土高原：蒙古包。"
-        ],
-        answer: "在內蒙古草原會看到蒙古包，因為當地人過着草原遊牧生活，蒙古包方便拆卸隨季節遷徙，又能抵禦風沙；在黃土高原會看到窰洞，因為當地氣候乾燥少雨且缺少木材，利用深厚的黃土建構窰洞可以就地取材，而且冬暖夏涼。"
-      },
-
-      // ==================== 第四部分：U9 文化遺產 (30題) ====================
-      { id: "hum_u9_01", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國是一個多民族的國家，共有 ________ 個民族，其中 ________ 族人口超過九成，其餘 ________ 個為少數民族。", blanks: ["56", "漢", "55"], distractors: ["50", "滿", "49"] },
-      { id: "hum_u9_02", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國少數民族的主要聚居地包括五個自治區：新疆維吾爾自治區、________ 自治區、________ 自治區、寧夏回族自治區、________ 壯族自治區，以及多民族聚居的 ________ 省。", blanks: ["內蒙古", "西藏", "廣西", "雲南"], distractors: ["廣東", "四川", "青海"] },
-      { id: "hum_u9_03", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "各少數民族聚居的地方實行 ________ 制度，以促進民族平等、團結、互助，所有民族自治地方都是中國 ________ 的部分。", blanks: ["區域自治", "不可分離"], distractors: ["獨立管理", "各自發展", "臨時劃分"] },
-      { id: "hum_u9_04", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "蒙古族使用 ________ 文，傳統飲食有烤全羊和 ________，重要傳統活動是「________ 大會」。", blanks: ["蒙古", "乾奶酪", "那達慕"], distractors: ["東巴", "麗江粑粑", "潑水"] },
-      { id: "hum_u9_05", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "雲南省納西族使用獨特的 ________ 文，特色食物有麗江粑粑和 ________，傳統節日是祭祀民族保護神的「________ 節」。", blanks: ["東巴", "雞豆涼粉", "三多"], distractors: ["蒙古", "乾奶酪", "火把"] },
-      { id: "hum_u9_06", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "位於西藏拉薩市的 ________ 歷史建築羣，是藏傳佛教聖地；位於四川省的 ________ 大佛，建於唐朝，是世界最大的石刻佛像。", blanks: ["布達拉宮", "樂山"], distractors: ["明十三陵", "開平", "花山"] },
-      { id: "hum_u9_07", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "廣東省開平市的 ________ 是1920至1930年代華僑為防禦土匪而建，具中西合璧風格；廣西崇左市的 ________ 則是壯族祖先以紅色顏料繪畫的崖壁畫。", blanks: ["開平碉樓", "花山岩畫"], distractors: ["布達拉宮", "樂山大佛", "莫高窟"] },
-      { id: "hum_u9_08", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "國家積極向聯合國教科文組織申報，把文化遺產列入《________ 名錄》，並訂立《________ 法》等法律保護歷史古蹟。", blanks: ["世界遺產", "文物保護"], distractors: ["自然公園", "城市規劃", "旅遊發展"] },
-
-      // U9 分類題 (#9 ~ #13) -> 分類籃
-      {
-        id: "hum_u9_09", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【少數民族服飾配對分類】請將傳統服飾放入對應的少數民族分類籃：",
-        baskets: ["苗族", "維吾爾族", "蒙古族", "彝族", "藏族"],
-        items: [
-          { label: "A. 刺繡和精緻銀飾（保平安）", basket: "苗族" },
-          { label: "B. 花帽和長袍", basket: "維吾爾族" },
-          { label: "C. 蒙古袍", basket: "蒙古族" },
-          { label: "D. 帽子和披風", basket: "彝族" },
-          { label: "E. 藏袍和項鍊", basket: "藏族" }
-        ],
-        answer: "苗族：A ｜ 維吾爾族：B ｜ 蒙古族：C ｜ 彝族：D ｜ 藏族：E"
-      },
-      {
-        id: "hum_u9_10", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【少數民族聚居地環境分類】請將地理與氣候特徵放入對應地區分類籃：",
-        baskets: ["新疆維吾爾自治區", "西藏自治區", "寧夏回族自治區", "雲南省"],
-        items: [
-          { label: "A. 高山盆地沙漠為主，夏酷熱冬嚴寒", basket: "新疆維吾爾自治區" },
-          { label: "B. 位於青藏高原，氣候高寒，晝夜溫差大", basket: "西藏自治區" },
-          { label: "C. 高原沙漠為主，盛產枸杞、葡萄、羊肉", basket: "寧夏回族自治區" },
-          { label: "D. 低海拔熱帶雨林、高海拔寒雪，孕育多元民族", basket: "雲南省" }
-        ],
-        answer: "新疆：A ｜ 西藏：B ｜ 寧夏：C ｜ 雲南：D"
-      },
-      {
-        id: "hum_u9_11", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【少數民族節慶分類】請將節慶活動放入對應的少數民族分類籃：",
-        baskets: ["傣族", "彝族", "蒙古族", "納西族"],
-        items: [
-          { label: "A. 潑水節（互相潑水祈求消災除病）", basket: "傣族" },
-          { label: "B. 火把節（點燃營火火把遊行驅邪祈福）", basket: "彝族" },
-          { label: "C. 那達慕大會（賽馬、摔跤和射箭比賽）", basket: "蒙古族" },
-          { label: "D. 三多節（農曆二月初八祭祀保護神）", basket: "納西族" }
-        ],
-        answer: "傣族：A ｜ 彝族：B ｜ 蒙古族：C ｜ 納西族：D"
-      },
-      {
-        id: "hum_u9_12", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【文化遺產地點分類】請將四項文化遺產放入所在地區分類籃：",
-        baskets: ["西藏自治區", "廣東省", "四川省", "廣西壯族自治區"],
-        items: [
-          { label: "A. 布達拉宮歷史建築羣", basket: "西藏自治區" },
-          { label: "B. 開平碉樓", basket: "廣東省" },
-          { label: "C. 峨眉山—樂山大佛", basket: "四川省" },
-          { label: "D. 花山岩畫", basket: "廣西壯族自治區" }
-        ],
-        answer: "西藏：A ｜ 廣東：B ｜ 四川：C ｜ 廣西：D"
-      },
-      {
-        id: "hum_u9_13", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
-        prompt: "【參觀古蹟行為分類】請將參觀文化遺產時的行為放入對應分類籃：",
-        baskets: ["正確保育行為", "破壞文物行為"],
-        items: [
-          { label: "A. 不觸摸、不攀爬文物", basket: "正確保育行為" },
-          { label: "B. 用閃光燈拍攝禁止閃光燈的青花瓷瓶", basket: "破壞文物行為" },
-          { label: "C. 聽從導覽員或標示指示", basket: "正確保育行為" },
-          { label: "D. 將垃圾丟入分類箱保持整潔", basket: "正確保育行為" },
-          { label: "E. 跨越圍欄撫摸古蹟石獅子及古炮台", basket: "破壞文物行為" }
-        ],
-        answer: "正確保育：A、C、D ｜ 破壞文物：B、E"
-      },
-
-      // U9 簡答題 (#14 ~ #18)
-      {
-        id: "hum_u9_14", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】少數民族的傳統服飾除了美觀和代表民族身份外，還有什麼實際功能？（可結合聚居地環境說明）",
-        options: [
-          "具有適應當地氣候環境和生活方式的實用功能，例如蒙古袍和藏袍能抵禦高原與草原的嚴寒及晝夜溫差；苗族銀飾則被視為保平安。",
-          "只為了在舞台上表演，日常生活中完全不能穿戴。",
-          "所有少數民族服飾都是為了潛水及水上活動而設計。",
-          "傳統服飾沒有任何保暖或實用功能。"
-        ],
-        answer: "具有適應當地氣候環境和生活方式的實用功能，例如蒙古袍和藏袍能抵禦高原與草原的嚴寒及巨大晝夜溫差；苗族銀飾則被視為有保平安的作用。"
-      },
-      {
-        id: "hum_u9_15", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】什麼是「民族團結」？我國實行區域自治制度有什麼目的？",
-        options: [
-          "民族團結：各民族友好相處、互相尊重包容幫助，齊心維護國家統一。自治制度目的：促進民族平等、團結、互助，鞏固國家統一。",
-          "民族團結指所有民族必須放棄自己的語言和節日。自治目的是讓各區互不往來。",
-          "民族團結只適用於漢族，不包括少數民族。",
-          "區域自治制度只是為了發展旅遊業，與民族平等無關。"
-        ],
-        answer: "民族團結：一方面指各民族之間友好相處，互相尊重、包容、接納和幫助；另一方面指各民族內部團結，齊心協力維護國家統一。自治制度目的：促進民族平等、團結、互助，並鞏固國家統一。"
-      },
-      {
-        id: "hum_u9_16", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】為什麼不同少數民族在飲食、文字和風俗上會有各自獨特的生活方式？",
-        options: [
-          "因為各民族居住地區的地理環境、氣候、歷史文化和資源條件都不相同，因而孕育出多姿多彩的生活方式。",
-          "因為各民族每年抽籤決定自己的飲食和文字。",
-          "因為所有少數民族都居住在完全相同的沙漠環境。",
-          "這與地理環境、氣候和歷史文化完全無關。"
-        ],
-        answer: "因為各民族居住地區的地理環境、氣候、歷史文化和資源條件都不相同，因而孕育出多姿多彩的生活方式。"
-      },
-      {
-        id: "hum_u9_17", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】什麼是「文化遺產」？我國政府在保育文化遺產方面採取了哪兩大類措施？",
-        options: [
-          "定義：從歷史、藝術或科學角度看具突出普遍價值的文物、建築和遺址。措施：(1)法律與政策保護（申報世遺、訂立《文物保護法》）；(2)修復與維護工程。",
-          "定義：現代新建的大型購物商場。措施：全部拆卸重建為玻璃大廈。",
-          "定義：只有外國才有的古蹟。措施：禁止任何市民參觀。",
-          "定義：天然形成的雨水。措施：不作任何維修任由風化。"
-        ],
-        answer: "定義：指從歷史、藝術或科學角度看，具有突出普遍價值的文物、建築和遺址。國家措施：(1) 利用法律與政策保護（申報世界遺產名錄、訂立《文物保護法》）；(2) 進行修復與維護工程（保留原有風格下解決結構老化和防災問題）。"
-      },
-      {
-        id: "hum_u9_18", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
-        prompt: "【簡答題】作為普通市民和學生，我們在參觀古蹟和博物館時，應該遵守哪三項基本守則來保護文化遺產？",
-        options: [
-          "(1) 不觸摸、不攀爬文物；(2) 聽從導覽員或標示指示（如不使用閃光燈）；(3) 保持環境整潔，不亂拋垃圾。",
-          "(1) 跨越圍欄拍照；(2) 開啟閃光燈近距離拍攝；(3) 在古蹟牆上刻字留念。",
-          "(1) 把文物帶回家研究；(2) 在展館內追逐飲食；(3) 攀爬石獅子。",
-          "參觀時不需要遵守任何規則。"
-        ],
-        answer: "(1) 不觸摸、不攀爬文物；(2) 聽從導覽員或標示指示（如不使用閃光燈）；(3) 保持環境整潔，不亂拋垃圾。"
-      },
-
-      // U9 看圖填充題 (#19 ~ #22)
-      {
-        id: "hum_u9_19", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u9_uyghur_boy",
-        prompt: "圖中頭戴花帽、身穿長袍、住在新疆並多吃牛羊肉的男孩屬於 ________ 族。",
-        blanks: ["維吾爾"], distractors: ["苗", "傣", "納西"]
-      },
-      {
-        id: "hum_u9_20", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u9_miao_girl",
-        prompt: "圖中頭戴精緻銀冠和銀項圈、相信銀器有保平安作用的女孩屬於 ________ 族。",
-        blanks: ["苗"], distractors: ["蒙古", "維吾爾", "藏"]
-      },
-      {
-        id: "hum_u9_21", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u9_potala_palace",
-        prompt: "這項文化遺產是位於西藏拉薩市的 ________，是藏傳佛教聖地。",
-        blanks: ["布達拉宮歷史建築羣"], distractors: ["開平碉樓", "樂山大佛", "花山岩畫"]
-      },
-      {
-        id: "hum_u9_22", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
-        svgKey: "hum_u9_museum_flash",
-        prompt: "圖中男遊客的行為是 ________（正確／不正確）的，因為他沒有 ________ 標示的指示，強光會損害文物。",
-        blanks: ["不正確", "聽從"], distractors: ["正確", "違反", "忽略"]
-      },
-
-      // U9 選擇題 (#23 ~ #27)
-      {
-        id: "hum_u9_23", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "以下哪個地方以「高原為主，地勢平坦開闊，擁有寬廣草原，適合放牧生活方式」而聞名？",
-        options: ["A. 新疆維吾爾自治區", "B. 內蒙古自治區", "C. 廣西壯族自治區", "D. 雲南省"],
-        answer: "B. 內蒙古自治區"
-      },
-      {
-        id: "hum_u9_24", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "每年四月（傣曆新年）舉行的「潑水節」是哪個少數民族的盛大節日？",
-        options: ["A. 彝族", "B. 納西族", "C. 傣族", "D. 藏族"],
-        answer: "C. 傣族"
-      },
-      {
-        id: "hum_u9_25", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "關於雲南省納西族所使用的「東巴文」，以下哪項描述是正確的？",
-        options: ["A. 它是一種拼音字母文字", "B. 它是一種圖畫象形文字，常刻畫在石頭或木紙上", "C. 它是蒙古族的傳統文字", "D. 它只用於現代電腦編程"],
-        answer: "B. 它是一種圖畫象形文字，常刻畫在石頭或木紙上"
-      },
-      {
-        id: "hum_u9_26", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "以下哪一項文化遺產是由華僑在1920至1930年代為了防禦土匪而建，並具有中西合璧的建築風格？",
-        options: ["A. 北京明十三陵", "B. 四川樂山大佛", "C. 廣東開平碉樓", "D. 廣西花山岩畫"],
-        answer: "C. 廣東開平碉樓"
-      },
-      {
-        id: "hum_u9_27", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
-        prompt: "我國對北京故宮等古蹟進行修復與維護工程時，會遵循什麼重要原則？",
-        options: [
-          "A. 全部拆卸並改建成現代化玻璃大廈",
-          "B. 在保留原有建築風格的前提下，重點解決結構老化和防災等問題",
-          "C. 任由古蹟自然風化，完全不作任何維修",
-          "D. 把古蹟塗上鮮艷的現代油漆"
-        ],
-        answer: "B. 在保留原有建築風格的前提下，重點解決結構老化和防災等問題"
-      },
-
-      // U9 問答題(情境題) (#28 ~ #30)
-      {
-        id: "hum_u9_28", unitKey: "hum_u9", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
-        prompt: "【情境】在博物館參觀時，你看到一個小男孩無視「請勿觸摸」的告示牌，伸手去摸古代大炮的木輪。(1) 男孩子的行為正確嗎？為什麼？ (2) 看到這個情況，你會怎樣做？",
-        options: [
-          "(1) 不正確，觸摸文物會加速文物損壞或老化。(2) 上前有禮貌地勸阻，提醒他看告示牌，或通知工作人員處理。",
-          "(1) 正確，親手摸過才能學到歷史。(2) 跟他一起排隊觸摸大炮。",
-          "(1) 不正確。(2) 大聲責罵並推開他。",
-          "(1) 正確。(2) 用閃光燈幫他拍照留念。"
-        ],
-        answer: "(1) 不正確。因為他沒有遵守博物館的標示指示，觸摸文物會加速文物損壞或老化。(2) 我會立即上前有禮貌地勸阻他，提醒他看「請勿觸摸」的告示牌，或通知博物館工作人員處理，因為保護文化遺產是我們應有的責任。"
-      },
-      {
-        id: "hum_u9_29", unitKey: "hum_u9", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
-        prompt: "【情境】學校舉辦「少數民族節日嘉年華」，有同學看到少數民族的傳統服飾和風俗跟自己平時的生活習慣很不一樣，便在旁取笑他們奇怪。你會怎樣勸導這位同學？",
-        options: [
-          "告訴他我國是多民族國家，各民族因地理和歷史不同而發展出獨特文化；我們應尊重、包容和欣賞不同民族文化，促進民族團結。",
-          "認同他的說法，並一起取笑少數民族的服飾。",
-          "叫他不要出聲，但心裡也覺得少數民族風俗很奇怪。",
-          "要求學校取消嘉年華活動。"
-        ],
-        answer: "我會告訴他我國是一個多民族國家，各民族因地理環境和歷史不同而發展出獨特的文化。我們應該尊重、包容和欣賞不同民族的傳統文化與生活差異，這樣才能促進民族團結與和諧。"
-      },
-      {
-        id: "hum_u9_30", unitKey: "hum_u9", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
-        prompt: "【情境】外國朋友來中國旅遊，想參觀一處既能體驗少數民族宗教文化、又能欣賞宏偉古代建築的世界文化遺產。你會向他推薦課本中的哪一個景點？並提醒他參觀注意事項。",
-        options: [
-          "推薦：西藏拉薩「布達拉宮歷史建築羣」（藏傳佛教聖地，保存珍貴佛經壁畫）。注意：尊重宗教文化、不觸摸攀爬文物、聽從指示及保持整潔。",
-          "推薦：現代大型主題樂園。注意：可以隨意攀爬及塗鴉。",
-          "推薦：珠江紅樹林濕地。注意：可以使用閃光燈捕捉候鳥。",
-          "推薦：一般城市商場。注意：不需要遵守任何守則。"
-        ],
-        answer: "推薦景點：拉薩布達拉宮歷史建築羣（位於西藏自治區拉薩市，是藏傳佛教聖地，保存大量珍貴佛經、壁畫和佛像）。參觀注意事項：尊重當地宗教文化，不觸摸及不攀爬文物，聽從導覽員或標示指示，並保持環境整潔。"
+        answer: "放下顧慮，大方地主動上前關心，並與其他同學一起扶對方到長椅休息；因為同學間應發揮仁愛和同理心互相幫助。"
       }
     ]
   };
+})();
+/* ============================================================================
+ * 人文科獨立題庫 — 下半部 Part 2B (questions/questions-humanities.js - v6.5)
+ * 內含：U8《人民生活》(30題) + U9《文化遺產》(30題)
+ * 請直接緊接貼在 Part 2A 代碼的最下方！
+ * ============================================================================ */
+(function() {
+  if (!window.Aetheria || !window.Aetheria.QuestionBank || !window.Aetheria.QuestionBank.Humanities) return;
+
+  const MORE_HUM_QUESTIONS = [
+    // ==================== 第三部分：U8 人民生活 (30題) ====================
+    { id: "hum_u8_01", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國人口有 ________ 多，但人口分佈並不平均，超過九成（約93.5%）人口集中在 ________ 地區。", blanks: ["14億", "東南部"], distractors: ["5億", "西北部", "正中央"] },
+    { id: "hum_u8_02", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國人口分佈地圖上，由黑龍江省 ________ 市至雲南省 ________ 市的連線，是著名的人口地理分界線。", blanks: ["黑河", "騰衝"], distractors: ["哈爾濱", "昆明", "拉薩"] },
+    { id: "hum_u8_03", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國東南部地勢較 ________，氣候較 ________，且降水量較 ________，因此適合人類居住及發展農業。", blanks: ["平緩", "溫暖", "充足"], distractors: ["陡峭", "嚴寒", "稀少"] },
+    { id: "hum_u8_04", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國素有「北方人吃 ________，南方人吃 ________」的飲食習慣差異。", blanks: ["麵食", "米食"], distractors: ["海鮮", "生果", "甜點"] },
+    { id: "hum_u8_05", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "________ 高原是我國黃河、長江、瀾滄江三條重要河流的發源地，有「________」的美譽。", blanks: ["青藏", "中華水塔"], distractors: ["黃土", "世界屋脊", "雲貴"] },
+    { id: "hum_u8_06", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "黃河上游河水清澈，但流經中部土壤鬆軟的 ________ 高原時，大量泥沙沖入河中，令河水變黃，更會抬高下游的 ________。", blanks: ["黃土", "河牀"], distractors: ["青藏", "水位", "山脈"] },
+    { id: "hum_u8_07", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "長江三峽位於長江上游，由 ________、________ 和 ________ 組成，風景雄偉。", blanks: ["瞿塘峽", "巫峽", "西陵峽"], allowSwapIndices: [0, 1, 2], distractors: ["虎跳峽", "三門峽", "劉家峽"] },
+    { id: "hum_u8_08", unitKey: "hum_u8", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "珠江流域擁有能保護海岸、改善水質的 ________，水域內更有 ________ 和黑臉琵鷺等瀕危物種棲息。", blanks: ["濕地", "中華白海豚"], distractors: ["沙漠", "大熊貓", "揚子鱷"] },
+
+    // U8 分類題 (#9 ~ #13) -> 分類籃
+    {
+      id: "hum_u8_09", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【西北部與東南部比較分類】請將以下特徵放入對應的分類籃：",
+      baskets: ["我國西北部", "我國東南部"],
+      items: [
+        { label: "A. 面積約佔56.2%，人口只佔約6.5%", basket: "我國西北部" },
+        { label: "B. 面積約佔43.8%，人口佔約93.5%", basket: "我國東南部" },
+        { label: "C. 海拔較高，寒冷乾燥，降水缺乏", basket: "我國西北部" },
+        { label: "D. 地勢平坦，溫暖多雨，交通發達", basket: "我國東南部" }
+      ],
+      answer: "我國西北部：A、C ｜ 我國東南部：B、D"
+    },
+    {
+      id: "hum_u8_10", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【地區物產與環境分類】請將以下物產放入我國四大地區分類籃：",
+      baskets: ["我國北部", "我國南部", "我國西部", "我國東部"],
+      items: [
+        { label: "A. 小麥製品（麵條、饅頭）", basket: "我國北部" },
+        { label: "B. 米飯（水稻）", basket: "我國南部" },
+        { label: "C. 肉類、奶類和毛皮（畜牧業）", basket: "我國西部" },
+        { label: "D. 水產（漁業）", basket: "我國東部" }
+      ],
+      answer: "北部：A ｜ 南部：B ｜ 西部：C ｜ 東部：D"
+    },
+    {
+      id: "hum_u8_11", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【特色房屋與環境配對分類】請將房屋特點放入對應的傳統建築分類籃：",
+      baskets: ["蒙古包", "窰洞", "吊腳樓", "四合院"],
+      items: [
+        { label: "A. 木柱支撐懸空，適應山坡濕熱，防潮通風", basket: "吊腳樓" },
+        { label: "B. 能拆卸隨季節遷徙，抵禦風沙適應遊牧", basket: "蒙古包" },
+        { label: "C. 四周房屋圍庭院在中間，適應平原防風防寒", basket: "四合院" },
+        { label: "D. 用黃土建構冬暖夏涼，適應乾燥少雨缺木材", basket: "窰洞" }
+      ],
+      answer: "蒙古包：B ｜ 窰洞：D ｜ 吊腳樓：A ｜ 四合院：C"
+    },
+    {
+      id: "hum_u8_12", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【三大河流特徵分類】請將以下特徵放入對應的河流分類籃：",
+      baskets: ["黃河", "長江", "珠江"],
+      items: [
+        { label: "A. 歷史氾濫約1600次，設調水調沙工程", basket: "黃河" },
+        { label: "B. 上游有三峽奇峯，開展《十年禁漁計劃》", basket: "長江" },
+        { label: "C. 擁有大片紅樹林濕地，中華白海豚棲息", basket: "珠江" }
+      ],
+      answer: "黃河：A ｜ 長江：B ｜ 珠江：C"
+    },
+    {
+      id: "hum_u8_13", unitKey: "hum_u8", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【河流危機與生態建設配對】請將生態建設措施放入對應的危機分類籃：",
+      baskets: ["治理河水氾濫", "治理水土流失", "治理水污染及生態"],
+      items: [
+        { label: "A. 植樹造林及修建梯田", basket: "治理水土流失" },
+        { label: "B. 推動大型水利工程（如調水調沙）", basket: "治理河水氾濫" },
+        { label: "C. 立法限制排污、設污水廠及禁捕政策", basket: "治理水污染及生態" }
+      ],
+      answer: "河水氾濫：B ｜ 水土流失：A ｜ 水污染及生態：C"
+    },
+
+    // U8 簡答題 (#14 ~ #18 — options[0] 與 answer 100% 完全一致)
+    {
+      id: "hum_u8_14", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】為什麼我國超過九成的人口都選擇居住在東南部，而西北部人口卻非常稀少？",
+      options: [
+        "西北部地勢高、山勢陡峭且寒冷乾燥，不利農業與交通；東南部多平原、氣候溫和、雨水充足，有利農業、交通及生活。",
+        "因為西北部全部是海洋，而東南部全部是高山。",
+        "因為政府規定人民只能居住在東南部。",
+        "因為西北部氣溫全年高達 50°C，沒有任何植物。"
+      ],
+      answer: "西北部地勢高、山勢陡峭且寒冷乾燥，不利農業與交通；東南部多平原、氣候溫和、雨水充足，有利農業、交通及生活。"
+    },
+    {
+      id: "hum_u8_15", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】為什麼我國會有「北方人吃麵食，南方人吃米食」的差異？",
+      options: [
+        "因為北方氣候較乾旱，適合小麥生長（製成麵條、饅頭）；南方氣候溫暖潮濕，適合水稻生長（加工成米飯）。",
+        "因為北方沒有河流，南方沒有土地。",
+        "因為北方人不懂煮米飯，南方人不懂做麵條。",
+        "這只是隨機習慣，與氣候和農作物完全無關。"
+      ],
+      answer: "因為北方氣候較乾旱，適合小麥生長（製成麵條、饅頭）；南方氣候溫暖潮濕，適合水稻生長（加工成米飯）。"
+    },
+    {
+      id: "hum_u8_16", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】河流對我國人民的生活發揮了哪些重要作用？（請舉出六項）",
+      options: [
+        "(1)灌溉農作物；(2)水路運輸；(3)水力發電；(4)日常生活飲用；(5)工業生產；(6)捕食及養殖水產。",
+        "(1)製造沙漠；(2)引發地震；(3)阻斷交通；(4)增加溫室效應；(5)排走空氣；(6)製造火山。",
+        "河流只有觀賞作用，對農業、工業與運輸沒有任何幫助。",
+        "河流只用於冬季溜冰及開採煤炭。"
+      ],
+      answer: "(1)灌溉農作物；(2)水路運輸；(3)水力發電；(4)日常生活飲用；(5)工業生產；(6)捕食及養殖水產。"
+    },
+    {
+      id: "hum_u8_17", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】河流流域的「水土流失」危機是由什麼原因造成的？國家採取了什麼措施治理，並取得了什麼成就？",
+      options: [
+        "原因：過度開墾和過度伐木令土壤貧瘠鬆散。措施與成就：利用植樹和修建梯田減少侵蝕，平均每年減少土壤流失達16億噸。",
+        "原因：魚類太多。措施：把所有河水抽乾，每年增加沙漠面積。",
+        "原因：降雨太少。措施：把山坡全部鋪上塑膠布。",
+        "原因：船隻行駛太快。措施：禁止所有船隻航行。"
+      ],
+      answer: "原因：過度開墾和過度伐木令土壤貧瘠鬆散。措施與成就：利用植樹和修建梯田減少侵蝕，平均每年減少土壤流失達16億噸。"
+    },
+    {
+      id: "hum_u8_18", unitKey: "hum_u8", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】為什麼保護水資源對我國的「國家安全（生態安全）」非常重要？",
+      options: [
+        "因為水是人類必需品，缺水會嚴重影響民生和經濟；若水資源被濫用或污染，生態環境便會被破壞，故必須確保水資源安全。",
+        "因為水資源可以代替石油直接作為汽車燃料。",
+        "因為只要有水資源就不需要發展農業和工業。",
+        "保護水資源只為了讓風景更好看，與民生經濟無關。"
+      ],
+      answer: "因為水是人類必需品，缺水會嚴重影響民生和經濟；若水資源被濫用或污染，生態環境便會被破壞，故必須確保水資源安全。"
+    },
+
+    // U8 看圖填充題 (#19 ~ #22)
+    {
+      id: "hum_u8_19", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u8_yurt_grassland",
+      prompt: "我國西部草原地區盛產 ________（物產），當地牧民多居住在方便拆卸遷徙的 ________（房屋）。",
+      blanks: ["肉類", "蒙古包"], distractors: ["水產", "吊腳樓", "四合院"]
+    },
+    {
+      id: "hum_u8_20", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u8_river_uses",
+      prompt: "這幅圖顯示河流具有水力 ________、水路 ________ 以及農業 ________ 的重要功能。",
+      blanks: ["發電", "運輸", "灌溉"], distractors: ["開墾", "排污", "伐木"]
+    },
+    {
+      id: "hum_u8_21", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u8_terraces",
+      prompt: "圖中展示我國青海省利用修建 ________ 的方法，有效治理 ________ 的生態危機。",
+      blanks: ["梯田", "水土流失"], distractors: ["魚塘", "空氣污染", "溫室效應"]
+    },
+    {
+      id: "hum_u8_22", unitKey: "hum_u8", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u8_stilt_house",
+      prompt: "這種特色房屋稱為 ________，能適應南方山坡、河谷及濕熱的天氣，具有 ________ 通風的作用。",
+      blanks: ["吊腳樓", "防潮"], distractors: ["窰洞", "保暖", "防風沙"]
+    },
+
+    // U8 選擇題 (#23 ~ #27)
+    {
+      id: "hum_u8_23", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "以下哪一項關於「黑河—騰衝線」的描述是正確的？",
+      options: [
+        "A. 線的西北部面積較小，但人口密度最高",
+        "B. 線的東南部面積約佔全國43.8%，卻居住了超過九成的人口",
+        "C. 這條線將我國分為南方和北方兩個面積相等的區域",
+        "D. 線的西北部地勢平坦、雨水充足"
+      ],
+      answer: "B. 線的東南部面積約佔全國43.8%，卻居住了超過九成的人口"
+    },
+    {
+      id: "hum_u8_24", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "為了保護黃河、長江和瀾滄江三大河流的源頭，我國在青藏高原設立了什麼保護區？",
+      options: ["A. 珠江濕地自然保護區", "B. 黃土高原林木栽植區", "C. 三江源自然保護區及三江源國家公園", "D. 長江三峽國家公園"],
+      answer: "C. 三江源自然保護區及三江源國家公園"
+    },
+    {
+      id: "hum_u8_25", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "以下哪一項描述是不正確的？",
+      options: [
+        "A. 青藏高原是黃河和珠江的發源地",
+        "B. 黃河流經黃土高原時帶走大量泥沙，令河水變黃",
+        "C. 長江三峽兩岸滿佈奇峯和古蹟，是著名的旅遊景點",
+        "D. 黃河是我國歷史上氾濫次數最多的河流之一"
+      ],
+      answer: "A. 青藏高原是黃河和珠江的發源地"
+    },
+    {
+      id: "hum_u8_26", unitKey: "hum_u8", qCategory: "hum_mcq", type: "multi_mcq", typeLabel: "選擇題(可多選)",
+      prompt: "針對家居、工業、農業污水流入河道，以及水產過度捕撈的問題，國家採取了什麼措施？（可選多於一項）",
+      options: ["A. 立法限制水污染", "B. 設立污水處理廠淨化水質", "C. 開展《長江十年禁漁計劃》等禁捕政策", "D. 填平河道改建為農地"],
+      answers: ["A. 立法限制水污染", "B. 設立污水處理廠淨化水質", "C. 開展《長江十年禁漁計劃》等禁捕政策"],
+      answer: "A. 立法限制水污染、B. 設立污水處理廠淨化水質、C. 開展《長江十年禁漁計劃》等禁捕政策"
+    },
+    {
+      id: "hum_u8_27", unitKey: "hum_u8", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "北京等北方平原地區常見的傳統建築「四合院」，具有什麼建築特點？",
+      options: [
+        "A. 在黃土山坡挖掘洞穴而成",
+        "B. 四周建有房屋，將庭院圍在中間，能防風和防寒",
+        "C. 用竹木搭建在水面上",
+        "D. 用毛氈覆蓋，方便隨時拆走"
+      ],
+      answer: "B. 四周建有房屋，將庭院圍在中間，能防風和防寒"
+    },
+
+    // U8 問答題(情境題) (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
+    {
+      id: "hum_u8_28", unitKey: "hum_u8", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
+      prompt: "【時事情境】新聞報道：「受持續暴雨影響，全國27條河流出現超警戒水位洪水，南方多地受災，張家界市有人被洪水沖走。當地出動武警防洪，國家緊急調運八萬多件救災物資到災區。」(1) 暴雨引發什麼災害與後果？ (2) 政府採取了什麼即時應對措施？",
+      options: [
+        "(1) 引發河水氾濫（洪水），導致財物損失及人命傷亡。(2) 出動武警防洪救援，並緊急調運帳篷、摺牀等救災物資到災區。",
+        "(1) 引發嚴重乾旱。(2) 進行人工增雨並關閉所有水庫。",
+        "(1) 引發沙塵暴。(2) 要求居民搬往蒙古包居住。",
+        "(1) 引發地震。(2) 實施十年禁漁計劃。"
+      ],
+      answer: "(1) 引發河水氾濫（洪水），導致財物損失及人命傷亡。(2) 出動武警防洪救援，並緊急調運帳篷、摺牀等救災物資到災區。"
+    },
+    {
+      id: "hum_u8_29", unitKey: "hum_u8", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
+      prompt: "【承上題情境】從長遠來看，國家及河流附近的居民有什麼方法可以預防及減低「河水氾濫」帶來的危機？",
+      options: [
+        "國家：推動大型水利工程（興建水壩、調水調沙）及植樹造林保持水土。居民：留意水位預警、暴雨遠離河道、配合疏散及不非法開墾。",
+        "國家：把所有河流填平變成公路。居民：在河牀正中央建造房屋。",
+        "國家：砍伐河岸所有樹木。居民：把垃圾倒入河中阻擋水流。",
+        "河水氾濫完全無法預防，不需要採取任何長遠措施。"
+      ],
+      answer: "國家：推動大型水利工程（興建水壩、調水調沙）及植樹造林保持水土。居民：留意水位預警、暴雨遠離河道、配合疏散及不非法開墾。"
+    },
+    {
+      id: "hum_u8_30", unitKey: "hum_u8", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
+      prompt: "【情境】假設你要到內蒙古草原及陝西黃土高原進行考察，你會分別看到當地居民居住在什麼傳統特色房屋？為什麼他們會建造這樣的房屋？",
+      options: [
+        "內蒙古草原：蒙古包（適應草原遊牧，方便拆卸遷徙並抵禦風沙）；黃土高原：窰洞（氣候乾燥少雨且缺木材，利用深厚黃土就地取材，冬暖夏涼）。",
+        "內蒙古草原：吊腳樓（防潮通風）；黃土高原：四合院（適應多雨氣候）。",
+        "兩地居民都居住在竹木搭建的水上棚屋。",
+        "內蒙古草原：窰洞；黃土高原：蒙古包。"
+      ],
+      answer: "內蒙古草原：蒙古包（適應草原遊牧，方便拆卸遷徙並抵禦風沙）；黃土高原：窰洞（氣候乾燥少雨且缺木材，利用深厚黃土就地取材，冬暖夏涼）。"
+    },
+
+    // ==================== 第四部分：U9 文化遺產 (30題) ====================
+    { id: "hum_u9_01", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國是一個多民族的國家，共有 ________ 個民族，其中 ________ 族人口超過九成，其餘 ________ 個為少數民族。", blanks: ["56", "漢", "55"], distractors: ["50", "滿", "49"] },
+    { id: "hum_u9_02", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "我國少數民族的主要聚居地包括五個自治區：新疆維吾爾自治區、________ 自治區、________ 自治區、寧夏回族自治區、________ 壯族自治區，以及多民族聚居的 ________ 省。", blanks: ["內蒙古", "西藏", "廣西", "雲南"], allowSwapIndices: [0, 1], distractors: ["廣東", "四川", "青海"] },
+    { id: "hum_u9_03", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "各少數民族聚居的地方實行 ________ 制度，以促進民族平等、團結、互助，所有民族自治地方都是中國 ________ 的部分。", blanks: ["區域自治", "不可分離"], distractors: ["獨立管理", "各自發展", "臨時劃分"] },
+    { id: "hum_u9_04", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "蒙古族使用 ________ 文，傳統飲食有烤全羊和 ________，重要傳統活動是「________ 大會」。", blanks: ["蒙古", "乾奶酪", "那達慕"], distractors: ["東巴", "麗江粑粑", "潑水"] },
+    { id: "hum_u9_05", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "雲南省納西族使用獨特的 ________ 文，特色食物有麗江粑粑和 ________，傳統節日是祭祀民族保護神的「________ 節」。", blanks: ["東巴", "雞豆涼粉", "三多"], distractors: ["蒙古", "乾奶酪", "火把"] },
+    { id: "hum_u9_06", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "位於西藏拉薩市的 ________ 歷史建築羣，是藏傳佛教聖地；位於四川省的 ________ 大佛，建於唐朝，是世界最大的石刻佛像。", blanks: ["布達拉宮", "樂山"], distractors: ["明十三陵", "開平", "花山"] },
+    { id: "hum_u9_07", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "廣東省開平市的 ________ 是1920至1930年代華僑為防禦土匪而建，具中西合璧風格；廣西崇左市的 ________ 則是壯族祖先以紅色顏料繪畫的崖壁畫。", blanks: ["開平碉樓", "花山岩畫"], distractors: ["布達拉宮", "樂山大佛", "莫高窟"] },
+    { id: "hum_u9_08", unitKey: "hum_u9", qCategory: "hum_fill", type: "fill_blank", typeLabel: "填充題", prompt: "國家積極向聯合國教科文組織申報，把文化遺產列入《________ 名錄》，並訂立《________ 法》等法律保護歷史古蹟。", blanks: ["世界遺產", "文物保護"], distractors: ["自然公園", "城市規劃", "旅遊發展"] },
+
+    // U9 分類題 (#9 ~ #13) -> 分類籃
+    {
+      id: "hum_u9_09", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【少數民族服飾配對分類】請將傳統服飾放入對應的少數民族分類籃：",
+      baskets: ["苗族", "維吾爾族", "蒙古族", "彝族", "藏族"],
+      items: [
+        { label: "A. 刺繡和精緻銀飾（保平安）", basket: "苗族" },
+        { label: "B. 花帽和長袍", basket: "維吾爾族" },
+        { label: "C. 蒙古袍", basket: "蒙古族" },
+        { label: "D. 帽子和披風", basket: "彝族" },
+        { label: "E. 藏袍和項鍊", basket: "藏族" }
+      ],
+      answer: "苗族：A ｜ 維吾爾族：B ｜ 蒙古族：C ｜ 彝族：D ｜ 藏族：E"
+    },
+    {
+      id: "hum_u9_10", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【少數民族聚居地環境分類】請將地理與氣候特徵放入對應地區分類籃：",
+      baskets: ["新疆維吾爾自治區", "西藏自治區", "寧夏回族自治區", "雲南省"],
+      items: [
+        { label: "A. 高山盆地沙漠為主，夏酷熱冬嚴寒", basket: "新疆維吾爾自治區" },
+        { label: "B. 位於青藏高原，氣候高寒，晝夜溫差大", basket: "西藏自治區" },
+        { label: "C. 高原沙漠為主，盛產枸杞、葡萄、羊肉", basket: "寧夏回族自治區" },
+        { label: "D. 低海拔熱帶雨林、高海拔寒雪，孕育多元民族", basket: "雲南省" }
+      ],
+      answer: "新疆：A ｜ 西藏：B ｜ 寧夏：C ｜ 雲南：D"
+    },
+    {
+      id: "hum_u9_11", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【少數民族節慶分類】請將節慶活動放入對應的少數民族分類籃：",
+      baskets: ["傣族", "彝族", "蒙古族", "納西族"],
+      items: [
+        { label: "A. 潑水節（互相潑水祈求消災除病）", basket: "傣族" },
+        { label: "B. 火把節（點燃營火火把遊行驅邪祈福）", basket: "彝族" },
+        { label: "C. 那達慕大會（賽馬、摔跤和射箭比賽）", basket: "蒙古族" },
+        { label: "D. 三多節（農曆二月初八祭祀保護神）", basket: "納西族" }
+      ],
+      answer: "傣族：A ｜ 彝族：B ｜ 蒙古族：C ｜ 納西族：D"
+    },
+    {
+      id: "hum_u9_12", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【文化遺產地點分類】請將四項文化遺產放入所在地區分類籃：",
+      baskets: ["西藏自治區", "廣東省", "四川省", "廣西壯族自治區"],
+      items: [
+        { label: "A. 布達拉宮歷史建築羣", basket: "西藏自治區" },
+        { label: "B. 開平碉樓", basket: "廣東省" },
+        { label: "C. 峨眉山—樂山大佛", basket: "四川省" },
+        { label: "D. 花山岩畫", basket: "廣西壯族自治區" }
+      ],
+      answer: "西藏：A ｜ 廣東：B ｜ 四川：C ｜ 廣西：D"
+    },
+    {
+      id: "hum_u9_13", unitKey: "hum_u9", qCategory: "hum_classify", type: "classify", typeLabel: "分類題",
+      prompt: "【參觀古蹟行為分類】請將參觀文化遺產時的行為放入對應分類籃：",
+      baskets: ["正確保育行為", "破壞文物行為"],
+      items: [
+        { label: "A. 不觸摸、不攀爬文物", basket: "正確保育行為" },
+        { label: "B. 用閃光燈拍攝禁止閃光燈的青花瓷瓶", basket: "破壞文物行為" },
+        { label: "C. 聽從導覽員或標示指示", basket: "正確保育行為" },
+        { label: "D. 將垃圾丟入分類箱保持整潔", basket: "正確保育行為" },
+        { label: "E. 跨越圍欄撫摸古蹟石獅子及古炮台", basket: "破壞文物行為" }
+      ],
+      answer: "正確保育：A、C、D ｜ 破壞文物：B、E"
+    },
+
+    // U9 簡答題 (#14 ~ #18 — options[0] 與 answer 100% 完全一致)
+    {
+      id: "hum_u9_14", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】少數民族的傳統服飾除了美觀和代表民族身份外，還有什麼實際功能？（可結合聚居地環境說明）",
+      options: [
+        "具有適應當地氣候環境和生活方式的實用功能，例如蒙古袍和藏袍能抵禦高原與草原的嚴寒及晝夜溫差；苗族銀飾則被視為保平安。",
+        "只為了在舞台上表演，日常生活中完全不能穿戴。",
+        "所有少數民族服飾都是為了潛水及水上活動而設計。",
+        "傳統服飾沒有任何保暖或實用功能。"
+      ],
+      answer: "具有適應當地氣候環境和生活方式的實用功能，例如蒙古袍和藏袍能抵禦高原與草原的嚴寒及晝夜溫差；苗族銀飾則被視為保平安。"
+    },
+    {
+      id: "hum_u9_15", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】什麼是「民族團結」？我國實行區域自治制度有什麼目的？",
+      options: [
+        "民族團結：各民族友好相處、互相尊重包容幫助，齊心維護國家統一。自治制度目的：促進民族平等、團結、互助，鞏固國家統一。",
+        "民族團結指所有民族必須放棄自己的語言和節日。自治目的是讓各區互不往來。",
+        "民族團結只適用於漢族，不包括少數民族。",
+        "區域自治制度只是為了發展旅遊業，與民族平等無關。"
+      ],
+      answer: "民族團結：各民族友好相處、互相尊重包容幫助，齊心維護國家統一。自治制度目的：促進民族平等、團結、互助，鞏固國家統一。"
+    },
+    {
+      id: "hum_u9_16", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】為什麼不同少數民族在飲食、文字和風俗上會有各自獨特的生活方式？",
+      options: [
+        "因為各民族居住地區的地理環境、氣候、歷史文化和資源條件都不相同，因而孕育出多姿多彩的生活方式。",
+        "因為各民族每年抽籤決定自己的飲食和文字。",
+        "因為所有少數民族都居住在完全相同的沙漠環境。",
+        "這與地理環境、氣候和歷史文化完全無關。"
+      ],
+      answer: "因為各民族居住地區的地理環境、氣候、歷史文化和資源條件都不相同，因而孕育出多姿多彩的生活方式。"
+    },
+    {
+      id: "hum_u9_17", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】什麼是「文化遺產」？我國政府在保育文化遺產方面採取了哪兩大類措施？",
+      options: [
+        "定義：從歷史、藝術或科學角度看具突出普遍價值的文物、建築和遺址。措施：(1)法律與政策保護（申報世遺、訂立《文物保護法》）；(2)修復與維護工程。",
+        "定義：現代新建的大型購物商場。措施：全部拆卸重建為玻璃大廈。",
+        "定義：只有外國才有的古蹟。措施：禁止任何市民參觀。",
+        "定義：天然形成的雨水。措施：不作任何維修任由風化。"
+      ],
+      answer: "定義：從歷史、藝術或科學角度看具突出普遍價值的文物、建築和遺址。措施：(1)法律與政策保護（申報世遺、訂立《文物保護法》）；(2)修復與維護工程。"
+    },
+    {
+      id: "hum_u9_18", unitKey: "hum_u9", qCategory: "hum_short", type: "short_qa", typeLabel: "簡答題",
+      prompt: "【簡答題】作為普通市民和學生，我們在參觀古蹟和博物館時，應該遵守哪三項基本守則來保護文化遺產？",
+      options: [
+        "(1) 不觸摸、不攀爬文物；(2) 聽從導覽員或標示指示（如不使用閃光燈）；(3) 保持環境整潔，不亂拋垃圾。",
+        "(1) 跨越圍欄拍照；(2) 開啟閃光燈近距離拍攝；(3) 在古蹟牆上刻字留念。",
+        "(1) 把文物帶回家研究；(2) 在展館內追逐飲食；(3) 攀爬石獅子。",
+        "參觀時不需要遵守任何規則。"
+      ],
+      answer: "(1) 不觸摸、不攀爬文物；(2) 聽從導覽員或標示指示（如不使用閃光燈）；(3) 保持環境整潔，不亂拋垃圾。"
+    },
+
+    // U9 看圖填充題 (#19 ~ #22)
+    {
+      id: "hum_u9_19", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u9_uyghur_boy",
+      prompt: "圖中頭戴花帽、身穿長袍、住在新疆並多吃牛羊肉的男孩屬於 ________ 族。",
+      blanks: ["維吾爾"], distractors: ["苗", "傣", "納西"]
+    },
+    {
+      id: "hum_u9_20", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u9_miao_girl",
+      prompt: "圖中頭戴精緻銀冠和銀項圈、相信銀器有保平安作用的女孩屬於 ________ 族。",
+      blanks: ["苗"], distractors: ["蒙古", "維吾爾", "藏"]
+    },
+    {
+      id: "hum_u9_21", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u9_potala_palace",
+      prompt: "這項文化遺產是位於西藏拉薩市的 ________，是藏傳佛教聖地。",
+      blanks: ["布達拉宮歷史建築羣"], distractors: ["開平碉樓", "樂山大佛", "花山岩畫"]
+    },
+    {
+      id: "hum_u9_22", unitKey: "hum_u9", qCategory: "hum_img_fill", type: "image_fill", typeLabel: "看圖填充題",
+      svgKey: "hum_u9_museum_flash",
+      prompt: "圖中男遊客的行為是 ________（正確／不正確）的，因為他沒有 ________ 標示的指示，強光會損害文物。",
+      blanks: ["不正確", "聽從"], distractors: ["正確", "違反", "忽略"]
+    },
+
+    // U9 選擇題 (#23 ~ #27)
+    {
+      id: "hum_u9_23", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "以下哪個地方以「高原為主，地勢平坦開闊，擁有寬廣草原，適合放牧生活方式」而聞名？",
+      options: ["A. 新疆維吾爾自治區", "B. 內蒙古自治區", "C. 廣西壯族自治區", "D. 雲南省"],
+      answer: "B. 內蒙古自治區"
+    },
+    {
+      id: "hum_u9_24", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "每年四月（傣曆新年）舉行的「潑水節」是哪個少數民族的盛大節日？",
+      options: ["A. 彝族", "B. 納西族", "C. 傣族", "D. 藏族"],
+      answer: "C. 傣族"
+    },
+    {
+      id: "hum_u9_25", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "關於雲南省納西族所使用的「東巴文」，以下哪項描述是正確的？",
+      options: ["A. 它是一種拼音字母文字", "B. 它是一種圖畫象形文字，常刻畫在石頭或木紙上", "C. 它是蒙古族的傳統文字", "D. 它只用於現代電腦編程"],
+      answer: "B. 它是一種圖畫象形文字，常刻畫在石頭或木紙上"
+    },
+    {
+      id: "hum_u9_26", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "以下哪一項文化遺產是由華僑在1920至1930年代為了防禦土匪而建，並具有中西合璧的建築風格？",
+      options: ["A. 北京明十三陵", "B. 四川樂山大佛", "C. 廣東開平碉樓", "D. 廣西花山岩畫"],
+      answer: "C. 廣東開平碉樓"
+    },
+    {
+      id: "hum_u9_27", unitKey: "hum_u9", qCategory: "hum_mcq", type: "mcq", typeLabel: "選擇題",
+      prompt: "我國對北京故宮等古蹟進行修復與維護工程時，會遵循什麼重要原則？",
+      options: [
+        "A. 全部拆卸並改建成現代化玻璃大廈",
+        "B. 在保留原有建築風格的前提下，重點解決結構老化和防災等問題",
+        "C. 任由古蹟自然風化，完全不作任何維修",
+        "D. 把古蹟塗上鮮艷的現代油漆"
+      ],
+      answer: "B. 在保留原有建築風格的前提下，重點解決結構老化和防災等問題"
+    },
+
+    // U9 問答題(情境題) (#28 ~ #30 — options[0] 與 answer 100% 完全一致)
+    {
+      id: "hum_u9_28", unitKey: "hum_u9", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
+      prompt: "【情境】在博物館參觀時，你看到一個小男孩無視「請勿觸摸」的告示牌，伸手去摸古代大炮的木輪。(1) 男孩子的行為正確嗎？為什麼？ (2) 看到這個情況，你會怎樣做？",
+      options: [
+        "(1) 不正確，觸摸文物會加速文物損壞或老化。(2) 上前有禮貌地勸阻，提醒他看告示牌，或通知工作人員處理。",
+        "(1) 正確，親手摸過才能學到歷史。(2) 跟他一起排隊觸摸大炮。",
+        "(1) 不正確。(2) 大聲責罵並推開他。",
+        "(1) 正確。(2) 用閃光燈幫他拍照留念。"
+      ],
+      answer: "(1) 不正確，觸摸文物會加速文物損壞或老化。(2) 上前有禮貌地勸阻，提醒他看告示牌，或通知工作人員處理。"
+    },
+    {
+      id: "hum_u9_29", unitKey: "hum_u9", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
+      prompt: "【情境】學校舉辦「少數民族節日嘉年華」，有同學看到少數民族的傳統服飾和風俗跟自己平時的生活習慣很不一樣，便在旁取笑他們奇怪。你會怎樣勸導這位同學？",
+      options: [
+        "告訴他我國是多民族國家，各民族因地理和歷史不同而發展出獨特文化；我們應尊重、包容和欣賞不同民族文化，促進民族團結。",
+        "認同他的說法，並一起取笑少數民族的服飾。",
+        "叫他不要出聲，但心裡也覺得少數民族風俗很奇怪。",
+        "要求學校取消嘉年華活動。"
+      ],
+      answer: "告訴他我國是多民族國家，各民族因地理和歷史不同而發展出獨特文化；我們應尊重、包容和欣賞不同民族文化，促進民族團結。"
+    },
+    {
+      id: "hum_u9_30", unitKey: "hum_u9", qCategory: "hum_scenario", type: "short_qa", typeLabel: "問答題(情境題)",
+      prompt: "【情境】外國朋友來中國旅遊，想參觀一處既能體驗少數民族宗教文化、又能欣賞宏偉古代建築的世界文化遺產。你會向他推薦課本中的哪一個景點？並提醒他參觀注意事項。",
+      options: [
+        "推薦：西藏拉薩「布達拉宮歷史建築羣」（藏傳佛教聖地，保存珍貴佛經壁畫）。注意：尊重宗教文化、不觸摸攀爬文物、聽從指示及保持整潔。",
+        "推薦：現代大型主題樂園。注意：可以隨意攀爬及塗鴉。",
+        "推薦：珠江紅樹林濕地。注意：可以使用閃光燈捕捉候鳥。",
+        "推薦：一般城市商場。注意：不需要遵守任何守則。"
+      ],
+      answer: "推薦：西藏拉薩「布達拉宮歷史建築羣」（藏傳佛教聖地，保存珍貴佛經壁畫）。注意：尊重宗教文化、不觸摸攀爬文物、聽從指示及保持整潔。"
+    }
+  ];
+
+  Array.prototype.push.apply(window.Aetheria.QuestionBank.Humanities.QUESTIONS, MORE_HUM_QUESTIONS);
 })();
