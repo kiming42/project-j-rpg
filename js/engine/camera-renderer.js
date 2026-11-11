@@ -1,7 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 無文字標籤清爽素材地圖與 NPC 任務狀態渲染器 (camera-renderer.js - v6.2)
- * 升級：1.移除地圖上所有素材採集點的文字標籤，徹底解決畫面擠迫問題 (僅保留清晰 16x16 專屬像素圖)
- *       2.NPC 頭頂動態區分 [!可接取] (黃)、[⏳進行中] (藍)、[✓可交付] (綠)
+ * Project J：艾瑟瑞亞的破曉 — 釣魚點標籤、帳篷入口任務標記與清爽地圖渲染器 (camera-renderer.js - v6.5)
+ * 修正：1.恢復所有水波釣魚點顯示「釣魚點 [按A]」標籤 (解決問題 4)
+ *       2.帳篷出入口 (linkedNpcId) 自動顯示帳篷內巴爾/雷恩的 [!新任務] / [✓可交付] 提示 (解決問題 6)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -14,6 +14,7 @@ window.Aetheria = window.Aetheria || {};
       pet: null,
       subPet: null,
       bridge: null,
+      portals: {},
       decos: {},
       nodes: {},
       npcs: {},
@@ -35,7 +36,10 @@ window.Aetheria = window.Aetheria || {};
 
       terrainLayer.innerHTML = "";
       entityLayer.innerHTML = "";
-      this.domPool = { hero: null, pet: null, subPet: null, bridge: null, decos: {}, nodes: {}, npcs: {}, monsters: {} };
+      this.domPool = {
+        hero: null, pet: null, subPet: null, bridge: null,
+        portals: {}, decos: {}, nodes: {}, npcs: {}, monsters: {}
+      };
 
       // 1. 地面泥土步道
       (mapObj.dirtBlobs || []).forEach(function(b) {
@@ -73,7 +77,8 @@ window.Aetheria = window.Aetheria || {};
         this.domPool.bridge = bridge;
       }
 
-      // 3. 傳送門與帳篷入口
+      // 3. 傳送門與帳篷入口 (支援動態顯示帳篷內 NPC 的任務標記)
+      const self = this;
       (mapObj.portals || []).forEach(function(p) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -82,12 +87,19 @@ window.Aetheria = window.Aetheria || {};
         el.style.width = "32px";
         el.style.height = "26px";
         el.style.zIndex = Math.round(p.y);
+
         const spKey = (p.icon === "cave" || p.icon === "abyss") ? "cracked_wall" : "crate";
-        const lblClass = "dom-label portal-lbl" + (p.labelBottom ? " lbl-bottom" : "");
-        el.innerHTML =
-          '<div class="' + lblClass + '">' + p.name + '</div>' +
-          '<img src="' + Sprites.getDataURL(spKey) + '" alt="">';
+        const lbl = document.createElement("div");
+        lbl.className = "dom-label portal-lbl" + (p.labelBottom ? " lbl-bottom" : "");
+        lbl.innerText = p.name;
+        el.appendChild(lbl);
+
+        const img = document.createElement("img");
+        img.src = Sprites.getDataURL(spKey);
+        el.appendChild(img);
+
         terrainLayer.appendChild(el);
+        self.domPool.portals[p.id] = { el: el, lbl: lbl, data: p };
       });
 
       // 4. 迷宮樹木與岩柱
@@ -104,8 +116,7 @@ window.Aetheria = window.Aetheria || {};
         terrainLayer.appendChild(el);
       });
 
-      // 5. 裝飾物與實地拓荒工程
-      const self = this;
+      // 5. 裝飾物、釣魚點與實地拓荒工程
       (mapObj.decos || []).forEach(function(d, idx) {
         const key = d.id || ("deco_" + idx);
         const el = document.createElement("div");
@@ -129,7 +140,7 @@ window.Aetheria = window.Aetheria || {};
         self.domPool.decos[key] = { el: el, img: img, lbl: lbl, data: d };
       });
 
-      // 6. 採集資源點：不顯示頭頂文字標籤，只渲染乾淨的 16x16 專屬像素圖示！
+      // 6. 採集資源點 (不顯示文字標籤，只保留乾淨 16x16 素材圖示)
       (mapObj.nodes || []).forEach(function(n) {
         const el = document.createElement("div");
         el.className = "dom-entity";
@@ -148,7 +159,6 @@ window.Aetheria = window.Aetheria || {};
           spKey = "mat_wood";
         }
 
-        // 素材一律不加 dom-label，保持地圖乾淨清爽
         el.innerHTML = '<img src="' + Sprites.getDataURL(spKey) + '" alt="">';
         entityLayer.appendChild(el);
         self.domPool.nodes[n.id] = { el: el, data: n };
@@ -276,7 +286,30 @@ window.Aetheria = window.Aetheria || {};
           }
         }
 
-        // 1. 更新實地拓荒工程與互動機關狀態
+        // 0. 動態更新帳篷入口標籤 (若帳篷內的巴爾或雷恩有任務，門口顯示 [!新任務] / [✓可交付])
+        Object.keys(this.domPool.portals).forEach(function(pId) {
+          const item = this.domPool.portals[pId];
+          const p = item.data;
+          const bottomCls = p.labelBottom ? " lbl-bottom" : "";
+          if (p.linkedNpcId && window.Aetheria.Data.getNpcMarkerState) {
+            const marker = window.Aetheria.Data.getNpcMarkerState(s, p.linkedNpcId);
+            if (marker === "ready") {
+              item.lbl.className = "dom-label quest-ready-lbl" + bottomCls;
+              item.lbl.innerText = "[✓可交付] " + p.name;
+            } else if (marker === "avail") {
+              item.lbl.className = "dom-label quest-avail-lbl" + bottomCls;
+              item.lbl.innerText = "[!新任務] " + p.name;
+            } else if (marker === "active") {
+              item.lbl.className = "dom-label quest-active-lbl" + bottomCls;
+              item.lbl.innerText = "[⏳進行中] " + p.name;
+            } else {
+              item.lbl.className = "dom-label portal-lbl" + bottomCls;
+              item.lbl.innerText = p.name;
+            }
+          }
+        }, this);
+
+        // 1. 更新實地拓荒工程、釣魚點與互動機關狀態
         Object.keys(this.domPool.decos).forEach(function(k) {
           const item = this.domPool.decos[k];
           const d = item.data;
@@ -287,19 +320,28 @@ window.Aetheria = window.Aetheria || {};
           }
           item.el.style.display = "block";
 
-          if (d.isProjectSite) {
+          // 問題 4 修正：所有釣魚點永久顯示「釣魚點 [按A]」標籤！
+          if (d.isFishingSpot) {
+            item.img.src = Sprites.getDataURL("fishing_spot");
+            item.lbl.style.display = "block";
+            item.lbl.className = "dom-label fish-lbl";
+            item.lbl.innerText = "釣魚點 [按A]";
+          } else if (d.isProjectSite) {
             const built = Boolean(s.projectsBuilt && s.projectsBuilt[d.projectId]);
             item.img.src = Sprites.getDataURL(built ? (d.builtSprite || d.sprite) : d.sprite);
             item.lbl.style.display = "block";
             if (!built) {
               item.lbl.className = "dom-label build-lbl";
-              item.lbl.innerText = "[工程] " + d.name;
+              item.lbl.innerText = "[工程] " + d.name + " [按A]";
             } else if (d.isClimbLadder) {
               item.lbl.className = "dom-label portal-lbl";
               item.lbl.innerText = d.name + " [按A攀爬]";
             } else if (d.projectId === "proj_z4_shelter") {
               item.lbl.className = "dom-label portal-lbl";
               item.lbl.innerText = "防風毛皮屋 [按A休整]";
+            } else if (d.projectId === "proj_camp_forge") {
+              item.lbl.className = "dom-label portal-lbl";
+              item.lbl.innerText = "鍛造熔爐 [已修復]";
             } else {
               item.lbl.style.display = "none";
             }
@@ -313,6 +355,10 @@ window.Aetheria = window.Aetheria || {};
             item.lbl.style.display = "block";
             item.lbl.className = "dom-label " + (unsealed ? "portal-lbl" : "lock-lbl");
             item.lbl.innerText = (d.name || "封印柱") + (unsealed ? " [已解封]" : " [按A解封]");
+          } else if (d.isCookPot) {
+            item.lbl.style.display = "block";
+            item.lbl.className = "dom-label";
+            item.lbl.innerText = "料理鍋 [按A]";
           } else {
             item.lbl.style.display = "none";
           }
@@ -326,7 +372,7 @@ window.Aetheria = window.Aetheria || {};
           item.el.style.display = isGone ? "none" : "block";
         }, this);
 
-        // 3. 更新 NPC 頭頂任務狀態標記 ([!可接取] 黃 / [⏳進行中] 藍 / [✓可交付] 綠)
+        // 3. 更新 NPC 頭頂任務狀態標記
         Object.keys(this.domPool.npcs).forEach(function(npcId) {
           const item = this.domPool.npcs[npcId];
           const npc = item.data;
