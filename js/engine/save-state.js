@@ -1,5 +1,5 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 全域狀態、雙封印柱紀錄與存檔中心 (save-state.js - v5.0)
+ * Project J：艾瑟瑞亞的破曉 — 全域狀態、高門檻公會晉升與動態懸賞追蹤 (save-state.js - v5.2)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -7,7 +7,7 @@ window.Aetheria = window.Aetheria || {};
   const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V5";
 
   const DEFAULT_STATE = {
-    version: "5.0",
+    version: "5.2",
     lv: 1,
     exp: 0,
     hp: 100,
@@ -20,7 +20,6 @@ window.Aetheria = window.Aetheria || {};
     maxStreak: 0,
     gold: 0,
 
-    // 職業、武器、防具與聖物飾品
     currentJob: "swordsman",
     unlockedJobs: ["swordsman"],
     equippedWeapon: "w_starter",
@@ -30,19 +29,16 @@ window.Aetheria = window.Aetheria || {};
     unlockedRelics: [],
     pinnedRecipe: "w_vine",
 
-    // 魔物核心符文鑲嵌槽
     socketedRunes: {
       weapon: null,
       armor: null
     },
 
-    // 營地燉肉鍋行前料理 Buff
     activeMeal: {
       id: null,
       battlesLeft: 0
     },
 
-    // 四大探索工具階級 (Lv.1 ~ Lv.3)
     tools: {
       pickaxe: 1,
       axe: 1,
@@ -50,13 +46,11 @@ window.Aetheria = window.Aetheria || {};
       hook: 1
     },
 
-    // 戰寵與遠征計數
     activePet: "pet_slime",
     unlockedPets: ["pet_slime"],
     shinyPets: [],
     expeditionCounter: 0,
 
-    // 26 種分區素材與消耗品 (新遊戲零素材開局)
     inventory: {
       iron: 0,
       mithril: 0,
@@ -86,7 +80,6 @@ window.Aetheria = window.Aetheria || {};
       tameFruit: 0
     },
 
-    // 四大古文明聖碑共鳴進度
     monolithPts: {
       chinese: 0,
       english: 0,
@@ -94,7 +87,6 @@ window.Aetheria = window.Aetheria || {};
       humanities: 0
     },
 
-    // 星象儀溫習科目與錯題記錄
     activeSubjects: {
       chinese: true,
       english: true,
@@ -104,21 +96,27 @@ window.Aetheria = window.Aetheria || {};
     questionMastery: {},
     wrongBook: [],
 
-    // 公會階級、單次俸祿紀錄、防刷冷卻與錯題討伐計數
+    // 公會階級、單次俸祿紀錄與動態懸賞池追蹤
     guildPoints: 0,
     guildRank: "F",
     claimedRankSupplies: [],
     activeBounties: [],
+    bountyPoolSeed: 1,
     bountyCooldowns: {},
     wrongBountyKills: 0,
+    bountyStats: {
+      kills: 0,
+      breaks: 0,
+      fishes: 0,
+      meals: 0
+    },
 
-    // 主線進度、守關領主擊破紀錄、區域雙封印柱解鎖紀錄與過場劇情紀錄
     questProgress: {
       mq_01_talked: false,
       bountiesCleared: 0
     },
     clearedBosses: {},
-    unlockedSeals: {}, // 例如 { seal_z1_1: true, seal_z1_2: true }
+    unlockedSeals: {},
     seenCutscenes: {},
 
     campBuildings: {
@@ -126,7 +124,6 @@ window.Aetheria = window.Aetheria || {};
       pasture: 1
     },
 
-    // 位置與步行解鎖傳送區域
     currentZone: "camp_hub",
     unlockedZones: ["camp_hub"],
     heroX: 320,
@@ -134,7 +131,7 @@ window.Aetheria = window.Aetheria || {};
     petX: 296,
     petY: 264,
     facing: "down",
-    openedNodes: {}, // 僅記錄一次性傳說寶箱、炸開的裂縫岩壁與點亮的火盆；高階工具素材與巨石/枯木跨區必刷新！
+    openedNodes: {},
     maxTowerFloor: 1
   };
 
@@ -192,16 +189,22 @@ window.Aetheria = window.Aetheria || {};
           if (!Array.isArray(this.data.unlockedZones) || this.data.unlockedZones.length === 0) {
             this.data.unlockedZones = ["camp_hub"];
           }
-          if (!Array.isArray(this.data.activeBounties)) this.data.activeBounties = [];
-          if (!Array.isArray(this.data.claimedRankSupplies)) this.data.claimedRankSupplies = [];
+          if (!Array.isArray(this.data.activeBounties)) {
+            this.data.activeBounties = [];
+          }
+          if (!Array.isArray(this.data.claimedRankSupplies)) {
+            this.data.claimedRankSupplies = [];
+          }
           if (!Array.isArray(this.data.unlockedArmors) || this.data.unlockedArmors.length === 0) {
             this.data.unlockedArmors = ["a_cloth"];
           }
           if (!this.data.unlockedSeals) this.data.unlockedSeals = {};
+          if (!this.data.bountyStats) this.data.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
         }
       } catch (e) {
         console.warn("讀取存檔失敗，使用預設進度:", e);
       }
+      this.updateGuildRank();
       this.recalcMaxHp();
       return this.data;
     },
@@ -246,6 +249,7 @@ window.Aetheria = window.Aetheria || {};
       try {
         const parsed = JSON.parse(jsonStr);
         this.data = deepMerge(DEFAULT_STATE, parsed);
+        this.updateGuildRank();
         this.recalcMaxHp();
         this.save();
         return true;
@@ -370,14 +374,18 @@ window.Aetheria = window.Aetheria || {};
       return leveledUp;
     },
 
+    // 大幅提高公會階級與俸祿晉升門檻 (需同時達標聲望點數與角色等級！)
     updateGuildRank: function() {
-      const pts = this.data.guildPoints;
-      if (pts >= 600) this.data.guildRank = "SS";
-      else if (pts >= 350) this.data.guildRank = "S";
-      else if (pts >= 180) this.data.guildRank = "A";
-      else if (pts >= 80)  this.data.guildRank = "C";
-      else if (pts >= 30)  this.data.guildRank = "E";
-      else this.data.guildRank = "F";
+      const s = this.data;
+      const pts = s.guildPoints || 0;
+      const lv = s.lv || 1;
+
+      if (pts >= 2200 && lv >= 45) s.guildRank = "SS";
+      else if (pts >= 1300 && lv >= 32) s.guildRank = "S";
+      else if (pts >= 700  && lv >= 20) s.guildRank = "A";
+      else if (pts >= 320  && lv >= 10) s.guildRank = "C";
+      else if (pts >= 120  && lv >= 4)  s.guildRank = "E";
+      else s.guildRank = "F";
     },
 
     checkJobUnlocks: function() {
