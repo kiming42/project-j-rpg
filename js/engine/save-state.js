@@ -1,23 +1,18 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 全域狀態、防具/符文鑲嵌/行前料理/四大聖碑中心 (save-state.js - v4.0)
- * 新增：1.防具系統 (equippedArmor / unlockedArmors) 與總防禦 getTotalDef()、環境抗性 hasHazardImmunity()
- *       2.魔物核心符文鑲嵌槽 (socketedRunes: { weapon, armor })
- *       3.營地行前料理 Buff (activeMeal: { id, battlesLeft })
- *       4.四大古文明聖碑共鳴點數 (monolithPts: { chinese, english, science, humanities }) 與永久神恩加成
- *       5.區域守關領主擊破紀錄 (clearedBosses) 與防刷懸賞冷卻 (bountyCooldowns / wrongBountyKills)
+ * Project J：艾瑟瑞亞的破曉 — 全域狀態、雙封印柱紀錄與存檔中心 (save-state.js - v5.0)
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
 (function() {
-  const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V4";
+  const SAVE_KEY = "PROJECT_J_AETHERIA_SAVE_V5";
 
   const DEFAULT_STATE = {
-    version: "4.0",
+    version: "5.0",
     lv: 1,
     exp: 0,
     hp: 100,
     maxHp: 100,
-    baseAtk: 22,
+    baseAtk: 24,
     baseDef: 6,
     bp: 1,
     maxBp: 5,
@@ -33,15 +28,15 @@ window.Aetheria = window.Aetheria || {};
     equippedArmor: "a_cloth",
     unlockedArmors: ["a_cloth"],
     unlockedRelics: [],
-    pinnedRecipe: "w_tide",
+    pinnedRecipe: "w_vine",
 
-    // 魔物核心符文鑲嵌槽 (武器 1 孔 + 防具 1 孔，可自由鑲嵌/拆下)
+    // 魔物核心符文鑲嵌槽
     socketedRunes: {
       weapon: null,
       armor: null
     },
 
-    // 營地燉肉鍋行前料理 Buff (持續 3 場戰鬥)
+    // 營地燉肉鍋行前料理 Buff
     activeMeal: {
       id: null,
       battlesLeft: 0
@@ -61,7 +56,7 @@ window.Aetheria = window.Aetheria || {};
     shinyPets: [],
     expeditionCounter: 0,
 
-    // 擴充版背包素材、6 大魔物破防核心與聖碑殘片 (新遊戲零素材開局)
+    // 26 種分區素材與消耗品 (新遊戲零素材開局)
     inventory: {
       iron: 0,
       mithril: 0,
@@ -91,7 +86,7 @@ window.Aetheria = window.Aetheria || {};
       tameFruit: 0
     },
 
-    // 四大古文明聖碑共鳴進度 (每答對該科題目 +2，獻上聖碑殘片 +20，滿 100 點解鎖終極神恩)
+    // 四大古文明聖碑共鳴進度
     monolithPts: {
       chinese: 0,
       english: 0,
@@ -114,16 +109,17 @@ window.Aetheria = window.Aetheria || {};
     guildRank: "F",
     claimedRankSupplies: [],
     activeBounties: [],
-    bountyCooldowns: {},  // 紀錄剛交付過的委託，需經過戰鬥才會刷新，杜絕原地無限刷
-    wrongBountyKills: 0,  // 接取錯題懸賞後，實際擊敗暗影幻象的次數 (需滿 2 隻才可交付)
+    bountyCooldowns: {},
+    wrongBountyKills: 0,
 
-    // 21 個主線進度、守關領主擊破紀錄與過場劇情觀看紀錄
+    // 主線進度、守關領主擊破紀錄、區域雙封印柱解鎖紀錄與過場劇情紀錄
     questProgress: {
       mq_01_talked: false,
       bountiesCleared: 0
     },
-    clearedBosses: {},    // 例如 { boss_z1: true, boss_cave1: true, boss_z2: true ... }
-    seenCutscenes: {},    // 例如 { intro: true, enter_z1: true ... }
+    clearedBosses: {},
+    unlockedSeals: {}, // 例如 { seal_z1_1: true, seal_z1_2: true }
+    seenCutscenes: {},
 
     campBuildings: {
       greenhouse: 0,
@@ -133,12 +129,12 @@ window.Aetheria = window.Aetheria || {};
     // 位置與步行解鎖傳送區域
     currentZone: "camp_hub",
     unlockedZones: ["camp_hub"],
-    heroX: 250,
-    heroY: 220,
-    petX: 228,
-    petY: 224,
+    heroX: 320,
+    heroY: 260,
+    petX: 296,
+    petY: 264,
     facing: "down",
-    openedNodes: {},
+    openedNodes: {}, // 僅記錄一次性傳說寶箱、炸開的裂縫岩壁與點亮的火盆；高階工具素材與巨石/枯木跨區必刷新！
     maxTowerFloor: 1
   };
 
@@ -201,6 +197,7 @@ window.Aetheria = window.Aetheria || {};
           if (!Array.isArray(this.data.unlockedArmors) || this.data.unlockedArmors.length === 0) {
             this.data.unlockedArmors = ["a_cloth"];
           }
+          if (!this.data.unlockedSeals) this.data.unlockedSeals = {};
         }
       } catch (e) {
         console.warn("讀取存檔失敗，使用預設進度:", e);
@@ -262,7 +259,6 @@ window.Aetheria = window.Aetheria || {};
       return Math.floor(35 * Math.pow(lv, 1.35));
     },
 
-    // 動態計算主角最大生命值 (基礎 + 等級 + 防具加成 + 旅人披風 + 料理 Buff + 紀元聖碑神恩)
     recalcMaxHp: function() {
       const s = this.data;
       const armors = (window.Aetheria.Data && window.Aetheria.Data.ARMORS) || {};
@@ -272,7 +268,6 @@ window.Aetheria = window.Aetheria || {};
       if (s.unlockedRelics && s.unlockedRelics.indexOf("r_cloak") !== -1) totalMax += 50;
       if (s.activeMeal && s.activeMeal.battlesLeft > 0 && s.activeMeal.id === "meal_soup") totalMax += 80;
 
-      // 📙 紀元編年聖碑 (人文科) 共鳴達 50 點：最大生命與防禦永久 +25%
       const humPts = (s.monolithPts && s.monolithPts.humanities) || 0;
       if (humPts >= 50) totalMax = Math.round(totalMax * 1.25);
 
@@ -281,7 +276,6 @@ window.Aetheria = window.Aetheria || {};
       return s.maxHp;
     },
 
-    // 計算總攻擊力 (含武器、職業、閃光寵、SS級公會、料理Buff、以及📘龍語聖碑神恩)
     getTotalAtk: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
@@ -291,17 +285,14 @@ window.Aetheria = window.Aetheria || {};
       const shinyBonus = (s.shinyPets && s.shinyPets.indexOf(s.activePet) !== -1) ? 1.2 : 1.0;
       const ssBonus = (s.guildRank === "SS") ? 1.3 : 1.0;
 
-      // 📘 龍語聖碑 (中文科) 神恩：25點 +15% ATK，75點 +30% ATK
       const chiPts = (s.monolithPts && s.monolithPts.chinese) || 0;
       const monoMult = (chiPts >= 75) ? 1.3 : (chiPts >= 25) ? 1.15 : 1.0;
 
-      // 鑲嵌炎魔熔核符文 (+25 ATK)
       const hasGolemRune = (s.socketedRunes && (s.socketedRunes.weapon === "coreGolem" || s.socketedRunes.armor === "coreGolem")) ? 25 : 0;
 
       return Math.round((s.baseAtk + wBonus + hasGolemRune) * jMult * shinyBonus * ssBonus * monoMult);
     },
 
-    // 計算總防禦力 (抵銷敵人每回合反擊傷害：基礎防禦 + 防具 DEF + 紀元聖碑神恩)
     getTotalDef: function() {
       const s = this.data;
       const armors = (window.Aetheria.Data && window.Aetheria.Data.ARMORS) || {};
@@ -314,7 +305,6 @@ window.Aetheria = window.Aetheria || {};
       return total;
     },
 
-    // 檢查是否具備極端環境抗性 ("cold" 雪原抗寒 | "heat" 火山抗熱)
     hasHazardImmunity: function(hazardType) {
       const s = this.data;
       const armors = (window.Aetheria.Data && window.Aetheria.Data.ARMORS) || {};
@@ -331,7 +321,6 @@ window.Aetheria = window.Aetheria || {};
       return false;
     },
 
-    // 計算額外破盾數 (含武器特效、職業、香煎秘銀魚排料理 Buff)
     getBonusShieldBreak: function() {
       const s = this.data;
       const weapons = (window.Aetheria.Data && window.Aetheria.Data.WEAPONS) || {};
@@ -342,7 +331,6 @@ window.Aetheria = window.Aetheria || {};
       return bonus;
     },
 
-    // 检查是否擁有 특정 符文核心鑲嵌
     hasRune: function(coreKey) {
       const r = this.data.socketedRunes;
       if (!r) return false;
@@ -354,7 +342,6 @@ window.Aetheria = window.Aetheria || {};
       guildPts = guildPts || 5;
       const s = this.data;
 
-      // 📕 阿爾比恩聖碑 (英文科) 75點神恩：連勝倍率上限提升至 2.0x
       const engPts = (s.monolithPts && s.monolithPts.english) || 0;
       let streakMult = 1.0;
       if (s.streak >= 5) streakMult = (engPts >= 75) ? 2.0 : 1.5;
@@ -410,17 +397,12 @@ window.Aetheria = window.Aetheria || {};
 
       if (s.expeditionCounter >= 5) {
         s.expeditionCounter = 0;
-        const idlePetCount = Math.max(1, s.unlockedPets.length);
-        const rankMult = (s.guildRank !== "F") ? 1.25 : 1.0;
-        const minedIron = Math.max(1, Math.ceil(idlePetCount * rankMult));
-        s.inventory.iron += minedIron;
-        s.inventory.wood += 1;
-
+        s.inventory.iron += 1;
         if (s.campBuildings.greenhouse > 0) {
           s.inventory.potionHint += 1;
-          msg = "牧場遠征：藍晶礦 +" + minedIron + "、原木 +1｜溫室：洞察藥水 +1";
+          msg = "牧場遠征：藍晶鐵礦 +1｜溫室：洞察藥水 +1";
         } else {
-          msg = "牧場遠征歸來：藍晶礦 +" + minedIron + "、翠風原木 +1";
+          msg = "牧場遠征歸來：藍晶鐵礦 +1";
         }
         this.save();
       }
