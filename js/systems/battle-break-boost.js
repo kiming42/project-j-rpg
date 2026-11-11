@@ -1,7 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 多層次像素戰鬥背景與動態懸賞追蹤引擎 (battle-break-boost.js - v5.2)
- * 升級：1.在戰鬥舞台自動生成遠景星空/雲海、雙層山脈剪影與區域像素景物（樹木、石柱、結晶、提燈、帆船）
- *       2.自動累計 s.bountyStats.breaks 與 s.bountyStats.kills 供公會動態支線懸賞即時檢定
+ * Project J：艾瑟瑞亞的破曉 — 多層次戰鬥舞台、雙掉落結算與破防核心必掉保證 (battle-break-boost.js - v6.1)
+ * 修正：1.winBattle() 同時發放 normalDrop 與 subDrop，確保松脂/玄武岩/珊瑚/強韌獸筋穩定產出
+ *       2.新增 e.wasBroken 標記：只要戰鬥中曾擊破過敵人護盾，即使敵人甦醒後才被擊殺，依然 100% 獲得魔物破防核心！
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -21,7 +21,6 @@ window.Aetheria = window.Aetheria || {};
     return (window.Aetheria.Data && window.Aetheria.Data.PETS[subId]) || null;
   }
 
-  // 根據當前地圖主題，生成多層次像素山脈地平線與像素景物裝飾
   function buildBattleScenery(arenaEl, theme, Sprites) {
     if (!arenaEl || !Sprites) return;
 
@@ -56,7 +55,6 @@ window.Aetheria = window.Aetheria || {};
         '</svg>';
     }
 
-    // 配置不同區域的像素背景道具
     let propList = [];
     if (theme === "forest") {
       propList = [
@@ -151,6 +149,7 @@ window.Aetheria = window.Aetheria || {};
       this.enemy = window.Aetheria.Data.createBattleEnemy(mapMonsterNode);
       this.enemy.name = stripEmoji(this.enemy.name);
       this.enemy.weak = "弱點：" + stripEmoji(this.enemy.weak);
+      this.enemy.wasBroken = false;
 
       if (s.currentJob === "archmage" && s.bp < 3) s.bp = 3;
       if (s.guildRank === "SS") s.bp = Math.min(s.maxBp, s.bp + 1);
@@ -176,6 +175,7 @@ window.Aetheria = window.Aetheria || {};
         this.enemy.shield = Math.max(0, this.enemy.shield - openBreak);
         if (this.enemy.shield === 0) {
           this.enemy.broken = true;
+          this.enemy.wasBroken = true;
           this.enemy.breakTurnsLeft = 2;
           this.enemy.intent = window.Aetheria.Data.rollNextIntent(this.enemy, 1);
         }
@@ -451,7 +451,7 @@ window.Aetheria = window.Aetheria || {};
     attemptTame: function() {
       const s = window.Aetheria.State.data;
       if ((s.inventory.tameFruit || 0) <= 0) {
-        window.Aetheria.UI.showToast("靈獸誘餌果不足！可在公會委託、金幣商店或煉金台取得。");
+        window.Aetheria.UI.showToast("靈獸誘餌果不足！可在營地工坊或金幣商店取得。");
         return;
       }
       s.inventory.tameFruit--;
@@ -464,7 +464,7 @@ window.Aetheria = window.Aetheria || {};
     useHealPotion: function() {
       const s = window.Aetheria.State.data;
       if ((s.inventory.potionHeal || 0) <= 0) {
-        window.Aetheria.UI.showToast("生命藥水不足！可在鐵匠鋪煉金或用金幣購買。");
+        window.Aetheria.UI.showToast("生命藥水不足！可在工坊煉金或用金幣購買。");
         return;
       }
       if (s.hp >= s.maxHp) {
@@ -636,6 +636,7 @@ window.Aetheria = window.Aetheria || {};
           e.shield = Math.max(0, e.shield - shieldDmg);
           if (e.shield === 0) {
             e.broken = true;
+            e.wasBroken = true; // 永久標記本戰已成功破防，獲勝必掉核心！
             e.breakTurnsLeft = 2;
             justBroken = true;
             if (!s.bountyStats) s.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
@@ -807,7 +808,6 @@ window.Aetheria = window.Aetheria || {};
 
       window.Aetheria.Audio.sfxLevelUp();
 
-      // 累計討伐數並自動輪替公會隨機懸賞池
       if (!s.bountyStats) s.bountyStats = { kills: 0, breaks: 0, fishes: 0, meals: 0 };
       s.bountyStats.kills = (s.bountyStats.kills || 0) + 1;
       s.bountyPoolSeed = (s.bountyPoolSeed || 1) + 1;
@@ -825,12 +825,18 @@ window.Aetheria = window.Aetheria || {};
         }
       }
 
+      // 同時發放主掉落物 (normalDrop) 與副掉落物 (subDrop)，確保松脂/玄武岩/珊瑚/強韌獸筋穩定取得！
       const normKey = e.normalDrop || "vine";
       s.inventory[normKey] = (s.inventory[normKey] || 0) + 1;
-
       let dropSummary = window.Aetheria.Data.MATERIALS[normKey].name + " +1";
 
-      if (e.broken && e.breakDrop) {
+      if (e.subDrop && window.Aetheria.Data.MATERIALS[e.subDrop]) {
+        s.inventory[e.subDrop] = (s.inventory[e.subDrop] || 0) + 1;
+        dropSummary += "、" + window.Aetheria.Data.MATERIALS[e.subDrop].name + " +1";
+      }
+
+      // 只要本場戰鬥曾成功擊破過護盾 (e.broken || e.wasBroken)，100% 獲得魔物破防核心！
+      if ((e.broken || e.wasBroken) && e.breakDrop) {
         s.inventory[e.breakDrop] = (s.inventory[e.breakDrop] || 0) + 1;
         dropSummary += "、破防核心【" + window.Aetheria.Data.MATERIALS[e.breakDrop].name + " +1】";
       }
