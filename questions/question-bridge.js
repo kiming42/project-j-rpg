@@ -1,7 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 四科17課(456題)與29幅教科書插畫總橋接器 (question-bridge.js - v6.4)
- * 自動串聯：questions-chinese.js (124題) / questions-english.js (92題) /
- *           questions-humanities.js (120題) / questions-science.js (120題)
+ * Project J：艾瑟瑞亞的破曉 — 四科17課(456題)與29幅教科書插畫總橋接器 (question-bridge.js - v6.5)
+ * 修正：1.英文填充題 (eng_fill) 移除句尾的中文解釋，純考英文句子語境
+ *       2.英文串字題 (eng_spell) 題目框移除底線與字數提示，只保留簡潔中文題意
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 
@@ -12,10 +12,8 @@ window.Aetheria = window.Aetheria || {};
   const HumBank = Bank.Humanities || { LESSONS: [], QUESTIONS: [], DIAGRAMS: {} };
   const SciBank = Bank.Science || { LESSONS: [], QUESTIONS: [], DIAGRAMS: {} };
 
-  // 1. 合併人文科與科學科全部 29 幅教科書級 SVG 向量圖庫
   const ALL_DIAGRAMS = Object.assign({}, HumBank.DIAGRAMS || {}, SciBank.DIAGRAMS || {});
 
-  // 2. 匯總四科 17 個課次目錄 (LESSON_CATALOG)
   const LESSON_CATALOG = [];
   const unitNameLookup = {};
 
@@ -36,11 +34,10 @@ window.Aetheria = window.Aetheria || {};
   registerLessons(HumBank.LESSONS, "humanities");
   registerLessons(SciBank.LESSONS, "science");
 
-  // 3. 題型分類目錄 (供星象調頻篩選題型)
   const QUIZ_TYPE_CATALOG = [
     { key: "chi_meaning", label: "中文・字詞/成語解釋" },
     { key: "chi_fill",    label: "中文・例句填充題" },
-    { key: "eng_spell",   label: "英文・字塊串字(附字數位)" },
+    { key: "eng_spell",   label: "英文・字塊串字" },
     { key: "eng_fill",    label: "英文・句子填充題" },
     { key: "hum_fill",    label: "人文・填充題" },
     { key: "hum_img_fill",label: "人文・看圖填充題" },
@@ -56,15 +53,6 @@ window.Aetheria = window.Aetheria || {};
     { key: "sci_scenario",label: "科學・情境問答題" }
   ];
 
-  // 4. 生成英文字數空白位，例如 "apple" -> "_____ (5)"、"by bus" -> "__ ___ (2, 3)"
-  function formatEngBlankPattern(phrase) {
-    const words = String(phrase || "").trim().split(/\s+/);
-    const underscores = words.map(function(w) { return "_".repeat(w.length); }).join("   ");
-    const counts = words.map(function(w) { return w.length; }).join(", ");
-    return underscores + " (" + counts + ")";
-  }
-
-  // 5. 為中文/英文自動從同單元抽取 3 個不重複的干擾選項
   function buildAutoOptions(targetItem, pool, idxSeed) {
     let candidates = pool.filter(function(item) {
       return item.unitKey === targetItem.unitKey && item.word !== targetItem.word;
@@ -84,7 +72,6 @@ window.Aetheria = window.Aetheria || {};
     return allOpts.slice(shift).concat(allOpts.slice(0, shift));
   }
 
-  // 6. 編譯四科全題庫 (合共 456 題)
   const ALL_QUESTIONS = [];
 
   // (A) 中文科：30 成語 + 32 字詞 -> 124 題
@@ -132,11 +119,10 @@ window.Aetheria = window.Aetheria || {};
     }
   });
 
-  // (B) 英文科：46 Vocab -> 92 題
+  // (B) 英文科：46 Vocab -> 92 題 (問題 2 & 3 修正：串字題刪題目底線與字數；填充題刪中文解釋！)
   const allEngItems = EngBank.VOCAB || [];
   allEngItems.forEach(function(item, idx) {
     const uName = item.unitName || unitNameLookup[item.unitKey] || "English";
-    const blankPattern = formatEngBlankPattern(item.word);
     const fillOpts = (item.options && item.options.length >= 2) ? item.options : buildAutoOptions(item, allEngItems, idx + 2);
 
     ALL_QUESTIONS.push({
@@ -149,10 +135,8 @@ window.Aetheria = window.Aetheria || {};
       qCategory: "eng_spell",
       type: "eng_tile_spell",
       typeLabel: "字塊串字",
-      prompt: "【英文串字】" + item.meaning + "\n字數提示：" + blankPattern,
+      prompt: "【英文串字】" + item.meaning,
       meaning: item.meaning,
-      sentenceHint: item.sentence || "",
-      blankPattern: blankPattern,
       answer: item.word
     });
 
@@ -167,7 +151,7 @@ window.Aetheria = window.Aetheria || {};
         qCategory: "eng_fill",
         type: "mcq",
         typeLabel: "句子填充題",
-        prompt: "【填充題】" + item.sentence + " (" + item.meaning + ")",
+        prompt: "【填充題】" + item.sentence,
         options: fillOpts,
         answer: item.word
       });
@@ -204,7 +188,6 @@ window.Aetheria = window.Aetheria || {};
     ALL_QUESTIONS.push(copy);
   });
 
-  // 統計每課題目數量
   LESSON_CATALOG.forEach(function(les) {
     les.count = ALL_QUESTIONS.filter(function(q) { return q.unitKey === les.key; }).length;
   });
@@ -227,7 +210,7 @@ window.Aetheria = window.Aetheria || {};
     }
 
     if (!s.lessonSelectMode) {
-      s.lessonSelectMode = "multi"; // "single" 單選課次 | "multi" 多選課次
+      s.lessonSelectMode = "multi";
     }
 
     if (!s.activeQuizTypes) {
@@ -246,7 +229,6 @@ window.Aetheria = window.Aetheria || {};
     LESSON_CATALOG: LESSON_CATALOG,
     QUIZ_TYPE_CATALOG: QUIZ_TYPE_CATALOG,
     DIAGRAMS: ALL_DIAGRAMS,
-    formatEngBlankPattern: formatEngBlankPattern,
     ensureQuizSettings: ensureQuizSettings,
 
     getDiagram: function(svgKey) {
@@ -333,4 +315,3 @@ window.Aetheria = window.Aetheria || {};
 
   window.Aetheria.QuizBridge = QuizBridge;
 })();
-a
