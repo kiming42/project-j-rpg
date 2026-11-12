@@ -1,6 +1,7 @@
 /* ============================================================================
- * Project J：艾瑟瑞亞的破曉 — 任務圖標化分步清單 (①收集素材 ➔ ②工坊打造 ➔ ③交付) 與NPC任務庫 (quests-npcs.js - v6.5)
- * 升級：實裝圖標化分步任務進度條，清晰指導玩家「先採集材料 ➔ 去工坊打造 ➔ 找對應NPC交付」
+ * Project J：艾瑟瑞亞的破曉 — 動態NPC對話狀態機與分步任務庫 (quests-npcs.js - v6.7)
+ * 升級：1.新增 getNpcDynamicGreeting(state, npcId)，接受或完成任務後立即切換對應台詞 (解決圖1問題)
+ *       2.全面檢查並更新全 10 位 NPC 的階段性對話及行商奇奇台詞
  * ============================================================================ */
 window.Aetheria = window.Aetheria || {};
 window.Aetheria.Data = window.Aetheria.Data || {};
@@ -46,7 +47,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
       id: "english", name: "阿爾比恩聖碑（英文）",
       perks: "25點：開局 +1 BP ｜ 75點：連勝倍率 2.0x",
       lore25: "【卷一】二十六枚字母化為星辰音節契約。",
-      lore50: "【卷二】拼寫真名者可引動星界增幅能量。",
+      lore50: "【卷二】拼寫真名者可引動星辰增幅能量。",
       lore100: "【終極】星界語法徹底解封，連勝賞金倍增。"
     },
     science: {
@@ -92,7 +93,6 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     });
   }
 
-  // 21 個推進式主線任務：對應圖標化分步流程「①收集素材 ➔ ②工坊打造 ➔ ③交付」
   const MAIN_QUESTS = [
     {
       id: "mq_01", chapter: "序章1/3", title: "修復【巴爾的鍛造熔爐】",
@@ -408,11 +408,10 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     }
   ];
 
-  // 10 位 NPC 資料庫
   const NPCS_DB = {
     npc_smith: {
       id: "npc_smith", name: "鐵匠大叔・巴爾", role: "鐵匠帳篷・首席鍛造與建材師", sprite: "npc_blacksmith", zoneName: "0.鐵匠帳篷內部",
-      greeting: "Justin！快喺下面接取修復熔爐任務，然後喺營地拾取枯枝、燧石同黏土，對準我身旁嘅熔爐投入建材修好佢！",
+      greeting: "「鍛造熔爐火力十足！需要打造武器、防具、加工厚木板建材或者升級採集工具，隨時打開下方工坊！」",
       serviceLabel: "開啟工坊（武器/防具/建材加工/工具）", serviceAction: "openForgeModal",
       villagerQuests: [],
       pathActions: [
@@ -447,7 +446,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_fisher: {
       id: "npc_fisher", name: "老漁夫・阿海", role: "曙光營地池畔垂釣達人", sprite: "npc_fisher", zoneName: "0.曙光營地池畔",
-      greeting: "後生仔，幫我搵『散落枯枝x2、堅韌藤蔓x1』修好舊魚簍，老夫就送你一支【竹製釣魚竿】！",
+      greeting: "「今日風浪平靜，最啱去水波釣魚點釣幾條銀鱗鮮魚返嚟煲湯或者鍛造水屬神兵！」",
       perkLabel: "【村民回禮】領取阿海的每日魚餌補給",
       onClaimPerk: function(s) {
         s.inventory.branch += 1;
@@ -483,7 +482,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_herbalist: {
       id: "npc_herbalist", name: "草藥婆婆・梅姑", role: "營地百草藥師", sprite: "npc_herbalist", zoneName: "0.曙光營地西側",
-      greeting: "出外拓荒最怕受傷同寒冷。先接受老婆子嘅第一個藥材委託，完成後我再教你提煉高階靈花！",
+      greeting: "「出外拓荒最緊要帶備充足嘅生命藥水同埋去營地料理鍋煲熱湯飲！」",
       perkLabel: "【村民回禮】飲用梅姑的百草養生茶",
       onClaimPerk: function(s) {
         s.hp = s.maxHp;
@@ -520,7 +519,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_scout: {
       id: "npc_scout", name: "受困斥候・里奧", role: "翠風森林前線斥候", sprite: "npc_scout", badge: "[斥候]", zoneName: "1.翠風森林斷橋西岸",
-      greeting: "洪水沖斷咗東岸木橋！幫我清剿附近嘅竹子妖並修好『跨河加固吊橋』，我們才能進軍東岸！",
+      greeting: "「翠風森林深處有南北兩座符文封印柱，全部點亮後就能削弱東岸樹妖王的護體結界！」",
       perkLabel: "【村民回禮】領取斥候收集的木材與藤蔓",
       onClaimPerk: function(s) {
         s.inventory.wood += 1;
@@ -557,7 +556,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_miner: {
       id: "npc_miner", name: "見習礦工・石頭", role: "洞窟爆破勘探員", sprite: "npc_miner", badge: "[礦工]", zoneName: "1.翠風森林北翼洞口",
-      greeting: "微光蘑菇洞窟入面又黑又有裂縫岩壁！幫我完成火種任務領取火藥袋後，仲可以接取秘銀勘探委託！",
+      greeting: "「微光蘑菇洞窟入面蘊藏住大量流沙秘銀同玄武岩，記得帶埋炸彈炸開西面嘅裂縫岩壁密室！」",
       perkLabel: "【村民回禮】領取石頭開採的礦石補給",
       onClaimPerk: function(s) {
         s.inventory.iron += 1;
@@ -582,7 +581,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_scholar: {
       id: "npc_scholar", name: "遺跡學者・古斯塔", role: "流沙峽谷古文明調查員", sprite: "npc_scholar", badge: "[學者]", zoneName: "2.流沙峽谷中央",
-      greeting: "流沙峽谷的北翼封印柱位於高聳斷崖上！我們必須用厚木板、麻繩、鐵釘與硬甲殼架設『斷崖重型絞盤木梯』才能攀登上去！",
+      greeting: "「流沙峽谷記載住先民嘅歷史智慧，只要善用斷崖木梯解開南北封印柱，就能挑戰荒漠流沙魔神！」",
       perkLabel: "【村民回禮】接受古斯塔的聖碑共鳴灌注",
       onClaimPerk: function(s) {
         s.monolithPts.chinese = Math.min(100, (s.monolithPts.chinese || 0) + 4);
@@ -619,7 +618,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_shipwright: {
       id: "npc_shipwright", name: "老船匠・達克", role: "翡翠海岸傳奇造船師", sprite: "npc_shipwright", badge: "[船匠]", zoneName: "3.翡翠海岸碼頭",
-      greeting: "想橫渡深海去對岸討伐幽靈船長？先去擊敗海盜收集『幽靈古帆布』，再回營地工坊合成『厚木板、防水松脂膠、遠航風帆』來碼頭造船！",
+      greeting: "「翡翠海岸嘅珊瑚同古帆布係極品造船同鍛造材料，準備充足就可以隨時揚帆渡海！」",
       perkLabel: "【村民回禮】領取達克打撈的深海物資",
       onClaimPerk: function(s) {
         s.inventory.coral += 1;
@@ -655,7 +654,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_astro: {
       id: "npc_astro", name: "星象少女・艾莉婭", role: "古文明聖碑共鳴師", sprite: "npc_astrologer", badge: "[聖碑]", zoneName: "0.曙光營地",
-      greeting: "當你完成各章節的聖碑與雪原拓荒主線時，請回來我這裡交付領獎！你也可以隨時在我這裡獻上『聖碑殘片』解鎖四大永久神恩。",
+      greeting: "「當你獲得『古文明聖碑殘片』時，隨時來我這裡獻上殘片，解鎖中、英、科、人四大聖碑的永久神恩！」",
       serviceLabel: "開啟古文明聖碑祭壇", serviceAction: "openMonolithModal",
       villagerQuests: [],
       pathActions: [
@@ -675,7 +674,7 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_guild: {
       id: "npc_guild", name: "公會會長・雷恩", role: "公會帳篷・記憶共鳴者總長", sprite: "npc_guildmaster", badge: "[公會]", zoneName: "0.公會帳篷內部",
-      greeting: "擊敗區域守關領主後，請返回公會帳篷向我交付主線報告！此外，公會亦提供額外懸賞挑戰與高階晉升俸祿。",
+      greeting: "「歡迎來到公會帳篷！你可以隨時查看拓荒日誌、接取公會試煉懸賞，或領取冒險階級晉升俸祿。」",
       serviceLabel: "查看拓荒日誌與公會懸賞", serviceAction: "openGuildModal",
       villagerQuests: [],
       pathActions: [
@@ -695,8 +694,8 @@ window.Aetheria.Data = window.Aetheria.Data || {};
 
     npc_merch: {
       id: "npc_merch", name: "神秘行商・奇奇", role: "跨大陸奇珍異寶商人", sprite: "npc_merchant", badge: "[行商]", zoneName: "0.曙光營地",
-      greeting: "嘿嘿，如果差一兩個枯枝、燧石、黏土或者松脂起橋，可以隨時喺我嘅金幣商店買到！",
-      serviceLabel: "開啟煉金與金幣商店", serviceAction: "openMerchantShop",
+      greeting: "「嘿嘿，所有天然木材同礦石都要靠你親手去野外採集！不過如果你需要生命藥水、洞察藥水、爆破炸彈或者靈獸誘餌果，隨時可以用金幣喺我度買到！」",
+      serviceLabel: "開啟煉金與金幣消耗品商店", serviceAction: "openMerchantShop",
       villagerQuests: [],
       pathActions: [
         {
@@ -867,6 +866,54 @@ window.Aetheria.Data = window.Aetheria.Data || {};
     return null;
   }
 
+  // ================= 問題 1 核心解決方案：全 10 位 NPC 四階段即時動態對話狀態機 =================
+  function getNpcDynamicGreeting(state, npcId) {
+    const npc = NPCS_DB[npcId];
+    if (!npc) return "";
+
+    const mq = getCurrentMainQuest(state);
+
+    // 1. 若當前主線正是由這位 NPC 負責：依「未接取 / 已接取進行中 / 可交付」三種狀態即時切換台詞！
+    if (mq && mq.giverNpcId === npcId) {
+      const isAcc = Boolean(state.questProgress && state.questProgress["acc_" + mq.id]);
+      const isDone = mq.checkComplete(state);
+
+      if (!isAcc) {
+        return "「Justin！我有新嘅主線任務【" + mq.title + "】交託俾你！快點擊下方黃色嘅『！可接主線』卡片接受任務啦！」";
+      }
+      if (isDone) {
+        return "「太出色喇 Justin！你已經順利完成【" + mq.title + "】嘅所有條件！快點擊下方綠色嘅『✓ 可交付領獎』卡片領取報酬啦！」";
+      }
+      // 已接取・進行中（即時切換為該任務的執行指引，絕不停留在上一句「請接取任務」！）
+      return "「你已經接咗【" + mq.title + "】喇！請按步驟完成：『" + mq.desc + "』，完成後記住返嚟搵我領獎！」";
+    }
+
+    // 2. 檢查這位 NPC 是否有已解鎖的「村民支線委託」，同樣依「未接 / 進行中 / 可交付」即時切換台詞！
+    if (npc.villagerQuests && npc.villagerQuests.length > 0) {
+      for (let i = 0; i < npc.villagerQuests.length; i++) {
+        const vq = npc.villagerQuests[i];
+        if (!isVillagerQuestUnlocked(state, vq)) continue;
+        const rec = state.npcQuests && state.npcQuests[vq.id];
+        if (!rec) {
+          return "「Justin，我呢度有個支線委託【" + vq.title + "】想請你幫手，點擊下方黃色卡片就可以接取！」";
+        }
+        if (rec.status === "accepted") {
+          if (isVillagerQuestReady(state, vq)) {
+            return "「哇！你已經幫我湊齊【" + vq.title + "】嘅要求喇！快點擊下方綠色卡片交付領獎啦！」";
+          }
+          return "「多謝你接下【" + vq.title + "】！目標係：『" + vq.desc + "』，完成後隨時返嚟搵我交付！」";
+        }
+      }
+    }
+
+    // 3. 若當前這位 NPC 沒有進行中的任務，顯示符合當前世界進度的日常台詞，並貼心提示當前主線去向！
+    const baseGreeting = npc.greeting || "";
+    if (mq) {
+      return baseGreeting + "（提示：當前主線【" + mq.title + "】請前往「" + mq.giverZone + "」搵【" + mq.giverName + "】！）";
+    }
+    return baseGreeting;
+  }
+
   window.Aetheria.Data.STORY_CUTSCENES = STORY_CUTSCENES;
   window.Aetheria.Data.MONOLITHS_DB = MONOLITHS_DB;
   window.Aetheria.Data.MAIN_QUESTS = MAIN_QUESTS;
@@ -879,4 +926,5 @@ window.Aetheria.Data = window.Aetheria.Data || {};
   window.Aetheria.Data.isVillagerQuestReady = isVillagerQuestReady;
   window.Aetheria.Data.getVillagerQuestProgressList = getVillagerQuestProgressList;
   window.Aetheria.Data.getNpcMarkerState = getNpcMarkerState;
+  window.Aetheria.Data.getNpcDynamicGreeting = getNpcDynamicGreeting;
 })();
