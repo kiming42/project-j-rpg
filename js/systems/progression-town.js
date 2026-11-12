@@ -569,7 +569,8 @@ window.Aetheria = window.Aetheria || {};
       this.setActivePanel("panel-dialogue");
       document.getElementById("npc-name-label").innerText = cleanText(npc.name);
       document.getElementById("npc-role-label").innerText = cleanText(npc.role);
-      document.getElementById("npc-speech-text").innerText = npc.greeting;
+      document.getElementById("npc-speech-text").innerText =
+        (window.Aetheria.Data.getNpcDynamicGreeting && window.Aetheria.Data.getNpcDynamicGreeting(s, npcId)) || npc.greeting;
 
       const portImg = document.getElementById("npc-portrait-img");
       if (portImg) portImg.src = S.getDataURL(npc.sprite);
